@@ -15,7 +15,7 @@ interface Props {
 const {
   title = `${SITE_INFO.name}   ${SITE_INFO.tagline}`,
   description = SITE_INFO.description,
-  image = '/images/logo.png',
+  image = '/images/logo.webp',
   type = 'website',
 } = Astro.props;
 
@@ -29,8 +29,8 @@ const structuredData = {
   "alternateName": SITE_INFO.fullName,
   "description": SITE_INFO.description,
   "url": SITE_INFO.url,
-  "logo": `${SITE_INFO.url}/images/logo.png`,
-  "image": `${SITE_INFO.url}/images/logo.png`,
+  "logo": `${SITE_INFO.url}/images/logo.webp`,
+  "image": `${SITE_INFO.url}/images/logo.webp`,
   "areaServed": {
     "@type": "AdministrativeArea",
     "name": "Hyderabad and surrounding areas, Telangana"
