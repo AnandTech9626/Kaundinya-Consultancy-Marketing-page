@@ -1,3 +1,5 @@
+> **IMPORTANT — BACKEND/API WORK:** Before any backend or API work, you MUST read `BACKEND.md` first and follow it exactly. It defines the fixed monorepo layout, the backend stack, and the "packages are central, never copy" rules.
+
 ## Structure
 
 Monorepo with npm workspaces:
@@ -32,6 +34,18 @@ astro dev --background
 ```
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
+
+## Deployment
+
+The marketing site is a static Astro build deployed to **Cloudflare Pages** (not Workers).
+
+Cloudflare Pages build settings (Git integration):
+
+- Production branch: `main`
+- Build command: `npm install && npm run build`
+- Build output directory: `apps/marketing/dist`
+
+The future React SPA (`apps/app`) will be hosted on Cloudflare Workers.
 
 ## Documentation
 
