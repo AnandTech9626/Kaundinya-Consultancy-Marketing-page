@@ -32,8 +32,8 @@ Rules:
 ## 3. CD / deployment
 
 - **Marketing** (`apps/marketing`) → **Cloudflare Pages** (static Astro)
-  - Pages project: `kaundinya-consultancy-marketing-page`
-  - Live URL: `https://kaundinya-consultancy-marketing-page-1tz.pages.dev/`
+  - Pages project: `kaundinyaconsultancy`
+  - Live URL: `https://kaundinyaconsultancy.pages.dev/`
   - Deploys automatically on push to `main` via the GitHub Actions workflow `.github/workflows/deploy.yml` (`cloudflare/pages-action`).
   - Required GitHub Actions secrets (set once by a repo admin under Settings → Secrets and variables → Actions):
     - `CLOUDFLARE_API_TOKEN`

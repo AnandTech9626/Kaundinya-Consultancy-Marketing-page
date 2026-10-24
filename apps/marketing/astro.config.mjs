@@ -6,7 +6,7 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://kaundinyaconsultancy.com',
+  site: 'https://kaundinyaconsultancy.pages.dev',
   integrations: [
     react(),
     sitemap()
