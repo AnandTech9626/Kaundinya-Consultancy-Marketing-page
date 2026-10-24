@@ -32,9 +32,12 @@ Rules:
 ## 3. CD / deployment
 
 - **Marketing** (`apps/marketing`) → **Cloudflare Pages** (static Astro)
-  - Build command: `npm install && npm run build`
-  - Output directory: `apps/marketing/dist`
-  - Deploys automatically on push to `main` via Pages Git integration.
+  - Pages project: `kaundinya-consultancy-marketing-page`
+  - Live URL: `https://kaundinya-consultancy-marketing-page-1tz.pages.dev/`
+  - Deploys automatically on push to `main` via the GitHub Actions workflow `.github/workflows/deploy.yml` (`cloudflare/pages-action`).
+  - Required GitHub Actions secrets (set once by a repo admin under Settings → Secrets and variables → Actions):
+    - `CLOUDFLARE_API_TOKEN`
+    - `CLOUDFLARE_ACCOUNT_ID`
 - **App** (`apps/app`) → **Cloudflare Workers** (future)
 - **API** (`apps/api`) → see `BACKEND.md` (future)
 
