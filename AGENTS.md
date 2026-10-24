@@ -1,4 +1,6 @@
 > **IMPORTANT — BACKEND/API WORK:** Before any backend or API work, you MUST read `BACKEND.md` first and follow it exactly. It defines the fixed monorepo layout, the backend stack, and the "packages are central, never copy" rules.
+>
+> **IMPORTANT — MERGING & DEPLOYING:** Before merging branches or deploying, read `deploy.md`. Work flows child branch → `developer` → `main`; never merge a child branch straight into `main`.
 
 ## Structure
 
