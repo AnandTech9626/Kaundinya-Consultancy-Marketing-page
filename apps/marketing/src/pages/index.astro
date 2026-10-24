@@ -1,0 +1,360 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import ServiceCard from '../components/ServiceCard.astro';
+import ServiceFinder from '../components/ServiceFinder';
+import BrandPrincipleCard from '../components/BrandPrincipleCard';
+import Button from '../components/Button.astro';
+import { 
+  SITE_INFO, 
+  SERVICE_CATEGORIES, 
+  BRAND_PRINCIPLES, 
+  HOW_IT_WORKS_STEPS,
+  CONTACT_PERSONS 
+} from '../lib/constants';
+
+const primaryContact = CONTACT_PERSONS[0];
+---
+
+<BaseLayout 
+  title={`${SITE_INFO.name} - Trusted Guidance. Complete Solutions.`}
+  description="Integrated multi-service consultancy in Hyderabad for Real Estate, Insurance, Property Management & Home Services, and Loans."
+>
+
+  <!-- 1. HERO SECTION (Exact Match with Reference Image) -->
+  <section class="relative bg-[#121316] overflow-hidden pt-14 sm:pt-20 lg:pt-24 pb-24 sm:pb-32 lg:pb-36">
+    <!-- Background Consultation Scene on Right (55% width, perfectly framing the couple and consultant with woman 100% visible and plant showing under slant) -->
+    <div class="absolute inset-y-0 right-0 w-full lg:w-[55%] z-0 overflow-hidden">
+      <img 
+        src="/images/hero_consultation_scene.jpg" 
+        alt="Kaundinya Consultancy - Personalized Advisory for Real Estate, Insurance, Home Services, and Loans" 
+        class="w-full h-full object-cover object-right"
+        loading="eager"
+      />
+      <!-- Soft ambient gradient on mobile / tablet to ensure perfect text contrast -->
+      <div class="absolute inset-0 bg-gradient-to-t from-[#121316] via-[#121316]/95 to-[#121316]/85 lg:hidden"></div>
+      <div class="hidden lg:block absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 pointer-events-none"></div>
+    </div>
+
+    <!-- Diagonal Dark Charcoal Slant with Soft Light Gold Reduced-Opacity Band on Desktop -->
+    <div class="hidden lg:block absolute inset-0 z-1 pointer-events-none">
+      <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1000 600" fill="none">
+        <defs>
+          <!-- Charcoal overlay gradient: 100% opaque on left for text readability, softening to 75% near slant so background plants softly show through -->
+          <linearGradient id="charcoalSubtleGlass" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#121316" stop-opacity="1" />
+            <stop offset="65%" stop-color="#121316" stop-opacity="1" />
+            <stop offset="85%" stop-color="#121316" stop-opacity="0.90" />
+            <stop offset="100%" stop-color="#121316" stop-opacity="0.75" />
+          </linearGradient>
+
+          <!-- Light, Luminous Gold Facet with Reduced Opacity (Soft, delicate, translucent gold) -->
+          <linearGradient id="lightGoldFacet" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#F5B900" stop-opacity="0.45" />
+            <stop offset="30%" stop-color="#FFF3B0" stop-opacity="0.65" />
+            <stop offset="65%" stop-color="#FFD54F" stop-opacity="0.55" />
+            <stop offset="100%" stop-color="#E5A832" stop-opacity="0.40" />
+          </linearGradient>
+        </defs>
+
+        <!-- 1. Dark Charcoal Polygon (Subtly translucent near slant so background plants softly show through) -->
+        <polygon points="0,0 450,0 528,600 0,600" fill="url(#charcoalSubtleGlass)" />
+
+        <!-- 2. Balanced Tapered Gold Band: Thick at Top (26px) tapering down very slim and thin at Bottom (4.5px) -->
+        <polygon points="450,0 476,0 532.5,600 528,600" fill="url(#lightGoldFacet)" />
+
+        <!-- 3. Soft Light Edge Highlight on left rim -->
+        <line x1="450" y1="0" x2="528" y2="600" stroke="#FFF7C2" stroke-width="0.75" opacity="0.55" />
+
+        <!-- 4. Subtle Warm Rim on right -->
+        <line x1="476" y1="0" x2="532.5" y2="600" stroke="#E5A832" stroke-width="0.7" opacity="0.35" />
+      </svg>
+    </div>
+
+    <!-- Hero Content Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-end">
+        
+        <!-- Left Column: Copy & Actions & 4 In-Hero Badges -->
+        <div class="lg:col-span-6 space-y-3.5 sm:space-y-4">
+          
+          <!-- Headline -->
+          <h1 class="text-3xl sm:text-4xl lg:text-[3.15rem] xl:text-[3.45rem] font-serif font-bold tracking-tight leading-[1.1] text-white">
+            Trusted Guidance. <br />
+            <span class="text-[#F5B900] block mt-1">Complete Solutions.</span>
+          </h1>
+
+          <!-- Paragraph -->
+          <p class="text-stone-300 text-sm sm:text-[0.95rem] leading-[1.65] max-w-lg font-normal">
+            From finding the right property and choosing suitable insurance to arranging home services and exploring loan options, Kaundinya Consultancy helps you navigate important decisions with confidence.
+          </p>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-wrap items-center gap-4 pt-6 sm:pt-8">
+            <a 
+              href="#service-finder" 
+              class="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-lg bg-[#F5B900] hover:bg-[#D8A200] text-[#121316] font-bold text-sm sm:text-base shadow-lg shadow-[#F5B900]/25 transition-all duration-200 hover:-translate-y-0.5"
+            >
+              <span>Explore Our Services</span>
+              <svg class="w-4 h-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </a>
+
+            <button
+              type="button"
+              data-open-consultation
+              class="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-lg bg-white/5 hover:bg-white/10 text-white font-semibold text-sm sm:text-base border border-white/20 hover:border-white/40 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+            >
+              <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              <span>Talk to Our Team</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Right Column Spacer -->
+        <div class="hidden lg:block lg:col-span-6 h-full"></div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. FLOATING OVERLAPPING PILLARS BAR (Matches Reference Image Exactly) -->
+  <section class="relative z-20 -mt-8 sm:-mt-10 lg:-mt-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="bg-white rounded-2xl border border-stone-200/90 shadow-2xl p-4 sm:p-5 lg:py-4.5 lg:px-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-6 divide-y sm:divide-y-0 lg:divide-x divide-stone-200/80">
+          
+          <!-- Pillar 1: Personalized Consultation -->
+          <div class="flex items-center gap-3.5 lg:pr-5">
+            <div class="w-11 h-11 rounded-full bg-[#FAF0D7] text-[#B8860B] flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-bold text-charcoal text-xs sm:text-sm leading-snug">Personalized Consultation</h4>
+              <p class="text-[11px] text-muted leading-tight mt-0.5">Tailored to your needs</p>
+            </div>
+          </div>
+
+          <!-- Pillar 2: Transparent Communication -->
+          <div class="flex items-center gap-3.5 pt-4 sm:pt-0 lg:px-5">
+            <div class="w-11 h-11 rounded-full bg-[#FAF0D7] text-[#B8860B] flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                <line x1="8" y1="9" x2="16" y2="9"></line>
+                <line x1="8" y1="13" x2="13" y2="13"></line>
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-bold text-charcoal text-xs sm:text-sm leading-snug">Transparent Communication</h4>
+              <p class="text-[11px] text-muted leading-tight mt-0.5">Clear and honest guidance</p>
+            </div>
+          </div>
+
+          <!-- Pillar 3: End-to-End Support -->
+          <div class="flex items-center gap-3.5 pt-4 sm:pt-0 lg:px-5">
+            <div class="w-11 h-11 rounded-full bg-[#FAF0D7] text-[#B8860B] flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M9 15l2 2 4-4"></path>
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-bold text-charcoal text-xs sm:text-sm leading-snug">End-to-End Support</h4>
+              <p class="text-[11px] text-muted leading-tight mt-0.5">From enquiry to resolution</p>
+            </div>
+          </div>
+
+          <!-- Pillar 4: Service Area -->
+          <div class="flex items-center gap-3.5 pt-4 sm:pt-0 lg:pl-5">
+            <div class="w-11 h-11 rounded-full bg-[#FAF0D7] text-[#B8860B] flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-bold text-charcoal text-xs sm:text-sm leading-snug">Service Area</h4>
+              <p class="text-[11px] text-muted leading-tight mt-0.5">Hyderabad & Surrounding Areas</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- 3. INTERACTIVE SERVICE FINDER MODULE -->
+  <section id="service-finder" class="pt-24 sm:pt-28 pb-20 bg-ivory scroll-mt-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      
+      <div class="text-center max-w-3xl mx-auto space-y-3">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-charcoal tracking-tight">
+          Find Exactly What You Need
+        </h2>
+        <p class="text-base text-muted">
+          Select a category below to explore tailored assistance, real deliverables, and direct consultation options.
+        </p>
+      </div>
+
+      <ServiceFinder client:load />
+
+    </div>
+  </section>
+
+  <!-- 4. SERVICES OVERVIEW -->
+  <section class="py-20 bg-white border-y border-border-subtle">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+        <SectionHeading 
+          badge="Integrated Portfolio"
+          title="All Four Core Service Categories"
+          subtitle="Explore the full spectrum of our coordinated services across Hyderabad."
+        />
+        <div>
+          <Button href="/services" variant="outline" size="sm">
+            <span>Explore All Detailed Guides</span>
+            <svg class="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </Button>
+        </div>
+      </div>
+
+      <!-- 4 Pillars Grid with real photos -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {SERVICE_CATEGORIES.map((cat, idx) => (
+          <ServiceCard category={cat} index={idx} />
+        ))}
+      </div>
+
+      <!-- Disclaimer notice with Clean SVG Icon -->
+      <div class="mt-12 p-5 rounded-xl bg-ivory border border-border-subtle text-xs text-muted leading-relaxed flex items-start gap-3">
+        <svg class="w-4 h-4 text-gold shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <p>
+          <strong>Notice of Transparency:</strong> Kaundinya Consultancy provides professional advisory, documentation support, and service coordination. We do not provide legal guarantees of loan approvals, insurance claim outcomes, or government document update timelines; all institutional approvals are subject to official regulatory criteria and guidelines.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 5. HOW IT WORKS -->
+  <section class="py-20 bg-ivory-light">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <SectionHeading 
+        badge="Simple Process"
+        title="How We Work With You"
+        subtitle="A clear, four-step journey from your initial requirement to coordinated fulfillment."
+        centered={true}
+        class="mb-16"
+      />
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {HOW_IT_WORKS_STEPS.map((step, index) => (
+          <div class="relative bg-white rounded-2xl p-6 border border-border-subtle shadow-sm hover:shadow-md transition-shadow group">
+            <span class="absolute top-4 right-5 font-serif text-6xl font-black text-ivory group-hover:text-gold/20 transition-colors select-none leading-none">
+              {step.step}
+            </span>
+            <div class="relative space-y-3 pt-8">
+              <h3 class="text-base font-bold text-charcoal">{step.title}</h3>
+              <p class="text-xs text-muted leading-relaxed">{step.description}</p>
+            </div>
+            {index < HOW_IT_WORKS_STEPS.length - 1 && (
+              <span class="hidden lg:flex absolute top-1/2 -right-[1.65rem] -translate-y-1/2 z-10 w-6 h-6 items-center justify-center text-gold">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 6. WHY CHOOSE US -->
+  <section class="py-20 bg-white border-b border-border-subtle">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <SectionHeading 
+        badge="Our Core Principles"
+        title="Why Families & Businesses Trust Kaundinya"
+        subtitle="Built on practical ethics, open communication, and attentive local service across Hyderabad."
+        centered={true}
+        class="mb-16"
+      />
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {BRAND_PRINCIPLES.map((principle) => (
+          <BrandPrincipleCard
+            icon={principle.icon}
+            title={principle.title}
+            description={principle.description}
+          />
+        ))}
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 7. SERVICE AREA CALLOUT -->
+  <section class="py-12 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="relative overflow-hidden rounded-2xl bg-charcoal border border-charcoal-light p-8 sm:p-10 lg:p-12">
+        <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-gold/10 blur-3xl pointer-events-none"></div>
+        <div class="relative flex flex-col lg:flex-row items-center lg:items-center justify-between gap-8">
+          <div class="flex flex-col sm:flex-row items-center sm:items-start lg:items-center gap-5 text-center sm:text-left max-w-2xl">
+            <div class="w-14 h-14 shrink-0 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <div class="space-y-1.5">
+              <p class="text-xs font-bold uppercase tracking-wider text-gold">Locally Committed</p>
+              <h3 class="text-xl sm:text-2xl font-bold text-white">Service Area: Hyderabad & Surrounding Areas</h3>
+              <p class="text-sm text-ivory/70 leading-relaxed">
+                We provide on-ground consultations, property visits, and technician coordination throughout Hyderabad and adjacent regions.
+              </p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <button
+              type="button"
+              data-open-consultation
+              class="inline-flex items-center justify-center gap-2 font-semibold rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-charcoal focus:ring-gold cursor-pointer bg-gold hover:bg-gold-hover active:bg-gold-muted text-charcoal shadow-sm text-sm px-6 py-3"
+            >
+              <span>Inquire for Your Locality</span>
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>

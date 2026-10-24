@@ -9,9 +9,7 @@
                     "dev":  "astro dev",
                     "build":  "astro build",
                     "preview":  "astro preview",
-                    "astro":  "astro",
-                    "deploy":  "astro build && wrangler pages deploy dist --project-name=kaundinya-consultancy-marketing-page",
-                    "deploy:pages":  "astro build && wrangler pages deploy dist --project-name=kaundinya-consultancy-marketing-page"
+                    "astro":  "astro"
                 },
     "dependencies":  {
                          "@astrojs/react":  "^7.1.1",

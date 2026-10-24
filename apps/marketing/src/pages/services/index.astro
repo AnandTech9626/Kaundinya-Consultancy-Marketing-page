@@ -1,0 +1,121 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import Button from '../../components/Button.astro';
+import { SITE_INFO, SERVICE_CATEGORIES } from '../../lib/constants';
+---
+
+<BaseLayout
+  title={`Our Services   ${SITE_INFO.name}`}
+  description="Comprehensive overview of Real Estate, Insurance, Property Management & Home Services, and Loan guidance from Kaundinya Consultancy in Hyderabad."
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <Breadcrumbs items={[{ label: "Services" }]} />
+  </div>
+
+  <!-- Header Section -->
+  <section class="py-12 sm:py-16 bg-ivory-light border-b border-border-subtle">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl space-y-4">
+        <h1 class="text-3xl sm:text-5xl font-extrabold text-charcoal tracking-tight">
+          Four Core Service Verticals
+        </h1>
+        <p class="text-base sm:text-lg text-muted leading-relaxed">
+          Structured, honest assistance tailored to individuals, families, and commercial clients throughout Hyderabad and neighboring regions.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Detailed Service Pillars -->
+  <section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+      
+      {SERVICE_CATEGORIES.map((cat, idx) => (
+        <article class={`grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-8 sm:p-12 rounded-2xl border border-border-subtle ${
+          idx % 2 === 1 ? 'bg-ivory/50' : 'bg-white'
+        }`}>
+          
+          <div class="lg:col-span-7 space-y-5">
+            <div class="flex items-center gap-3">
+              <span class="px-2.5 py-1 rounded bg-charcoal text-gold text-xs font-bold">
+                Pillar 0{idx + 1}
+              </span>
+              <span class="text-xs font-bold uppercase tracking-wider text-muted">
+                {cat.tagline}
+              </span>
+            </div>
+
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-charcoal">
+              {cat.name}
+            </h2>
+
+            <p class="text-sm sm:text-base text-muted leading-relaxed">
+              {cat.description}
+            </p>
+
+            <div class="pt-2">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-charcoal mb-3">
+                Assistance You Can Request:
+              </h3>
+              <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm text-charcoal-light">
+                {cat.services.map((svc) => (
+                  <li class="flex items-start gap-2">
+                    <svg class="w-4 h-4 text-gold shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>{svc}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div class="pt-4 flex flex-wrap items-center gap-4">
+              <Button href={cat.href} variant="primary" size="md">
+                <span>Detailed Guide & Scope</span>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </Button>
+              <button
+                type="button"
+                data-open-consultation
+                class="inline-flex items-center justify-center font-semibold rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 gap-2 cursor-pointer bg-ivory hover:bg-ivory-dark text-charcoal border border-border-subtle focus:ring-charcoal text-sm px-5 py-2.5"
+              >
+                <span>Inquire About This Service</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5">
+            {cat.image ? (
+              <div class="rounded-xl overflow-hidden border border-border-subtle shadow-md">
+                <img 
+                  src={cat.image} 
+                  alt={cat.name} 
+                  class="w-full h-64 sm:h-80 object-cover"
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <div class="h-64 sm:h-80 rounded-xl bg-ivory border border-border-subtle flex items-center justify-center p-8 text-center">
+                <div class="space-y-2">
+                  <div class="w-12 h-12 mx-auto rounded-full bg-gold/20 flex items-center justify-center text-charcoal font-bold">
+                    KIS
+                  </div>
+                  <h4 class="font-bold text-charcoal">{cat.name}</h4>
+                  <p class="text-xs text-muted">Dedicated Advisory in Hyderabad</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </article>
+      ))}
+
+    </div>
+  </section>
+
+</BaseLayout>

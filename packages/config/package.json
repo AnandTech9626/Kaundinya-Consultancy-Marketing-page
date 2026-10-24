@@ -1,0 +1,6 @@
+{
+  "name": "@kaundinya/config",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Shared content, data, and configuration used across apps"
+}

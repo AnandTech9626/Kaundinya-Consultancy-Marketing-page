@@ -1,0 +1,120 @@
+---
+import { NAV_LINKS, SITE_INFO } from '../lib/constants';
+import MobileNav from './MobileNav';
+
+const currentPath = Astro.url.pathname;
+---
+
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-border-subtle transition-all duration-200">
+  <!-- Main Navigation Bar -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-20">
+      
+      <!-- Brand Logo -->
+      <a href="/" class="flex items-center gap-3.5 group focus:outline-none focus:ring-2 focus:ring-gold rounded-lg p-1" aria-label="Kaundinya Consultancy Home">
+        <img 
+          src="/images/logo.png" 
+          alt="Kaundinya Consultancy Logo" 
+          class="h-16 w-auto object-contain transition-transform group-hover:scale-105 duration-200" 
+          width="180" 
+          height="56" 
+        />
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="hidden lg:flex items-center gap-8" aria-label="Main Navigation">
+        {NAV_LINKS.map((item) => {
+          const isContact = item.label.toLowerCase() === 'contact';
+          const isActive = !isContact && (currentPath === item.href || (item.children && currentPath.startsWith(item.href) && item.href !== '/'));
+          
+          if (item.children) {
+            return (
+              <div class="relative group">
+                <a
+                  href={item.href}
+                  class={`flex items-center gap-1.5 py-2 text-sm font-medium tracking-wide transition-colors ${
+                    isActive ? 'text-charcoal font-semibold' : 'text-muted hover:text-charcoal'
+                  }`}
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                >
+                  <span>{item.label}</span>
+                  <svg class="w-4 h-4 text-muted group-hover:text-charcoal transition-transform group-hover:rotate-180 duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </a>
+
+                <!-- Dropdown Menu -->
+                <div class="absolute top-full left-0 w-64 pt-2 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200 z-50">
+                  <div class="bg-white rounded-lg shadow-xl border border-border-subtle p-2 space-y-1">
+                    <a
+                      href="/services"
+                      class="block px-3 py-2 text-xs font-semibold text-charcoal-light uppercase tracking-wider hover:bg-ivory rounded transition-colors border-b border-border-subtle/40 mb-1"
+                    >
+                      All Services Hub
+                    </a>
+                    {item.children.map((child) => (
+                      <a
+                        href={child.href}
+                        class={`block px-3 py-2 text-sm rounded transition-colors ${
+                          currentPath === child.href
+                            ? 'bg-gold-light text-charcoal font-semibold'
+                            : 'text-muted hover:text-charcoal hover:bg-ivory'
+                        }`}
+                      >
+                        {child.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          if (isContact) {
+            return (
+              <button
+                type="button"
+                data-open-consultation
+                class="py-2 text-sm font-medium tracking-wide transition-colors text-muted hover:text-charcoal cursor-pointer focus:outline-none focus:text-gold"
+              >
+                {item.label}
+              </button>
+            );
+          }
+
+          return (
+            <a
+              href={item.href}
+              class={`py-2 text-sm font-medium tracking-wide transition-colors relative ${
+                isActive
+                  ? 'text-charcoal font-semibold'
+                  : 'text-muted hover:text-charcoal'
+              }`}
+            >
+              {item.label}
+              {isActive && (
+                <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-gold rounded-full"></span>
+              )}
+            </a>
+          );
+        })}
+      </nav>
+
+      <!-- Desktop CTA Modal Trigger -->
+      <div class="hidden lg:flex items-center gap-4">
+        <button
+          type="button"
+          data-open-consultation
+          class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-charcoal bg-gold hover:bg-gold-hover active:bg-gold-muted rounded-md shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold cursor-pointer"
+        >
+          Request a Consultation
+        </button>
+      </div>
+
+      <!-- Mobile Nav Island -->
+      <MobileNav client:idle links={NAV_LINKS} currentPath={currentPath} />
+
+    </div>
+  </div>
+</header>

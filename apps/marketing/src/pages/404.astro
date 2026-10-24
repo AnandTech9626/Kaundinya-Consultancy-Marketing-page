@@ -1,0 +1,34 @@
+ ---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
+import { SITE_INFO } from '../lib/constants';
+---
+
+<BaseLayout
+  title={`Page Not Found   ${SITE_INFO.name}`}
+  description="The requested page could not be located on Kaundinya Consultancy."
+>
+  <section class="py-24 sm:py-32 bg-ivory-light flex items-center justify-center">
+    <div class="max-w-xl mx-auto px-4 text-center space-y-6">
+      
+
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-charcoal">
+        Page Not Located
+      </h1>
+
+      <p class="text-base text-muted leading-relaxed">
+        The link you followed may have expired, or the page may have been moved. Let's guide you back to our active services.
+      </p>
+
+      <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <Button href="/" variant="primary" size="md">
+          <span>Return to Homepage</span>
+        </Button>
+        <Button href="/services" variant="secondary" size="md">
+          <span>Explore All Services</span>
+        </Button>
+      </div>
+
+    </div>
+  </section>
+</BaseLayout>
