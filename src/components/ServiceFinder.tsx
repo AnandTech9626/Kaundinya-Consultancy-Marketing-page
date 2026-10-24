@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { Building2, ShieldCheck, Wrench, Coins, ArrowRight, CheckCircle2, Phone } from "lucide-react";
-import { CONTACT_PERSONS } from "../lib/constants";
+import { Building2, ShieldCheck, Wrench, Coins, ArrowRight, CheckCircle2 } from "lucide-react";
 
 interface ServiceTab {
   id: string;
@@ -79,7 +78,6 @@ const TABS: ServiceTab[] = [
 export default function ServiceFinder() {
   const [activeTab, setActiveTab] = useState<string>("real-estate");
   const current = TABS.find((t) => t.id === activeTab) || TABS[0];
-  const primaryContact = CONTACT_PERSONS[0];
 
   return (
     <div className="bg-white rounded-3xl border border-border-subtle shadow-xl overflow-hidden">
@@ -113,11 +111,6 @@ export default function ServiceFinder() {
           
           {/* Text and Deliverables */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/15 text-charcoal text-xs font-bold uppercase tracking-wider border border-gold/40">
-              <span className="w-1.5 h-1.5 rounded-full bg-gold"></span>
-              <span>KIS Dedicated Solution</span>
-            </div>
-
             <h3 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight leading-snug">
               {current.headline}
             </h3>
@@ -148,14 +141,6 @@ export default function ServiceFinder() {
                 <span>Full Service Guide</span>
                 <ArrowRight className="w-4 h-4" />
               </a>
-
-              <a
-                href={`tel:${primaryContact.phoneRaw}`}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold text-charcoal bg-ivory hover:bg-ivory-dark border border-border-subtle transition-colors"
-              >
-                <Phone className="w-4 h-4 text-gold" />
-                <span>Call {primaryContact.name}</span>
-              </a>
             </div>
           </div>
 
@@ -167,13 +152,6 @@ export default function ServiceFinder() {
                 alt={current.name}
                 className="w-full h-64 sm:h-80 object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-transparent to-transparent"></div>
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs text-white">
-                <span className="font-bold bg-charcoal/80 px-2.5 py-1 rounded backdrop-blur-sm">
-                  {current.name}   Hyderabad
-                </span>
-                <span className="text-gold font-semibold">Verified Support</span>
-              </div>
             </div>
           </div>
 

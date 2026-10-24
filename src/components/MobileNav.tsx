@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Menu, X, Phone, ChevronDown, ArrowRight } from "lucide-react";
+import { Menu, X, ChevronDown, ArrowRight } from "lucide-react";
 
 interface NavChild {
   label: string;
@@ -15,10 +15,9 @@ interface NavLink {
 interface Props {
   links: NavLink[];
   currentPath: string;
-  contacts: { name: string; phone: string; phoneRaw: string }[];
 }
 
-export default function MobileNav({ links, currentPath, contacts }: Props) {
+export default function MobileNav({ links, currentPath }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
 
@@ -139,27 +138,6 @@ export default function MobileNav({ links, currentPath, contacts }: Props) {
                 <span>Request a Consultation</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-border-subtle mt-8">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">
-              Direct Phone Support (Hyderabad)
-            </p>
-            <div className="space-y-2">
-              {contacts.map((contact) => (
-                <a
-                  key={contact.phoneRaw}
-                  href={`tel:${contact.phoneRaw}`}
-                  className="flex items-center justify-between p-3 rounded-lg bg-ivory hover:bg-ivory-dark transition-colors text-charcoal"
-                >
-                  <div>
-                    <div className="text-xs text-muted">{contact.name}</div>
-                    <div className="text-sm font-bold">{contact.phone}</div>
-                  </div>
-                  <Phone className="w-4 h-4 text-gold" />
-                </a>
-              ))}
             </div>
           </div>
         </div>

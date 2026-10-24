@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { 
   X, 
-  Phone, 
   MapPin, 
   CheckCircle2, 
   AlertCircle, 
@@ -274,25 +273,11 @@ export default function ConsultationModal() {
                 <div className="border-t border-charcoal-light/70 pt-4 space-y-1">
                   <p className="text-[11px] text-ivory/60 font-medium">Managing Director / Principal</p>
                   <p className="text-sm font-bold text-white">Sampath Krishna Goud</p>
-                  <a
-                    href="tel:+917093320947"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-gold hover:text-gold-hover transition-colors mt-0.5"
-                  >
-                    <Phone className="w-3.5 h-3.5" />
-                    <span>+91 70933 20947</span>
-                  </a>
                 </div>
 
                 <div className="border-t border-charcoal-light/70 pt-4 space-y-1">
                   <p className="text-[11px] text-ivory/60 font-medium">Managing Partner</p>
                   <p className="text-sm font-bold text-white">Harika Garre</p>
-                  <a
-                    href="tel:+919632240116"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-gold hover:text-gold-hover transition-colors mt-0.5"
-                  >
-                    <Phone className="w-3.5 h-3.5" />
-                    <span>+91 96322 40116</span>
-                  </a>
                 </div>
               </div>
 
@@ -301,7 +286,7 @@ export default function ConsultationModal() {
                 <p className="text-[11px] text-ivory/60 font-medium">Service area</p>
                 <p className="text-sm font-bold text-white flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-gold" />
-                  <span>Hyderabad &amp; surrounding areas</span>
+                  <span>Hyderabad & surrounding areas</span>
                 </p>
               </div>
 

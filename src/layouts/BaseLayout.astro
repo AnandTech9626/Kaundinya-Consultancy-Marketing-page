@@ -31,7 +31,6 @@ const structuredData = {
   "url": SITE_INFO.url,
   "logo": `${SITE_INFO.url}/images/logo.png`,
   "image": `${SITE_INFO.url}/images/logo.png`,
-  "telephone": CONTACT_PERSONS[0].phoneRaw,
   "areaServed": {
     "@type": "AdministrativeArea",
     "name": "Hyderabad and surrounding areas, Telangana"
@@ -50,7 +49,6 @@ const structuredData = {
   ],
   "contactPoint": CONTACT_PERSONS.map(c => ({
     "@type": "ContactPoint",
-    "telephone": c.phoneRaw,
     "contactType": "customer service",
     "name": c.name,
     "areaServed": "IN",

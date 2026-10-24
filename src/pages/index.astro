@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import ServiceCard from '../components/ServiceCard.astro';
 import ServiceFinder from '../components/ServiceFinder';
+import BrandPrincipleCard from '../components/BrandPrincipleCard';
 import Button from '../components/Button.astro';
 import { 
   SITE_INFO, 
@@ -21,7 +22,7 @@ const primaryContact = CONTACT_PERSONS[0];
 >
 
   <!-- 1. HERO SECTION (Exact Match with Reference Image) -->
-  <section class="relative bg-[#121316] overflow-hidden pt-6 sm:pt-8 lg:pt-8 pb-14 sm:pb-16 lg:pb-16">
+  <section class="relative bg-[#121316] overflow-hidden pt-14 sm:pt-20 lg:pt-24 pb-24 sm:pb-32 lg:pb-36">
     <!-- Background Consultation Scene on Right (55% width, perfectly framing the couple and consultant with woman 100% visible and plant showing under slant) -->
     <div class="absolute inset-y-0 right-0 w-full lg:w-[55%] z-0 overflow-hidden">
       <img 
@@ -77,13 +78,6 @@ const primaryContact = CONTACT_PERSONS[0];
         <!-- Left Column: Copy & Actions & 4 In-Hero Badges -->
         <div class="lg:col-span-6 space-y-3.5 sm:space-y-4">
           
-          <!-- Eyebrow -->
-          <div class="inline-flex items-center gap-2.5 text-[#F5B900] text-xs font-bold tracking-[0.24em] uppercase">
-            <span class="w-4 h-[1.5px] bg-[#F5B900]"></span>
-            <span>YOUR TRUSTED PARTNER</span>
-            <span class="w-4 h-[1.5px] bg-[#F5B900]"></span>
-          </div>
-
           <!-- Headline -->
           <h1 class="text-3xl sm:text-4xl lg:text-[3.15rem] xl:text-[3.45rem] font-serif font-bold tracking-tight leading-[1.1] text-white">
             Trusted Guidance. <br />
@@ -96,7 +90,7 @@ const primaryContact = CONTACT_PERSONS[0];
           </p>
 
           <!-- Action Buttons -->
-          <div class="flex flex-wrap items-center gap-4 pt-0.5">
+          <div class="flex flex-wrap items-center gap-4 pt-6 sm:pt-8">
             <a 
               href="#service-finder" 
               class="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-lg bg-[#F5B900] hover:bg-[#D8A200] text-[#121316] font-bold text-sm sm:text-base shadow-lg shadow-[#F5B900]/25 transition-all duration-200 hover:-translate-y-0.5"
@@ -118,60 +112,6 @@ const primaryContact = CONTACT_PERSONS[0];
               </svg>
               <span>Talk to Our Team</span>
             </button>
-          </div>
-
-          <!-- 4 In-Hero Service Items Strip with Vertical Dividers (Exact Match with Reference Image) -->
-          <div class="pt-4">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-2 divide-y sm:divide-y-0 sm:divide-x divide-white/15">
-              
-              <!-- 1. Real Estate -->
-              <div class="space-y-1.5 sm:pr-2.5">
-                <div class="w-11 h-11 rounded-2xl bg-[#1C1A16] border border-[#3E3420] flex items-center justify-center text-[#F5B900] shadow-lg">
-                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                  </svg>
-                </div>
-                <h4 class="font-bold text-white text-xs sm:text-[13px]">Real Estate</h4>
-                <p class="text-[10px] text-stone-400 leading-snug">Rentals, Buying<br class="hidden sm:inline" /> &amp; Selling Assistance</p>
-              </div>
-
-              <!-- 2. Insurance -->
-              <div class="space-y-1.5 pt-2 sm:pt-0 sm:px-2.5">
-                <div class="w-11 h-11 rounded-2xl bg-[#1C1A16] border border-[#3E3420] flex items-center justify-center text-[#F5B900] shadow-lg">
-                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    <path d="M9 12l2 2 4-4"></path>
-                  </svg>
-                </div>
-                <h4 class="font-bold text-white text-xs sm:text-[13px]">Insurance</h4>
-                <p class="text-[10px] text-stone-400 leading-snug">Life, Health, Vehicle<br class="hidden sm:inline" /> &amp; Property Insurance</p>
-              </div>
-
-              <!-- 3. Home Services -->
-              <div class="space-y-1.5 pt-2 sm:pt-0 sm:px-2.5">
-                <div class="w-11 h-11 rounded-2xl bg-[#1C1A16] border border-[#3E3420] flex items-center justify-center text-[#F5B900] shadow-lg">
-                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                  </svg>
-                </div>
-                <h4 class="font-bold text-white text-xs sm:text-[13px]">Home Services</h4>
-                <p class="text-[10px] text-stone-400 leading-snug">Maintenance, Repairs<br class="hidden sm:inline" /> &amp; Interior Support</p>
-              </div>
-
-              <!-- 4. Loans (Exact Match: Circular Ring with Rupee inside) -->
-              <div class="space-y-1.5 pt-2 sm:pt-0 sm:pl-2.5">
-                <div class="w-11 h-11 rounded-2xl bg-[#1C1A16] border border-[#3E3420] flex items-center justify-center shadow-lg">
-                  <div class="w-7 h-7 rounded-full border-[1.8px] border-[#F5B900] flex items-center justify-center font-bold text-xs text-[#F5B900]">
-                    ₹
-                  </div>
-                </div>
-                <h4 class="font-bold text-white text-xs sm:text-[13px]">Loans</h4>
-                <p class="text-[10px] text-stone-400 leading-snug">Personal, Home,<br class="hidden sm:inline" /> Business &amp; Mortgage</p>
-              </div>
-
-            </div>
           </div>
 
         </div>
@@ -245,7 +185,7 @@ const primaryContact = CONTACT_PERSONS[0];
             </div>
             <div>
               <h4 class="font-bold text-charcoal text-xs sm:text-sm leading-snug">Service Area</h4>
-              <p class="text-[11px] text-muted leading-tight mt-0.5">Hyderabad &amp; Surrounding Areas</p>
+              <p class="text-[11px] text-muted leading-tight mt-0.5">Hyderabad & Surrounding Areas</p>
             </div>
           </div>
 
@@ -260,9 +200,6 @@ const primaryContact = CONTACT_PERSONS[0];
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
       
       <div class="text-center max-w-3xl mx-auto space-y-3">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gold/15 text-charcoal border border-gold/40">
-          <span>Interactive Solutions</span>
-        </div>
         <h2 class="text-3xl sm:text-4xl font-extrabold text-charcoal tracking-tight">
           Find Exactly What You Need
         </h2>
@@ -331,24 +268,24 @@ const primaryContact = CONTACT_PERSONS[0];
         class="mb-16"
       />
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-        {HOW_IT_WORKS_STEPS.map((step) => (
-          <div class="bg-white rounded-2xl p-7 border border-border-subtle shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between relative group">
-            <div class="space-y-4">
-              <div class="w-12 h-12 rounded-xl bg-ivory text-gold group-hover:bg-gold group-hover:text-charcoal transition-colors flex items-center justify-center font-mono font-black text-lg">
-                {step.step}
-              </div>
-              <h3 class="text-base font-bold text-charcoal group-hover:text-gold-hover transition-colors">
-                {step.title}
-              </h3>
-              <p class="text-xs text-muted leading-relaxed">
-                {step.description}
-              </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {HOW_IT_WORKS_STEPS.map((step, index) => (
+          <div class="relative bg-white rounded-2xl p-6 border border-border-subtle shadow-sm hover:shadow-md transition-shadow group">
+            <span class="absolute top-4 right-5 font-serif text-6xl font-black text-ivory group-hover:text-gold/20 transition-colors select-none leading-none">
+              {step.step}
+            </span>
+            <div class="relative space-y-3 pt-8">
+              <h3 class="text-base font-bold text-charcoal">{step.title}</h3>
+              <p class="text-xs text-muted leading-relaxed">{step.description}</p>
             </div>
-            <div class="pt-4 mt-4 border-t border-border-subtle/50 text-[11px] font-semibold text-charcoal-light flex items-center justify-between">
-              <span>Accountable Support</span>
-              <span class="text-gold font-mono">KIS</span>
-            </div>
+            {index < HOW_IT_WORKS_STEPS.length - 1 && (
+              <span class="hidden lg:flex absolute top-1/2 -right-[1.65rem] -translate-y-1/2 z-10 w-6 h-6 items-center justify-center text-gold">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </span>
+            )}
           </div>
         ))}
       </div>
@@ -362,28 +299,19 @@ const primaryContact = CONTACT_PERSONS[0];
       
       <SectionHeading 
         badge="Our Core Principles"
-        title="Why Families &amp; Businesses Trust Kaundinya"
+        title="Why Families & Businesses Trust Kaundinya"
         subtitle="Built on practical ethics, open communication, and attentive local service across Hyderabad."
         centered={true}
         class="mb-16"
       />
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {BRAND_PRINCIPLES.map((principle, index) => (
-          <div class="p-7 rounded-2xl bg-ivory/60 border border-border-subtle hover:border-gold/60 transition-all duration-200 flex flex-col justify-between group">
-            <div class="space-y-4">
-              <div class="w-10 h-10 rounded-lg bg-charcoal text-gold flex items-center justify-center font-bold text-sm">
-                0{index + 1}
-              </div>
-              <h3 class="text-lg font-bold text-charcoal group-hover:text-gold-hover transition-colors">
-                {principle.title}
-              </h3>
-              <p class="text-sm text-muted leading-relaxed">
-                {principle.description}
-              </p>
-            </div>
-            <div class="h-0.5 w-8 bg-gold mt-6 group-hover:w-16 transition-all duration-300"></div>
-          </div>
+        {BRAND_PRINCIPLES.map((principle) => (
+          <BrandPrincipleCard
+            icon={principle.icon}
+            title={principle.title}
+            description={principle.description}
+          />
         ))}
       </div>
 
@@ -393,22 +321,37 @@ const primaryContact = CONTACT_PERSONS[0];
   <!-- 7. SERVICE AREA CALLOUT -->
   <section class="py-12 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-6 p-8 rounded-2xl bg-ivory border border-border-subtle">
-        <div class="space-y-1.5 text-center md:text-left">
-          <p class="text-xs font-bold uppercase tracking-wider text-gold">Locally Committed</p>
-          <h3 class="text-xl font-bold text-charcoal">Service Area: Hyderabad &amp; Surrounding Areas</h3>
-          <p class="text-sm text-muted">
-            We provide on-ground consultations, property visits, and technician coordination throughout Hyderabad and adjacent regions.
-          </p>
-        </div>
-        <div class="shrink-0 flex items-center gap-3">
-          <button
-            type="button"
-            data-open-consultation
-            class="inline-flex items-center justify-center font-semibold rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 gap-2 cursor-pointer bg-charcoal hover:bg-charcoal-light active:bg-charcoal-dark text-white shadow-sm focus:ring-charcoal border border-charcoal text-sm px-5 py-2.5"
-          >
-            <span>Inquire for Your Locality</span>
-          </button>
+      <div class="relative overflow-hidden rounded-2xl bg-charcoal border border-charcoal-light p-8 sm:p-10 lg:p-12">
+        <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-gold/10 blur-3xl pointer-events-none"></div>
+        <div class="relative flex flex-col lg:flex-row items-center lg:items-center justify-between gap-8">
+          <div class="flex flex-col sm:flex-row items-center sm:items-start lg:items-center gap-5 text-center sm:text-left max-w-2xl">
+            <div class="w-14 h-14 shrink-0 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <div class="space-y-1.5">
+              <p class="text-xs font-bold uppercase tracking-wider text-gold">Locally Committed</p>
+              <h3 class="text-xl sm:text-2xl font-bold text-white">Service Area: Hyderabad & Surrounding Areas</h3>
+              <p class="text-sm text-ivory/70 leading-relaxed">
+                We provide on-ground consultations, property visits, and technician coordination throughout Hyderabad and adjacent regions.
+              </p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <button
+              type="button"
+              data-open-consultation
+              class="inline-flex items-center justify-center gap-2 font-semibold rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-charcoal focus:ring-gold cursor-pointer bg-gold hover:bg-gold-hover active:bg-gold-muted text-charcoal shadow-sm text-sm px-6 py-3"
+            >
+              <span>Inquire for Your Locality</span>
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>

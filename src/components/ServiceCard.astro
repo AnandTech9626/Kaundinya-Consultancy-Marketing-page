@@ -20,21 +20,6 @@ const { category, index } = Astro.props;
         loading={index < 2 ? "eager" : "lazy"}
       />
       <div class="absolute inset-0 bg-gradient-to-t from-charcoal/70 via-transparent to-transparent"></div>
-      
-      <!-- Top category tag -->
-      <div class="absolute top-2.5 left-2.5">
-        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-charcoal/85 backdrop-blur-md text-white border border-white/10 shadow-sm">
-          <span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
-          <span>Pillar 0{index + 1}</span>
-        </span>
-      </div>
-
-      <!-- Bottom overlay city -->
-      <div class="absolute bottom-2.5 right-3">
-        <span class="text-gold font-semibold bg-charcoal/80 px-2 py-0.5 rounded text-[10px]">
-          Hyderabad
-        </span>
-      </div>
     </div>
   )}
 

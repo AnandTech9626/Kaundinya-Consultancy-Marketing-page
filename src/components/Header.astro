@@ -1,5 +1,5 @@
 ---
-import { NAV_LINKS, SITE_INFO, CONTACT_PERSONS } from '../lib/constants';
+import { NAV_LINKS, SITE_INFO } from '../lib/constants';
 import MobileNav from './MobileNav';
 
 const currentPath = Astro.url.pathname;
@@ -15,7 +15,7 @@ const currentPath = Astro.url.pathname;
         <img 
           src="/images/logo.png" 
           alt="Kaundinya Consultancy Logo" 
-          class="h-14 w-auto object-contain transition-transform group-hover:scale-105 duration-200" 
+          class="h-16 w-auto object-contain transition-transform group-hover:scale-105 duration-200" 
           width="180" 
           height="56" 
         />
@@ -113,7 +113,7 @@ const currentPath = Astro.url.pathname;
       </div>
 
       <!-- Mobile Nav Island -->
-      <MobileNav client:idle links={NAV_LINKS} currentPath={currentPath} contacts={CONTACT_PERSONS} />
+      <MobileNav client:idle links={NAV_LINKS} currentPath={currentPath} />
 
     </div>
   </div>

@@ -28,7 +28,7 @@ export async function submitEnquiry(payload: EnquiryPayload): Promise<ApiRespons
     return {
       success: false,
       isBackendConfigured: false,
-      message: "The online submission server is currently being connected. Please contact our leadership directly at +91 70933 20947 or +91 96322 40116 for immediate assistance."
+      message: "The online submission server is currently being connected. Please try again shortly or reach out through the enquiry form."
     };
   }
 
@@ -62,7 +62,7 @@ export async function submitEnquiry(payload: EnquiryPayload): Promise<ApiRespons
     return {
       success: false,
       isBackendConfigured: true,
-      message: "Unable to reach the server. Please call us directly at +91 70933 20947 or +91 96322 40116."
+      message: "Unable to reach the server. Please try again shortly."
     };
   }
 }

@@ -1,7 +1,7 @@
  ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Button from '../components/Button.astro';
-import { SITE_INFO, CONTACT_PERSONS } from '../lib/constants';
+import { SITE_INFO } from '../lib/constants';
 ---
 
 <BaseLayout
@@ -11,9 +11,6 @@ import { SITE_INFO, CONTACT_PERSONS } from '../lib/constants';
   <section class="py-24 sm:py-32 bg-ivory-light flex items-center justify-center">
     <div class="max-w-xl mx-auto px-4 text-center space-y-6">
       
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gold/15 text-charcoal border border-gold/40">
-        <span>Error 404</span>
-      </div>
 
       <h1 class="text-4xl sm:text-5xl font-extrabold text-charcoal">
         Page Not Located
@@ -30,15 +27,6 @@ import { SITE_INFO, CONTACT_PERSONS } from '../lib/constants';
         <Button href="/services" variant="secondary" size="md">
           <span>Explore All Services</span>
         </Button>
-      </div>
-
-      <div class="pt-8 text-xs text-muted border-t border-border-subtle">
-        <p>Need urgent assistance? Call our team directly:</p>
-        <div class="mt-2 flex items-center justify-center gap-4">
-          <a href={`tel:${CONTACT_PERSONS[0].phoneRaw}`} class="font-bold text-charcoal hover:text-gold">
-            {CONTACT_PERSONS[0].name}: {CONTACT_PERSONS[0].phone}
-          </a>
-        </div>
       </div>
 
     </div>
