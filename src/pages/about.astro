@@ -1,0 +1,193 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Button from '../components/Button.astro';
+import { SITE_INFO, CONTACT_PERSONS, BRAND_PRINCIPLES } from '../lib/constants';
+---
+
+<BaseLayout
+  title={`About Us          ${SITE_INFO.name}`}
+  description="Learn about Kaundinya Consultancy (KIS)          our integrated approach to real estate, insurance, home services, and loans in Hyderabad."
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <Breadcrumbs items={[{ label: "About Us" }]} />
+  </div>
+
+  <!-- Hero / Introduction with Split Layout & Architecture Photo -->
+  <section class="py-12 sm:py-20 bg-ivory-light border-b border-border-subtle">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <div class="lg:col-span-7 space-y-6">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gold/15 text-charcoal border border-gold/40">
+            <span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
+            <span>About Kaundinya Consultancy</span>
+          </div>
+          <h1 class="text-3xl sm:text-5xl font-extrabold text-charcoal tracking-tight leading-tight">
+            Practical Guidance for Important Life & Business Decisions.
+          </h1>
+          <p class="text-base sm:text-lg text-muted leading-relaxed">
+            Kaundinya Consultancy, operating as Kaundinya Integrated Services (KIS), brings together real estate assistance, insurance advisory, property maintenance, and loan guidance under one trustworthy framework in Hyderabad.
+          </p>
+          <div class="pt-2 flex items-center gap-4">
+            <button
+              type="button"
+              data-open-consultation
+              class="inline-flex items-center justify-center font-semibold rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 gap-2 cursor-pointer bg-gold hover:bg-gold-hover active:bg-gold-muted text-charcoal shadow-sm focus:ring-gold border border-gold text-sm px-5 py-2.5"
+            >
+              <span>Talk to Our Leadership</span>
+            </button>
+            <Button href="/services" variant="secondary" size="md">
+              <span>Explore Services</span>
+            </Button>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5">
+          <div class="relative rounded-2xl overflow-hidden shadow-xl border border-border-subtle">
+            <img 
+              src="/images/city_architecture.jpg" 
+              alt="Urban architecture in Hyderabad" 
+              class="w-full h-72 sm:h-88 object-cover"
+              loading="eager"
+            />
+            <div class="absolute bottom-0 inset-x-0 p-4 bg-charcoal/90 backdrop-blur-sm text-white text-xs flex items-center justify-between">
+              <span class="font-bold text-gold">Hyderabad & Telangana</span>
+              <span class="text-ivory/70 text-[11px]">KIS Headquarters</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Mission & Integrated Approach -->
+  <section class="py-16 sm:py-20 bg-white border-b border-border-subtle">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <div class="lg:col-span-6 space-y-6">
+          <SectionHeading 
+            badge="The Integrated Advantage"
+            title="Why Integrated Services Make Practical Sense"
+            subtitle="Eliminating the fragmentation of dealing with isolated agents and contractors."
+          />
+          <div class="space-y-4 text-sm sm:text-base text-muted leading-relaxed">
+            <p>
+              When a family buys or rents a home, they frequently need related services almost immediately: property documentation verification, home safety installations like pigeon nets or grills, appliance maintenance, moving assistance, and loan or insurance reviews.
+            </p>
+            <p>
+              Traditionally, this forces individuals to contact multiple individual brokers, unverified freelance technicians, and aggressive sales agents. Information gets repeated, accountability gets lost, and hidden fees often emerge.
+            </p>
+            <p class="font-medium text-charcoal">
+              At Kaundinya Consultancy, we coordinate these essential requirements systematically. We work as your honest advisory partner, maintaining transparency on timelines, requirements, and realistic costs.
+            </p>
+          </div>
+        </div>
+
+        <div class="lg:col-span-6">
+          <div class="bg-ivory rounded-2xl p-8 border border-border-subtle space-y-6">
+            <h3 class="text-xl font-bold text-charcoal border-b border-border-subtle pb-3">
+              How We Coordinate Our Services
+            </h3>
+            
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <span class="w-6 h-6 rounded-full bg-charcoal text-gold text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <div>
+                  <h4 class="text-sm font-bold text-charcoal">Direct Consultation</h4>
+                  <p class="text-xs text-muted mt-0.5">We assess your exact situation rather than pushing predetermined packages.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3">
+                <span class="w-6 h-6 rounded-full bg-charcoal text-gold text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <div>
+                  <h4 class="text-sm font-bold text-charcoal">Verified Provider Network</h4>
+                  <p class="text-xs text-muted mt-0.5">We connect with vetted local technicians and established financial/insurance channels.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3">
+                <span class="w-6 h-6 rounded-full bg-charcoal text-gold text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <div>
+                  <h4 class="text-sm font-bold text-charcoal">Single Point of Accountability</h4>
+                  <p class="text-xs text-muted mt-0.5">Our leadership team remains directly reachable to ensure work proceeds smoothly.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-white border border-border-subtle text-xs text-charcoal space-y-1">
+              <div class="font-bold text-charcoal">Direct Accountability Guarantee</div>
+              <p class="text-muted">You never deal with impersonal automated call trees. You speak directly with our team.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Principles Section -->
+  <section class="py-16 bg-ivory-light border-b border-border-subtle">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <SectionHeading 
+        badge="Ethical Guidelines"
+        title="Our Operating Commitments"
+        subtitle="Principles that guide every consultation and service coordination."
+        class="mb-12"
+      />
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {BRAND_PRINCIPLES.map((principle) => (
+          <div class="p-6 rounded-xl bg-white border border-border-subtle space-y-3">
+            <div class="h-1 w-6 bg-gold"></div>
+            <h3 class="text-base font-bold text-charcoal">{principle.title}</h3>
+            <p class="text-xs sm:text-sm text-muted leading-relaxed">{principle.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Leadership & Direct Contacts -->
+  <section class="py-16 sm:py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <SectionHeading 
+        badge="Key Leadership"
+        title="Speak Directly With Our Leadership"
+        subtitle="Real people accessible via direct phone for your inquiries in Hyderabad."
+        class="mb-12"
+      />
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-3xl">
+        {CONTACT_PERSONS.map((person) => (
+          <div class="p-6 rounded-xl bg-ivory border border-border-subtle hover:border-gold/60 transition-all flex flex-col justify-between space-y-4">
+            <div class="space-y-1">
+              <h3 class="text-xl font-bold text-charcoal">{person.name}</h3>
+              <p class="text-xs font-semibold text-gold uppercase tracking-wider">{person.role}</p>
+              <p class="text-xs text-muted pt-2">
+                Available for consultations across Real Estate, Insurance, Home Services, and Loan inquiries.
+              </p>
+            </div>
+
+            <div class="pt-4 border-t border-border-subtle">
+              <a 
+                href={`tel:${person.phoneRaw}`} 
+                class="inline-flex items-center gap-2 text-sm font-bold text-charcoal hover:text-gold transition-colors"
+              >
+                <svg class="w-4 h-4 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                <span>Call {person.phone}</span>
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>

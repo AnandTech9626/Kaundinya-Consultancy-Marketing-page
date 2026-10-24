@@ -1,0 +1,79 @@
+ ---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { SITE_INFO, CONTACT_PERSONS } from '../lib/constants';
+---
+
+<BaseLayout
+  title={`Privacy Notice   ${SITE_INFO.name}`}
+  description="Privacy Notice of Kaundinya Consultancy (KIS) explaining how we handle client inquiry data in Hyderabad, Telangana."
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <Breadcrumbs items={[{ label: "Privacy Notice" }]} />
+  </div>
+
+  <section class="py-12 sm:py-16 bg-white">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      
+      <div class="space-y-3 border-b border-border-subtle pb-6">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-charcoal">Privacy Notice</h1>
+        <p class="text-xs text-muted uppercase tracking-wider font-semibold">
+          Effective Date: October 2026 | Kaundinya Consultancy (KIS)
+        </p>
+      </div>
+
+      <div class="space-y-6 text-sm text-charcoal-light leading-relaxed">
+        <section class="space-y-2">
+          <h2 class="text-lg font-bold text-charcoal">1. Introduction</h2>
+          <p>
+            Kaundinya Consultancy (also referred to as Kaundinya Integrated Services or KIS) respects your personal privacy. This notice outlines how we collect, handle, and protect your information when you interact with our website or submit an inquiry for real estate, insurance, home services, or loan guidance.
+          </p>
+        </section>
+
+        <section class="space-y-2">
+          <h2 class="text-lg font-bold text-charcoal">2. Information We Collect</h2>
+          <p>When you submit an online consultation request or contact us directly, we may collect:</p>
+          <ul class="list-disc pl-5 space-y-1 text-xs sm:text-sm">
+            <li><strong>Full Name:</strong> To address you properly in our communications.</li>
+            <li><strong>Phone Number & Email Address:</strong> To respond to your inquiry and discuss your requirements.</li>
+            <li><strong>Service Interests & Local Area PIN Code:</strong> To determine if your locality in Hyderabad and surrounding regions falls within our service coverage.</li>
+            <li><strong>Comments or Notes:</strong> Any specific background details you choose to share regarding your requirement.</li>
+          </ul>
+        </section>
+
+        <section class="space-y-2">
+          <h2 class="text-lg font-bold text-charcoal">3. Purpose and Legal Basis</h2>
+          <p>We process your data strictly to:</p>
+          <ul class="list-disc pl-5 space-y-1 text-xs sm:text-sm">
+            <li>Review and respond to your requested consultation.</li>
+            <li>Coordinate service execution with verified technicians or advisors upon your explicit consent.</li>
+            <li>Maintain clear communication during ongoing assignments.</li>
+          </ul>
+          <p class="pt-1 font-medium text-charcoal">
+            We do not sell, rent, or trade your personal information to third-party telemarketing companies.
+          </p>
+        </section>
+
+        <section class="space-y-2">
+          <h2 class="text-lg font-bold text-charcoal">4. Data Security & Storage</h2>
+          <p>
+            We take appropriate organizational and technical measures to safeguard your personal details from unauthorized access, disclosure, or misuse. Access to your contact information is limited exclusively to authorized representatives of Kaundinya Consultancy.
+          </p>
+        </section>
+
+        <section class="space-y-2">
+          <h2 class="text-lg font-bold text-charcoal">5. Contact Regarding Your Data</h2>
+          <p>
+            If you wish to review, correct, or request the deletion of the information you have provided to us, please reach out directly to our leadership:
+          </p>
+          <div class="p-4 rounded-lg bg-ivory border border-border-subtle text-xs space-y-1">
+            <p><strong>Kaundinya Consultancy</strong> (KIS)</p>
+            <p>Principals: {CONTACT_PERSONS[0].name} ({CONTACT_PERSONS[0].phone}), {CONTACT_PERSONS[1].name} ({CONTACT_PERSONS[1].phone})</p>
+            <p>Hyderabad and surrounding areas, Telangana, India</p>
+          </div>
+        </section>
+      </div>
+
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,135 @@
+---
+import { SITE_INFO, CONTACT_PERSONS, SERVICE_CATEGORIES, NAV_LINKS } from '../lib/constants';
+
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="bg-charcoal text-white pt-16 pb-12 border-t-2 border-gold/40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-charcoal-light">
+      
+      <!-- Column 1: Brand & Identity (Span 2 cols on lg) -->
+      <div class="lg:col-span-2 space-y-4">
+        <div class="flex items-center gap-3">
+          <img 
+            src="/images/logo.png" 
+            alt="Kaundinya Consultancy Logo" 
+            class="h-14 w-auto bg-white/95 p-1 rounded-md"
+            width="170" 
+            height="56"
+          />
+        </div>
+        <p class="text-sm text-ivory/80 leading-relaxed max-w-sm pt-2">
+          {SITE_INFO.description}
+        </p>
+        <div class="pt-2 text-xs text-ivory/60 space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
+            <span><strong>Primary Focus:</strong> {SITE_INFO.serviceArea}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
+            <span><strong>Identity:</strong> Kaundinya Integrated Services (KIS)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 2: Navigation Links -->
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-gold mb-4">Quick Navigation</h3>
+        <ul class="space-y-2.5 text-sm">
+          {NAV_LINKS.map((link) => {
+            const isContact = link.label.toLowerCase() === 'contact';
+            if (isContact) {
+              return (
+                <li>
+                  <button 
+                    type="button" 
+                    data-open-consultation
+                    class="text-ivory/70 hover:text-gold transition-colors block py-0.5 text-left cursor-pointer"
+                  >
+                    Request a Consultation
+                  </button>
+                </li>
+              );
+            }
+            return (
+              <li>
+                <a 
+                  href={link.href} 
+                  class="text-ivory/70 hover:text-gold transition-colors block py-0.5"
+                >
+                  {link.label}
+                </a>
+              </li>
+            );
+          })}
+          <li>
+            <a 
+              href="/privacy" 
+              class="text-ivory/70 hover:text-gold transition-colors block py-0.5"
+            >
+              Privacy Policy
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Column 3: Service Categories -->
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-gold mb-4">Our Services</h3>
+        <ul class="space-y-2.5 text-sm">
+          {SERVICE_CATEGORIES.map((cat) => (
+            <li>
+              <a 
+                href={cat.href} 
+                class="text-ivory/70 hover:text-gold transition-colors block py-0.5"
+              >
+                {cat.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <!-- Column 4: Verified Direct Contacts -->
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-gold mb-4">Direct Contacts</h3>
+        <div class="space-y-4 text-sm">
+          {CONTACT_PERSONS.map((person) => (
+            <div class="bg-charcoal-light/70 p-3 rounded-lg border border-charcoal-light">
+              <div class="text-xs text-ivory/60 font-medium">{person.name}</div>
+              <div class="text-xs text-gold/80 mb-1">{person.role}</div>
+              <a 
+                href={`tel:${person.phoneRaw}`} 
+                class="text-white hover:text-gold font-semibold tracking-wide inline-flex items-center gap-1.5 transition-colors"
+              >
+                <svg class="w-3.5 h-3.5 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                <span>{person.phone}</span>
+              </a>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-ivory/50">
+      <p>
+        &copy; {currentYear} {SITE_INFO.name} (Kaundinya Integrated Services). All rights reserved.
+      </p>
+      <div class="flex items-center gap-6">
+        <span>Serving Hyderabad & Telangana</span>
+        <span>   </span>
+        <a href="/privacy" class="hover:text-gold transition-colors">Privacy Notice</a>
+        <span>   </span>
+        <button type="button" data-open-consultation class="hover:text-gold transition-colors cursor-pointer">
+          Request Consultation
+        </button>
+      </div>
+    </div>
+  </div>
+</footer>

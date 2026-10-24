@@ -1,0 +1,134 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import ConsultationModal from '../components/ConsultationModal';
+import { SITE_INFO, CONTACT_PERSONS } from '../lib/constants';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+}
+
+const {
+  title = `${SITE_INFO.name}   ${SITE_INFO.tagline}`,
+  description = SITE_INFO.description,
+  image = '/images/logo.png',
+  type = 'website',
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, SITE_INFO.url);
+const siteTitle = title.includes(SITE_INFO.name) ? title : `${title} | ${SITE_INFO.name}`;
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  "name": SITE_INFO.name,
+  "alternateName": SITE_INFO.fullName,
+  "description": SITE_INFO.description,
+  "url": SITE_INFO.url,
+  "logo": `${SITE_INFO.url}/images/logo.png`,
+  "image": `${SITE_INFO.url}/images/logo.png`,
+  "telephone": CONTACT_PERSONS[0].phoneRaw,
+  "areaServed": {
+    "@type": "AdministrativeArea",
+    "name": "Hyderabad and surrounding areas, Telangana"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Hyderabad",
+    "addressRegion": "Telangana",
+    "addressCountry": "IN"
+  },
+  "knowsAbout": [
+    "Real Estate Rentals and Purchases",
+    "Insurance Advisory",
+    "Property Management and Balcony Safety Nets",
+    "Loans and Financial Documentation Guidance"
+  ],
+  "contactPoint": CONTACT_PERSONS.map(c => ({
+    "@type": "ContactPoint",
+    "telephone": c.phoneRaw,
+    "contactType": "customer service",
+    "name": c.name,
+    "areaServed": "IN",
+    "availableLanguage": ["English", "Telugu", "Hindi"]
+  }))
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{siteTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+
+    <!-- Google Fonts Preconnect & Stylesheet -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link 
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" 
+      rel="stylesheet" 
+    />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={siteTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, SITE_INFO.url)} />
+    <meta property="og:locale" content="en_IN" />
+    <meta property="og:site_name" content={SITE_INFO.name} />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={siteTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(image, SITE_INFO.url)} />
+
+    <!-- Structured Data JSON-LD -->
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+  </head>
+  <body class="min-h-screen flex flex-col bg-white text-charcoal font-sans selection:bg-gold selection:text-charcoal antialiased">
+    
+    <!-- Accessibility Skip Link -->
+    <a 
+      href="#main-content" 
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-charcoal focus:text-gold focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-gold"
+    >
+      Skip to main content
+    </a>
+
+    <Header />
+
+    <main id="main-content" class="flex-grow">
+      <slot />
+    </main>
+
+    <Footer />
+
+    <!-- Global Consultation Pop-up Modal Island -->
+    <ConsultationModal client:load />
+
+    <!-- Global Click Listener to guarantee modal opening from static Astro elements -->
+    <script is:inline>
+      document.addEventListener('click', function(e) {
+        var el = e.target && e.target.closest ? e.target.closest('[data-open-consultation]') : null;
+        if (el) {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('open-consultation-modal'));
+        }
+      });
+    </script>
+
+  </body>
+</html>
