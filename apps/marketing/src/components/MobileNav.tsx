@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Menu, X, ChevronDown, ArrowRight } from "lucide-react";
 
 interface NavChild {
@@ -21,7 +21,13 @@ export default function MobileNav({ links, currentPath }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
 
-  const toggle = () => setIsOpen((prev) => !prev);
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   const close = () => {
     setIsOpen(false);
     setServicesOpen(false);
@@ -36,109 +42,120 @@ export default function MobileNav({ links, currentPath }: Props) {
     <div className="lg:hidden">
       <button
         type="button"
-        onClick={toggle}
-        aria-label={isOpen ? "Close menu" : "Open menu"}
-        aria-expanded={isOpen}
+        onClick={() => setIsOpen(true)}
+        aria-label="Open menu"
         className="inline-flex items-center justify-center p-2.5 rounded-md text-charcoal hover:text-charcoal-dark hover:bg-ivory focus:outline-none focus:ring-2 focus:ring-gold transition-colors"
       >
-        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        <Menu className="w-6 h-6" />
       </button>
 
       {isOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 top-20 z-50 bg-white/95 backdrop-blur-md border-t border-border-subtle flex flex-col justify-between overflow-y-auto p-6 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200"
-        >
-          <div className="space-y-6">
-            <nav className="flex flex-col space-y-2" aria-label="Mobile Navigation">
-              {links.map((link) => {
-                const isContact = link.label.toLowerCase() === "contact";
-                const isActive = currentPath === link.href;
+        <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
+          <div className="flex items-center justify-between h-16 px-4 border-b border-border-subtle">
+            <img
+              src="/images/logo.webp"
+              alt="Kaundinya Consultancy"
+              className="h-9 w-auto"
+              width="36"
+              height="36"
+            />
+            <button
+              type="button"
+              onClick={close}
+              aria-label="Close menu"
+              className="inline-flex items-center justify-center p-2 rounded-md text-charcoal hover:bg-ivory focus:outline-none focus:ring-2 focus:ring-gold transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
 
-                if (link.children) {
-                  return (
-                    <div key={link.label} className="border-b border-border-subtle/50 pb-2">
-                      <button
-                        type="button"
-                        onClick={() => setServicesOpen(!servicesOpen)}
-                        className="flex items-center justify-between w-full py-2.5 text-base font-semibold text-charcoal hover:text-gold transition-colors"
-                      >
-                        <span>{link.label}</span>
-                        <ChevronDown
-                          className={`w-4 h-4 transition-transform duration-200 ${
-                            servicesOpen ? "rotate-180 text-gold" : "text-muted"
-                          }`}
-                        />
-                      </button>
+          <nav className="px-4 py-4 space-y-1" aria-label="Mobile Navigation">
+            {links.map((link) => {
+              const isContact = link.label.toLowerCase() === "contact";
+              const isActive = currentPath === link.href;
 
-                      {servicesOpen && (
-                        <div className="pl-4 py-1 space-y-1 bg-ivory/60 rounded-md my-1">
-                          <a
-                            href={link.href}
-                            onClick={close}
-                            className="block py-2 text-sm font-medium text-charcoal hover:text-gold transition-colors"
-                          >
-                            All Services Overview
-                          </a>
-                          {link.children.map((child) => (
-                            <a
-                              key={child.href}
-                              href={child.href}
-                              onClick={close}
-                              className={`block py-1.5 text-sm transition-colors ${
-                                currentPath === child.href
-                                  ? "text-gold font-semibold"
-                                  : "text-muted hover:text-charcoal"
-                              }`}
-                            >
-                              {child.label}
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                if (isContact) {
-                  return (
-                    <button
-                      key={link.label}
-                      type="button"
-                      onClick={openModal}
-                      className="text-left py-2.5 text-base font-semibold border-b border-border-subtle/50 text-charcoal hover:text-gold transition-colors cursor-pointer"
-                    >
-                      {link.label}
-                    </button>
-                  );
-                }
-
+              if (link.children) {
                 return (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={close}
-                    className={`py-2.5 text-base font-semibold border-b border-border-subtle/50 transition-colors ${
-                      isActive ? "text-gold" : "text-charcoal hover:text-gold"
-                    }`}
+                  <div key={link.label} className="border-b border-border-subtle/60">
+                    <button
+                      type="button"
+                      onClick={() => setServicesOpen(!servicesOpen)}
+                      className="flex items-center justify-between w-full py-3 text-base font-semibold text-charcoal hover:text-gold transition-colors"
+                    >
+                      <span>{link.label}</span>
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          servicesOpen ? "rotate-180 text-gold" : "text-muted"
+                        }`}
+                      />
+                    </button>
+
+                    {servicesOpen && (
+                      <div className="pb-3 space-y-1">
+                        <a
+                          href={link.href}
+                          onClick={close}
+                          className="block py-2 pl-4 text-sm font-medium text-charcoal hover:text-gold transition-colors"
+                        >
+                          All Services Overview
+                        </a>
+                        {link.children.map((child) => (
+                          <a
+                            key={child.href}
+                            href={child.href}
+                            onClick={close}
+                            className={`block py-2 pl-4 text-sm transition-colors ${
+                              currentPath === child.href
+                                ? "text-gold font-semibold"
+                                : "text-muted hover:text-charcoal"
+                            }`}
+                          >
+                            {child.label}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              if (isContact) {
+                return (
+                  <button
+                    key={link.label}
+                    type="button"
+                    onClick={openModal}
+                    className="block w-full text-left py-3 text-base font-semibold border-b border-border-subtle/60 text-charcoal hover:text-gold transition-colors cursor-pointer"
                   >
                     {link.label}
-                  </a>
+                  </button>
                 );
-              })}
-            </nav>
+              }
 
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={openModal}
-                className="inline-flex items-center justify-center w-full px-5 py-3 text-sm font-semibold text-charcoal bg-gold hover:bg-gold-hover rounded-md shadow-sm transition-colors gap-2 cursor-pointer"
-              >
-                <span>Request a Consultation</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={close}
+                  className={`block py-3 text-base font-semibold border-b border-border-subtle/60 transition-colors ${
+                    isActive ? "text-gold" : "text-charcoal hover:text-gold"
+                  }`}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
+          </nav>
+
+          <div className="px-4 py-6">
+            <button
+              type="button"
+              onClick={openModal}
+              className="inline-flex items-center justify-center w-full px-5 py-3 text-sm font-semibold text-charcoal bg-gold hover:bg-gold-hover rounded-md shadow-sm transition-colors gap-2 cursor-pointer"
+            >
+              <span>Request a Consultation</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
