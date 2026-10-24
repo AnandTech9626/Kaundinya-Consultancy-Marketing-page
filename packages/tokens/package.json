@@ -1,0 +1,6 @@
+{
+  "name": "@kaundinya/tokens",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Shared design tokens, Tailwind preset, and CSS variables"
+}

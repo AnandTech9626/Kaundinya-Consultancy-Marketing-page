@@ -1,4 +1,29 @@
+## Structure
+
+Monorepo with npm workspaces:
+
+- `apps/marketing` — Astro marketing site (active)
+- `apps/app` — future React + Tailwind SPA (placeholder)
+- `apps/api` — future backend API (placeholder)
+- `packages/ui` — shared React components (islands) for both apps
+- `packages/config` — shared content/data
+- `packages/tokens` — shared design tokens / Tailwind preset
+
 ## Development
+
+Install from the root: `npm install`
+
+Run the marketing dev server from the root:
+
+```
+npm run dev
+```
+
+Or from the marketing workspace directly:
+
+```
+npm run dev --workspace @kaundinya/marketing
+```
 
 When starting the dev server, use background mode:
 
