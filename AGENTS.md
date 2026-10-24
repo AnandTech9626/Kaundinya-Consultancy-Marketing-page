@@ -47,6 +47,16 @@ Cloudflare Pages build settings (Git integration):
 
 The future React SPA (`apps/app`) will be hosted on Cloudflare Workers.
 
+## CI/CD (GitHub Actions)
+
+`.github/workflows/ci.yml` runs on every **pull request to `main`** (and push to `main`). It installs dependencies, runs `astro check` (typecheck) and `astro build` for the marketing site. A PR must pass this pipeline before it can be merged.
+
+Branch flow: `sagar/dev` → `developer` → `main`.
+
+To enforce it, enable **branch protection on `main`**: require a pull request and require the `CI` status check to pass. This prevents `main` from being updated unless the pipeline is green.
+
+Future work: add jobs/tests for `apps/app` and `apps/api` to the same workflow as those apps are built.
+
 ## Documentation
 
 Full documentation: https://docs.astro.build
