@@ -80,7 +80,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       "Tenant coordination & rental agreements",
     ],
     href: "/services/real-estate",
-    image: "/images/real_estate.jpg",
+    image: "/images/real_estate.webp",
     icon: "Building2",
   },
   {
@@ -96,7 +96,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       "Residential & commercial property insurance",
     ],
     href: "/services/insurance",
-    image: "/images/insurance.jpg",
+    image: "/images/insurance.webp",
     icon: "ShieldCheck",
   },
   {
@@ -112,7 +112,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       "Interior design & modular fitout consultation",
     ],
     href: "/services/property-home-services",
-    image: "/images/home_services.jpg",
+    image: "/images/home_services.webp",
     icon: "Wrench",
   },
   {
@@ -128,7 +128,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       "Loan against property (Mortgage loans)",
     ],
     href: "/services/loans",
-    image: "/images/loans.jpg",
+    image: "/images/loans.webp",
     icon: "Coins",
   },
 ];

@@ -19,7 +19,7 @@ const TABS: ServiceTab[] = [
     icon: Building2,
     headline: "Property Rentals & Purchase Guidance Without High-Pressure Tactics",
     description: "Whether you are looking to rent a comfortable home, purchase your ideal property, or sell an asset in Hyderabad, we assist with market comparisons, agreement drafting, and tenant coordination.",
-    image: "/images/real_estate.jpg",
+    image: "/images/real_estate.webp",
     link: "/services/real-estate",
     deliverables: [
       "Verified residential & commercial rentals",
@@ -34,7 +34,7 @@ const TABS: ServiceTab[] = [
     icon: ShieldCheck,
     headline: "Objective Policy Reviews to Protect Your Family and Assets",
     description: "Confused by fine print and waiting periods? We help you evaluate life, term, comprehensive health, motor, and property insurance plans tailored to your real circumstances.",
-    image: "/images/insurance.jpg",
+    image: "/images/insurance.webp",
     link: "/services/insurance",
     deliverables: [
       "Adequate sum assured & term life calculation",
@@ -49,7 +49,7 @@ const TABS: ServiceTab[] = [
     icon: Wrench,
     headline: "Balcony Pigeon Nets, Invisible Grills & Appliance Servicing",
     description: "Eliminate the headache of dealing with unverified freelance technicians. We coordinate vetted professionals for pigeon nets, invisible grills, AC maintenance, and civic documentation in Hyderabad.",
-    image: "/images/home_services.jpg",
+    image: "/images/home_services.webp",
     link: "/services/property-home-services",
     deliverables: [
       "UV-stabilized copolymer pigeon nets installation",
@@ -64,7 +64,7 @@ const TABS: ServiceTab[] = [
     icon: Coins,
     headline: "Transparent Loan Eligibility & Financial Paperwork Support",
     description: "Compare lending options, calculate realistic borrowing capacities, and organize your documentation for home, personal, business, or mortgage loans with clear, factual advice.",
-    image: "/images/loans.jpg",
+    image: "/images/loans.webp",
     link: "/services/loans",
     deliverables: [
       "Home loans for apartment purchase & construction",

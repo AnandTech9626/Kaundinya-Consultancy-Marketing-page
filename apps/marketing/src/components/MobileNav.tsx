@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Menu, X, ChevronDown, ArrowRight } from "lucide-react";
 
 interface NavChild {
@@ -21,7 +22,13 @@ export default function MobileNav({ links, currentPath }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
 
-  const toggle = () => setIsOpen((prev) => !prev);
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   const close = () => {
     setIsOpen(false);
     setServicesOpen(false);
@@ -36,33 +43,46 @@ export default function MobileNav({ links, currentPath }: Props) {
     <div className="lg:hidden">
       <button
         type="button"
-        onClick={toggle}
-        aria-label={isOpen ? "Close menu" : "Open menu"}
-        aria-expanded={isOpen}
+        onClick={() => setIsOpen(true)}
+        aria-label="Open menu"
         className="inline-flex items-center justify-center p-2.5 rounded-md text-charcoal hover:text-charcoal-dark hover:bg-ivory focus:outline-none focus:ring-2 focus:ring-gold transition-colors"
       >
-        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        <Menu className="w-6 h-6" />
       </button>
 
-      {isOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 top-20 z-50 bg-white/95 backdrop-blur-md border-t border-border-subtle flex flex-col justify-between overflow-y-auto p-6 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200"
-        >
-          <div className="space-y-6">
-            <nav className="flex flex-col space-y-2" aria-label="Mobile Navigation">
+      {isOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] bg-white overflow-y-auto">
+            <div className="flex items-center justify-between h-16 px-4 border-b border-border-subtle">
+              <img
+                src="/images/logo.webp"
+                alt="Kaundinya Consultancy"
+                className="h-9 w-auto"
+                width="36"
+                height="36"
+              />
+              <button
+                type="button"
+                onClick={close}
+                aria-label="Close menu"
+                className="inline-flex items-center justify-center p-2 rounded-md text-charcoal hover:bg-ivory focus:outline-none focus:ring-2 focus:ring-gold transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <nav className="px-4 py-4 space-y-1" aria-label="Mobile Navigation">
               {links.map((link) => {
                 const isContact = link.label.toLowerCase() === "contact";
                 const isActive = currentPath === link.href;
 
                 if (link.children) {
                   return (
-                    <div key={link.label} className="border-b border-border-subtle/50 pb-2">
+                    <div key={link.label} className="border-b border-border-subtle/60">
                       <button
                         type="button"
                         onClick={() => setServicesOpen(!servicesOpen)}
-                        className="flex items-center justify-between w-full py-2.5 text-base font-semibold text-charcoal hover:text-gold transition-colors"
+                        className="flex items-center justify-between w-full py-3 text-base font-semibold text-charcoal hover:text-gold transition-colors"
                       >
                         <span>{link.label}</span>
                         <ChevronDown
@@ -73,11 +93,11 @@ export default function MobileNav({ links, currentPath }: Props) {
                       </button>
 
                       {servicesOpen && (
-                        <div className="pl-4 py-1 space-y-1 bg-ivory/60 rounded-md my-1">
+                        <div className="pb-3 space-y-1">
                           <a
                             href={link.href}
                             onClick={close}
-                            className="block py-2 text-sm font-medium text-charcoal hover:text-gold transition-colors"
+                            className="block py-2 pl-4 text-sm font-medium text-charcoal hover:text-gold transition-colors"
                           >
                             All Services Overview
                           </a>
@@ -86,7 +106,7 @@ export default function MobileNav({ links, currentPath }: Props) {
                               key={child.href}
                               href={child.href}
                               onClick={close}
-                              className={`block py-1.5 text-sm transition-colors ${
+                              className={`block py-2 pl-4 text-sm transition-colors ${
                                 currentPath === child.href
                                   ? "text-gold font-semibold"
                                   : "text-muted hover:text-charcoal"
@@ -107,7 +127,7 @@ export default function MobileNav({ links, currentPath }: Props) {
                       key={link.label}
                       type="button"
                       onClick={openModal}
-                      className="text-left py-2.5 text-base font-semibold border-b border-border-subtle/50 text-charcoal hover:text-gold transition-colors cursor-pointer"
+                      className="block w-full text-left py-3 text-base font-semibold border-b border-border-subtle/60 text-charcoal hover:text-gold transition-colors cursor-pointer"
                     >
                       {link.label}
                     </button>
@@ -119,7 +139,7 @@ export default function MobileNav({ links, currentPath }: Props) {
                     key={link.href}
                     href={link.href}
                     onClick={close}
-                    className={`py-2.5 text-base font-semibold border-b border-border-subtle/50 transition-colors ${
+                    className={`block py-3 text-base font-semibold border-b border-border-subtle/60 transition-colors ${
                       isActive ? "text-gold" : "text-charcoal hover:text-gold"
                     }`}
                   >
@@ -129,7 +149,7 @@ export default function MobileNav({ links, currentPath }: Props) {
               })}
             </nav>
 
-            <div className="pt-2">
+            <div className="px-4 py-6">
               <button
                 type="button"
                 onClick={openModal}
@@ -139,9 +159,9 @@ export default function MobileNav({ links, currentPath }: Props) {
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
