@@ -24,3 +24,7 @@ dev.err.log
 
 # jetbrains setting folder
 .idea/
+
+# local preview/dev logs
+preview.log
+app-dev.log

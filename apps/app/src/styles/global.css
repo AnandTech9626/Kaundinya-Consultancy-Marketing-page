@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import "@kaundinya/tokens/tokens.css";
+
+@source "../../../../packages/ui/src";
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--color-charcoal);
+    background-color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background-color: #f5b900;
+    color: #171717;
+  }
+}
