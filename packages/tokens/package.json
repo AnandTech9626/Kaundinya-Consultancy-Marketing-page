@@ -2,5 +2,9 @@
   "name": "@kaundinya/tokens",
   "private": true,
   "version": "0.1.0",
-  "description": "Shared design tokens, Tailwind preset, and CSS variables"
+  "type": "module",
+  "description": "Shared design tokens / Tailwind v4 theme for marketing and app",
+  "exports": {
+    "./tokens.css": "./tokens.css"
+  }
 }

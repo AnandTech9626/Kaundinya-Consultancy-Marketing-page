@@ -2,5 +2,16 @@
   "name": "@kaundinya/ui",
   "private": true,
   "version": "0.1.0",
-  "description": "Shared React components used across apps (React islands)"
+  "type": "module",
+  "description": "Shared React components used across apps",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "lucide-react": "^1.61.0"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0",
+    "react-dom": ">=19.0.0"
+  }
 }
