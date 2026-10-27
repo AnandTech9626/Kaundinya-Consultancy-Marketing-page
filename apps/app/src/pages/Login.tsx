@@ -54,12 +54,11 @@ export function Login() {
   return (
     <div className="min-h-screen bg-ivory flex flex-col">
       <header className="h-16 bg-white/95 border-b border-border-subtle flex items-center justify-center px-6">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-gold text-charcoal font-extrabold flex items-center justify-center text-lg">
-            K
-          </div>
-          <span className="text-sm font-bold text-charcoal">{SITE_INFO.name}</span>
-        </div>
+        <img
+          src="/images/logo.webp"
+          alt={SITE_INFO.name}
+          className="h-10 w-auto object-contain"
+        />
       </header>
 
       <main className="flex-1 flex items-center justify-center p-6">

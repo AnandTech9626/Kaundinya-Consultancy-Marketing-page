@@ -19,6 +19,10 @@ dev.err.log
 .env
 .env.production
 
+# local secrets (never commit)
+cloudflare.local.env
+*.local.env
+
 # macOS-specific files
 .DS_Store
 
