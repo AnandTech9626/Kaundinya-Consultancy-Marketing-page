@@ -47,23 +47,27 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="p-5 border-b border-charcoal-light flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-gold text-charcoal font-extrabold flex items-center justify-center text-lg">
-              K
+        <div className="p-5 border-b border-charcoal-light">
+          <div className="flex items-center justify-between">
+            <div className="bg-white rounded-md px-2 py-1.5 flex items-center justify-center">
+              <img
+                src="/images/logo.webp"
+                alt={SITE_INFO.name}
+                className="h-7 w-auto max-w-[150px] object-contain"
+              />
             </div>
-            <div>
-              <p className="text-sm font-bold leading-tight">{SITE_INFO.shortName}</p>
-              <p className="text-[10px] text-ivory/60">Client Portal</p>
-            </div>
+            <button
+              onClick={onClose}
+              aria-label="Close menu"
+              className="lg:hidden p-1.5 rounded-lg text-ivory/70 hover:bg-charcoal-light hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Close menu"
-            className="lg:hidden p-1.5 rounded-lg text-ivory/70 hover:bg-charcoal-light hover:text-white transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <p className="mt-2.5 text-[11px] font-bold leading-snug text-white">
+            {SITE_INFO.fullName}
+          </p>
+          <p className="text-[10px] text-ivory/60">Client Portal</p>
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
