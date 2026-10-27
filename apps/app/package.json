@@ -2,5 +2,35 @@
   "name": "@kaundinya/app",
   "private": true,
   "version": "0.1.0",
-  "description": "Future React + Tailwind single-page application (placeholder)"
+  "type": "module",
+  "description": "Kaundinya Consultancy user platform (React + Tailwind SPA)",
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "scripts": {
+    "dev": "vite --port 5173",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "deploy": "vite build && wrangler deploy",
+    "preview:workers": "vite build && wrangler dev"
+  },
+  "dependencies": {
+    "@kaundinya/config": "*",
+    "@kaundinya/tokens": "*",
+    "@kaundinya/ui": "*",
+    "lucide-react": "^1.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.5"
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ShieldCheck, Loader2, RotateCcw, AlertCircle, Pencil } from "lucide-react";
 
 interface OtpVerificationProps {
@@ -13,7 +13,7 @@ interface OtpVerificationProps {
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
 
-export default function OtpVerification({
+export function OtpVerification({
   mobile,
   isVerifying,
   errorMessage,

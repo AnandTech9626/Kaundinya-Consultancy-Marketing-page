@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import OtpVerification from "./OtpVerification";
-import { CheckCircle2, AlertCircle, Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
+import { redirectToAppOtp } from "../lib/routing";
 
 const CATEGORY_OPTIONS: Record<string, string[]> = {
   "Real Estate": [
@@ -68,12 +68,6 @@ export default function EnquiryForm() {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [step, setStep] = useState<"form" | "otp" | "success">("form");
-  const [statusMessage, setStatusMessage] = useState<{
-    type: "success" | "error" | "unconfigured" | null;
-    text: string;
-  }>({ type: null, text: "" });
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -126,77 +120,19 @@ export default function EnquiryForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatusMessage({ type: null, text: "" });
 
     if (!validate()) return;
 
     setIsSubmitting(true);
-    // Backend not yet available: simulate sending the OTP, then move to verification.
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    // OTP send will be handled by the backend (POST /api/otp/send) once ready.
+    // For now we simulate the send and hand off to the app's OTP screen.
+    await new Promise((resolve) => setTimeout(resolve, 600));
     setIsSubmitting(false);
-    setStep("otp");
-  };
-
-  const handleVerifyOtp = async (_otp: string) => {
-    setIsVerifying(true);
-    // Simulate OTP verification until the backend API is ready.
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    setIsVerifying(false);
-    setStep("success");
-  };
-
-  const handleResendOtp = () => {
-    // Mock resend — will call the backend OTP endpoint once available.
-  };
-
-  const handleEditMobile = () => {
-    setStep("form");
-  };
-
-  const handleReset = () => {
-    setFormData({
-      fullName: "",
-      email: "",
-      mobile: "",
-      serviceCategory: "",
-      specificService: "",
-      pinCode: "",
-      comments: "",
-      consent: false,
-    });
-    setErrors({});
-    setStatusMessage({ type: null, text: "" });
-    setStep("form");
+    redirectToAppOtp(formData.mobile);
   };
 
   return (
     <div className="bg-white rounded-2xl border border-border-subtle p-7 sm:p-8 shadow-xl flex flex-col justify-between h-full">
-      {step === "otp" ? (
-        <OtpVerification
-          mobile={formData.mobile}
-          isVerifying={isVerifying}
-          onVerify={handleVerifyOtp}
-          onResend={handleResendOtp}
-          onEdit={handleEditMobile}
-        />
-      ) : step === "success" ? (
-        <div className="flex flex-col items-center justify-center text-center space-y-4 py-10">
-          <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle2 className="w-7 h-7" />
-          </div>
-          <h2 className="text-2xl font-extrabold text-charcoal tracking-tight">Enquiry Received</h2>
-          <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-sm">
-            Your mobile number has been verified. Our team will contact you shortly.
-          </p>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold text-charcoal bg-gold hover:bg-gold-hover active:bg-gold-muted transition-all shadow-md cursor-pointer"
-          >
-            Submit Another Enquiry
-          </button>
-        </div>
-      ) : (
         <div>
         <div className="mb-5 space-y-1">
           <h2 className="text-2xl font-extrabold text-charcoal tracking-tight">
@@ -206,27 +142,6 @@ export default function EnquiryForm() {
             Share a few details and our team can follow up to discuss your requirements.
           </p>
         </div>
-
-        {/* Status Messages */}
-        {statusMessage.type === "success" && (
-          <div className="mb-4 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <div className="text-xs">
-              <p className="font-bold">Inquiry Received</p>
-              <p className="mt-0.5">{statusMessage.text}</p>
-            </div>
-          </div>
-        )}
-
-        {statusMessage.type && statusMessage.type !== "success" && (
-          <div className="mb-4 p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 flex items-start gap-2 text-xs">
-            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold">Direct Phone Consultation Available</p>
-              <p className="mt-0.5 text-amber-900">{statusMessage.text}</p>
-            </div>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} noValidate className="space-y-3.5">
           
@@ -395,11 +310,11 @@ export default function EnquiryForm() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Sending OTP...</span>
+                        <span>Sending...</span>
                       </>
                     ) : (
                       <>
-                        <span>Send OTP & Verify</span>
+                        <span>Send Verification Code</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
@@ -408,7 +323,6 @@ export default function EnquiryForm() {
 
         </form>
         </div>
-      )}
     </div>
   );
 }

@@ -1,0 +1,23 @@
+@theme {
+  --color-charcoal: #171717;
+  --color-charcoal-light: #262626;
+  --color-charcoal-dark: #0f0f0f;
+
+  --color-gold: #f5b900;
+  --color-gold-hover: #d8a200;
+  --color-gold-light: #fef9e8;
+  --color-gold-muted: #e2b013;
+
+  --color-ivory: #f7f4ec;
+  --color-ivory-light: #fcfaf6;
+  --color-ivory-dark: #ece6d8;
+
+  --color-muted: #686868;
+  --color-muted-light: #9e9b93;
+
+  --color-border-subtle: #e5dfd1;
+
+  --font-heading: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+}
