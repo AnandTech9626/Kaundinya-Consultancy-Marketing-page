@@ -6,4 +6,11 @@ export type {
   ServiceCategory,
   ServiceRequest,
   AppNotification,
+  EnquiryStatus,
+  Priority,
+  StaffRole,
+  Staff,
+  EnquiryNote,
+  Enquiry,
+  ClientRecord,
 } from "./types";
