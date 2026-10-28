@@ -2,6 +2,10 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   ClipboardList,
+  Building2,
+  Wrench,
+  ShieldCheck,
+  Coins,
   PlusCircle,
   User,
   Bell,
@@ -13,6 +17,11 @@ import { useAuth } from "../lib/auth";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/real-estate", label: "Real Estate", icon: Building2 },
+  { to: "/home-services", label: "Home Services", icon: Wrench },
+  { to: "/jobs", label: "My Jobs", icon: ClipboardList },
+  { to: "/insurance", label: "Insurance", icon: ShieldCheck },
+  { to: "/loans", label: "Loans", icon: Coins },
   { to: "/requests", label: "My Requests", icon: ClipboardList },
   { to: "/services", label: "Request a Service", icon: PlusCircle },
   { to: "/profile", label: "Profile", icon: User },

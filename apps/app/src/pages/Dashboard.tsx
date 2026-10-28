@@ -7,10 +7,19 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Badge, Card, Skeleton, StatCard } from "@kaundinya/ui";
+import { MODULE_META, type ServiceCategoryId } from "@kaundinya/config";
 import { useAuth } from "../lib/auth";
 import { fetchRequests } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { STATUS_META } from "../lib/status";
+import { getServiceIcon } from "../lib/icons";
+
+const QUICK_MODULES: { id: ServiceCategoryId; to: string }[] = [
+  { id: "real-estate", to: "/real-estate" },
+  { id: "insurance", to: "/insurance" },
+  { id: "property-home-services", to: "/home-services" },
+  { id: "loans", to: "/loans" },
+];
 
 function DashboardSkeleton() {
   return (
@@ -64,6 +73,26 @@ export function Dashboard() {
           <Sparkles className="w-4 h-4" />
           Request a Service
         </Link>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {QUICK_MODULES.map(({ id, to }) => {
+          const meta = MODULE_META[id];
+          const Icon = getServiceIcon(meta.icon);
+          return (
+            <Link key={id} to={to} className="block">
+              <Card hoverable className="p-4 h-full space-y-2">
+                <div className="w-9 h-9 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center">
+                  <Icon className="w-4 h-4" />
+                </div>
+                <p className="text-sm font-extrabold text-charcoal">{meta.shortName}</p>
+                <p className="text-[11px] text-muted leading-relaxed line-clamp-2">
+                  {meta.description}
+                </p>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
 
       {error ? (
