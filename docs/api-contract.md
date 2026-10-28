@@ -1,190 +1,243 @@
-# API Contract & OTP Integration Spec — Kaundinya Client Portal
+# Kaundinya — Complete API Specification
 
-> **Purpose:** single reference for the backend team. It lists **every OTP flow we built**,
-> and **each endpoint** with:
-> - what the **frontend sends** (payload: fields, types, required, example), and
-> - what the **backend must return** (response params/values).
+> **Who this is for:** the backend developer implementing `apps/api`.
+> **What it covers:** every endpoint the frontend already expects — from **marketing OTP** through the **client app** to the **admin panel** — with **exact request payloads** and **exact response bodies**, field by field.
 >
-> **Ownership:** frontend owns this contract (`apps/app` + `apps/marketing`). Backend (`apps/api`) implements it.
-> **Types source of truth:** `packages/config/src/types.ts`
-> **Current frontend data layer (mock):** `apps/app/src/lib/mockApi.ts`
-> **When the API is live:** replace each mock function with a `fetch` to the endpoint below — page code stays unchanged.
+> **How to use it:** implement each endpoint to return the documented shapes. The frontend is already coded against these shapes (currently using a mock layer), so matching them means **no frontend changes**.
 >
-> **Status: HELD FILE** — do not delete. Backend will pick this up when ready.
+> **Sources of truth:** types in `packages/config/src/types.ts`; mock data layer in `apps/app/src/lib/mockApi.ts` and `apps/admin/src/lib/mockApi.ts`.
+>
+> _This file is the single hand-off document. Do not delete it._
 
 ---
 
-## 0. Environments & live URLs
+## 0. Quickstart
 
-| Item | Value |
+| Thing | Value |
 | --- | --- |
-| Marketing (Cloudflare Pages) | `https://kaundinyaconsultancy.pages.dev` |
-| Main app (Cloudflare Workers) | `https://kaundinya-app.attack-surface.workers.dev` |
-| Backend base URL (future) | `PUBLIC_API_BASE_URL` (env) |
-| App redirect target (env) | `PUBLIC_APP_URL` → currently `https://kaundinya-app.attack-surface.workers.dev` |
+| Marketing site (Pages) | `https://kaundinya.pages.dev` |
+| Client app (Workers) | `https://app.kaundinya.workers.dev` |
+| Admin panel (Workers) | `https://admin.kaundinya.workers.dev` |
+| Backend base URL | `PUBLIC_API_BASE_URL` (env) — e.g. `https://api.kaundinya.com` |
+| Redirect target used by marketing | `PUBLIC_APP_URL=https://app.kaundinya.workers.dev` |
 
-Global conventions:
-- Auth header: `Authorization: Bearer <token>`
-- JSON only; `Content-Type: application/json`
-- Dates: `YYYY-MM-DD`; timestamps (if needed): ISO-8601 UTC
-- Money (future): integer paise (INR)
-- Lists: newest-first
-- Success: `{ "success": true, "message"?: string, "data": <payload> }`
-- Error: `{ "success": false, "message": string, "errors"?: { "<field>": "reason" } }`
+**Envelopes (every response):**
+```json
+{ "success": true,  "message": "optional", "data": <payload> }
+{ "success": false, "message": "reason",   "errors": { "<field>": "<reason>" } }
+```
+
+**Rules of the road**
+- All bodies are JSON: `Content-Type: application/json`.
+- Authenticated endpoints require: `Authorization: Bearer <token>`.
+- `token` is issued by `POST /api/otp/verify`.
+- Dates: `YYYY-MM-DD`. Timestamps (if you ever need them): ISO‑8601 UTC.
+- Lists are returned **newest first**.
+- IDs are strings (e.g. `req-1001`, `enq-1001`, `st-2`).
+- Never trust the client for authorization — scope `/api/requests` & `/api/notifications` to the token's user; scope `/api/admin/*` to staff.
 
 ---
 
-## 1. OTP — all flows we built (frontend side)
+## 1. Enumerations (exact allowed string values)
 
-All OTP flows use the **same two endpoints**: `POST /api/otp/send` and `POST /api/otp/verify`.
+These values must be returned **exactly** as written (lowercase, snake_case where shown).
 
-| # | Flow | Where (UI) | What happens now (mock) | Backend calls needed |
+| Enum | Allowed values |
+| --- | --- |
+| `RequestStatus` | `"new"`, `"in_progress"`, `"completed"`, `"cancelled"` |
+| `EnquiryStatus` | `"new"`, `"contacted"`, `"qualified"`, `"converted"`, `"lost"` |
+| `Priority` | `"low"`, `"medium"`, `"high"` |
+| `StaffRole` | `"admin"`, `"agent"` |
+| Service categories (static) | `"Real Estate"`, `"Insurance"`, `"Property Management & Home Services"`, `"Loans"` |
+
+> The 4 service categories + their sub-services are **static** (in `packages/config/src/constants.ts`) and are **not** served by the API — both frontends import them directly.
+
+---
+
+## 2. Field dictionary (every field)
+
+Legend: **Req** = required. “Rules” are what the backend should enforce.
+
+### 2.1 `User`
+| Field | Type | Req | Rules / Allowed | Example |
 | --- | --- | --- | --- | --- |
-| 1 | **New user — marketing enquiry** | Marketing `ConsultationModal` / `EnquiryForm` → button **"Send Verification Code"** | validates form, waits 600ms, redirects to `{PUBLIC_APP_URL}/login?mobile=<10 digits>&step=otp` | **POST `/api/enquiries`** (save form) → **POST `/api/otp/send`** { mobile } → redirect |
-| 2 | **OTP verify → app session** | App `Login` (arrives with `?mobile=&step=otp`) → **"Verify OTP"** | mock accepts any 6 digits; creates session `{ name: "Kaundinya Client", mobile }`; navigates `/dashboard` | **POST `/api/otp/verify`** { mobile, otp } → `{ token, user }`; store token; go `/dashboard` |
-| 3 | **Resend OTP** | App `OtpVerification` → "Resend OTP" (30s timer) | clears boxes, restarts timer; no call | **POST `/api/otp/send`** { mobile } |
-| 4 | **Edit mobile** | App `OtpVerification` → "Edit" | returns to mobile step | — (no call) |
-| 5 | **Returning user login** | App `/login` → enter mobile → **"Send OTP"** → OTP step → verify | `otpSend` mock then `otpVerify` mock | **POST `/api/otp/send`** → **POST `/api/otp/verify`** |
+| `name` | string | yes | 2–80 chars, trimmed | `"Ramesh Bujji"` |
+| `email` | string | no | valid email or `""` | `"gudipudimani63@gmail.com"` |
+| `mobile` | string | yes | exactly 10 digits, unique | `"8688493369"` |
 
-**Rules for OTP:**
-- `mobile`: exactly **10 digits** (India). Frontend always normalizes to digits only.
-- `otp`: exactly **6 digits**.
-- OTP send/verify responses power the redirect: on success the app stores the token and shows the dashboard.
-- Only the **mobile number** is carried across the marketing→app handoff today; name/email/service are posted to `/api/enquiries` (future), **not** put in the URL.
+### 2.2 `ServiceRequest` (client)
+| Field | Type | Req | Rules / Allowed | Example |
+| --- | --- | --- | --- | --- |
+| `id` | string | yes | server-generated, stable | `"req-1001"` |
+| `serviceCategory` | string | yes | one of the 4 categories | `"Real Estate"` |
+| `specificService` | string | yes | must be a sub-service of that category | `"Property rentals (Residential & Commercial)"` |
+| `status` | `RequestStatus` | yes | defaults `"new"` on create | `"in_progress"` |
+| `createdAt` | string | yes | `YYYY-MM-DD` | `"2026-10-24"` |
+| `comments` | string | yes | may be `""`, max 2000 | `"2BHK in Gachibowli"` |
 
-### 1.1 Marketing → App handoff (exact)
-```
-Marketing form (valid) 
-  └─ 600ms simulated send
-  └─ window.location = {PUBLIC_APP_URL}/login?mobile=<10 digits>&step=otp
+### 2.3 `AppNotification` (client)
+| Field | Type | Req | Rules | Example |
+| --- | --- | --- | --- | --- |
+| `id` | string | yes | server-generated | `"ntf-1"` |
+| `title` | string | yes | short headline | `"Request received"` |
+| `message` | string | yes | body text | `"Your request is in progress."` |
+| `createdAt` | string | yes | `YYYY-MM-DD` | `"2026-10-24"` |
+| `read` | boolean | yes | `false` on create | `false` |
 
-App /login?mobile=...&step=otp
-  └─ opens directly on OTP step (mobile pre-filled)
-  └─ user enters 6-digit OTP → POST /api/otp/verify
-  └─ on success: store token → /dashboard
-```
+### 2.4 `Enquiry` (admin — a marketing lead)
+| Field | Type | Req | Rules / Allowed | Example |
+| --- | --- | --- | --- | --- |
+| `id` | string | yes | server-generated | `"enq-1001"` |
+| `fullName` | string | yes | 2–80 | `"Ramesh Bujji"` |
+| `email` | string | yes | valid email | `"gudipudimani63@gmail.com"` |
+| `mobile` | string | yes | 10 digits | `"8688493369"` |
+| `serviceCategory` | string | yes | one of 4 | `"Insurance"` |
+| `specificService` | string | yes | sub-service | `"Comprehensive health & family floater insurance"` |
+| `pinCode` | string | yes | 6 digits (may be `""` if skipped) | `"522617"` |
+| `comments` | string | yes | ≤ 2000, may be `""` | `"Family floater for 4 members."` |
+| `consent` | boolean | yes | must be `true` to accept | `true` |
+| `status` | `EnquiryStatus` | yes | defaults `"new"` | `"contacted"` |
+| `priority` | `Priority` | yes | defaults `"medium"` | `"high"` |
+| `assignedTo` | string \| null | yes | staff `id` or `null` | `"st-2"` |
+| `followUpAt` | string \| null | yes | `YYYY-MM-DD` or `null` | `"2026-10-28"` |
+| `source` | string | yes | origin, currently `"marketing"` | `"marketing"` |
+| `createdAt` | string | yes | `YYYY-MM-DD` | `"2026-10-24"` |
+| `notes` | `EnquiryNote[]` | yes | `[]` if none | see below |
 
----
+### 2.5 `EnquiryNote`
+| Field | Type | Req | Rules | Example |
+| --- | --- | --- | --- | --- |
+| `id` | string | yes | server-generated | `"note-1"` |
+| `author` | string | yes | staff name (from token) | `"Harika Garre"` |
+| `text` | string | yes | 1–2000 | `"Called client, scheduled visit."` |
+| `createdAt` | string | yes | `YYYY-MM-DD` | `"2026-10-24"` |
 
-## 2. Data models
+### 2.6 `Staff`
+| Field | Type | Req | Rules | Example |
+| --- | --- | --- | --- | --- |
+| `id` | string | yes | server-generated | `"st-2"` |
+| `name` | string | yes | 2–80 | `"Harika Garre"` |
+| `email` | string | yes | valid email | `"harika@kaundinya.com"` |
+| `role` | `StaffRole` | yes | `admin` \| `agent` | `"agent"` |
+| `active` | boolean | yes | — | `true` |
 
-Types in `packages/config/src/types.ts`.
+### 2.7 `ClientRecord` (admin)
+| Field | Type | Req | Rules | Example |
+| --- | --- | --- | --- | --- |
+| `id` | string | yes | server-generated | `"cl-1"` |
+| `name` | string | yes | — | `"Ramesh Bujji"` |
+| `email` | string | yes | — | `"gudipudimani63@gmail.com"` |
+| `mobile` | string | yes | 10 digits | `"8688493369"` |
+| `joinedAt` | string | yes | `YYYY-MM-DD` | `"2026-10-24"` |
+| `requestsCount` | number | yes | integer ≥ 0 | `1` |
+| `verified` | boolean | yes | OTP-verified | `true` |
 
-### `User`
-| Field | Type | Req | Notes |
+### 2.8 `AdminRequest` (admin view of a client request, adds client info)
+| Field | Type | Req | Example |
 | --- | --- | --- | --- |
-| `name` | string | yes | 2–80 chars |
-| `email` | string | no | valid email or `""` |
-| `mobile` | string | yes | 10 digits, unique |
+| `id` | string | yes | `"req-1001"` |
+| `clientName` | string | yes | `"Ramesh Bujji"` |
+| `mobile` | string | yes | `"8688493369"` |
+| `serviceCategory` | string | yes | `"Insurance"` |
+| `specificService` | string | yes | `"Comprehensive health & family floater insurance"` |
+| `status` | `RequestStatus` | yes | `"in_progress"` |
+| `assignedTo` | string \| null | yes | `"st-3"` |
+| `createdAt` | string | yes | `"2026-10-24"` |
+| `comments` | string | yes | `"..."` |
 
-### `ServiceRequest`
-| Field | Type | Req | Notes |
-| --- | --- | --- | --- |
-| `id` | string | yes | server-generated |
-| `serviceCategory` | string | yes | one of the 4 categories |
-| `specificService` | string | yes | must belong to category |
-| `status` | `"new" \| "in_progress" \| "completed" \| "cancelled"` | yes | defaults `"new"` |
-| `createdAt` | string | yes | `YYYY-MM-DD` |
-| `comments` | string | yes | may be `""` |
+### 2.9 `AdminStats`
+| Field | Type | Example |
+| --- | --- | --- |
+| `totalEnquiries` | number | `7` |
+| `newEnquiries` | number | `2` |
+| `converted` | number | `1` |
+| `openRequests` | number | `3` |
+| `completedRequests` | number | `1` |
+| `byService` | `{ name: string; count: number }[]` | `[{ "name": "Real Estate", "count": 2 }]` |
+| `byStatus` | `{ status: EnquiryStatus; count: number }[]` | `[{ "status": "new", "count": 2 }]` |
 
-### `AppNotification`
-| Field | Type | Req | Notes |
-| --- | --- | --- | --- |
-| `id` | string | yes | server-generated |
-| `title` | string | yes | short |
-| `message` | string | yes | body |
-| `createdAt` | string | yes | `YYYY-MM-DD` |
-| `read` | boolean | yes | `false` on create |
-
-### `EnquiryPayload` (marketing form)
-| Field | Type | Req | Notes |
+### 2.10 `EnquiryPayload` (what the marketing form submits)
+| Field | Type | Req | Rules |
 | --- | --- | --- | --- |
 | `fullName` | string | yes | 2–80 |
-| `email` | string | yes | valid (marketing defaults `not-provided@client.local`) |
+| `email` | string | yes | valid email (marketing may send `not-provided@client.local` if blank) |
 | `mobile` | string | yes | 10 digits |
 | `serviceCategory` | string | yes | one of 4 |
 | `specificService` | string | no | sub-service |
 | `pinCode` | string | no | 6 digits |
-| `comments` | string | no | ≤ 2000 chars |
+| `comments` | string | no | ≤ 2000 |
 | `consent` | boolean | yes | must be `true` |
-
-The **4 service categories** (static, from `packages/config/src/constants.ts`, not from the API):
-`Real Estate`, `Insurance`, `Property Management & Home Services`, `Loans`.
 
 ---
 
-## 3. Endpoints
+## 3. Authentication & OTP
 
-Legend: **Frontend sends** = request payload; **Backend returns** = response we need.
+### 3.1 OTP flows the frontend implements
+| # | Flow | Trigger | Endpoints |
+| --- | --- | --- | --- |
+| 1 | New user via marketing | “Send Verification Code” button | `POST /api/enquiries` → `POST /api/otp/send` → redirect to app |
+| 2 | App OTP verify | “Verify OTP” in app | `POST /api/otp/verify` → token → `/dashboard` |
+| 3 | Resend OTP | “Resend OTP” (30s timer) | `POST /api/otp/send` |
+| 4 | Edit mobile | “Edit” | no call (back to input) |
+| 5 | Returning user | enter mobile → OTP | `POST /api/otp/send` → `POST /api/otp/verify` |
 
-### 3.1 `POST /api/otp/send`
+Handoff: marketing redirects to `{PUBLIC_APP_URL}/login?mobile=<10 digits>&step=otp` → app opens on OTP step.
+
+### 3.2 `POST /api/otp/send`
 - **Auth:** none
-- **Frontend sends:**
+- **Request**
   ```json
   { "mobile": "8688493369" }
   ```
-  | field | type | required | notes |
+  | Field | Type | Req | Rules |
   | --- | --- | --- | --- |
-  | mobile | string | yes | 10 digits |
-- **Backend returns (200):**
+  | `mobile` | string | yes | exactly 10 digits |
+- **Response 200**
   ```json
   { "success": true, "message": "OTP sent", "data": { "expiresInSeconds": 60 } }
   ```
-  | field | type | notes |
-  | --- | --- | --- |
-  | data.expiresInSeconds | number | used to drive the resend timer (currently 30s client-side) |
-- **Errors:** `422` invalid mobile · `429` rate limited
+- **Errors:** `422` invalid mobile · `429` rate-limited
 
-### 3.2 `POST /api/otp/verify`
+### 3.3 `POST /api/otp/verify`
 - **Auth:** none
-- **Frontend sends:**
+- **Request**
   ```json
   { "mobile": "8688493369", "otp": "123456" }
   ```
-  | field | type | required | notes |
+  | Field | Type | Req | Rules |
   | --- | --- | --- | --- |
-  | mobile | string | yes | 10 digits |
-  | otp | string | yes | 6 digits |
-- **Backend returns (200):**
+  | `mobile` | string | yes | 10 digits |
+  | `otp` | string | yes | exactly 6 digits |
+- **Response 200**
   ```json
-  { "success": true, "data": { "token": "<opaque/jwt>", "user": { "name": "Ramesh Bujji", "email": "gudipudimani63@gmail.com", "mobile": "8688493369" } } }
+  { "success": true, "data": {
+      "token": "<jwt-or-opaque>",
+      "user": { "name": "Ramesh Bujji", "email": "gudipudimani63@gmail.com", "mobile": "8688493369" }
+  } }
   ```
-  | field | type | notes |
-  | --- | --- | --- |
-  | data.token | string | bearer token for all authenticated calls |
-  | data.user.name/email/mobile | User | profile shown in app + sidebar |
-- **Errors:** `400` wrong/expired OTP · `404` no pending OTP · `429` too many attempts
+- **Errors:** `400` wrong/expired · `404` no pending OTP · `429` too many attempts
 
-### 3.3 `GET /api/me`
-- **Auth:** bearer
-- **Frontend sends:** nothing (just token)
-- **Backend returns (200):**
-  ```json
-  { "success": true, "data": { "name": "Ramesh Bujji", "email": "gudipudimani63@gmail.com", "mobile": "8688493369" } }
-  ```
+### 3.4 `GET /api/me`
+- **Auth:** Bearer — **Response 200:** `{ "success": true, "data": User }`
 
-### 3.4 `PATCH /api/me`
-- **Auth:** bearer
-- **Frontend sends (Profile "Save Changes"):**
+### 3.5 `PATCH /api/me`
+- **Auth:** Bearer
+- **Request** (any subset; `mobile` is **not** editable)
   ```json
   { "name": "Ramesh Bujji", "email": "gudipudimani63@gmail.com", "pinCode": "522617" }
   ```
-  | field | type | required | notes |
-  | --- | --- | --- | --- |
-  | name | string | no | 2–80 |
-  | email | string | no | valid email |
-  | pinCode | string | no | 6 digits |
-  | mobile | — | — | **not editable** (change requires re-verify) |
-- **Backend returns (200):** `{ "success": true, "data": User }`
+- **Response 200:** `{ "success": true, "data": User }`
 
-### 3.5 `POST /api/auth/logout`
-- **Auth:** bearer
-- **Frontend sends:** nothing
-- **Backend returns:** `204` (no body)
+### 3.6 `POST /api/auth/logout`
+- **Auth:** Bearer — **Response:** `204` (no body)
 
-### 3.6 `POST /api/enquiries` (marketing form)
-- **Auth:** none (public, rate-limited)
-- **Frontend sends:** `EnquiryPayload` (§2)
+---
+
+## 4. Enquiries (marketing → backend)
+
+### 4.1 `POST /api/enquiries`
+- **Auth:** none (rate-limit by IP + mobile)
+- **Request** — `EnquiryPayload` (§2.10):
   ```json
   {
     "fullName": "Ramesh Bujji",
@@ -197,118 +250,196 @@ Legend: **Frontend sends** = request payload; **Backend returns** = response we 
     "consent": true
   }
   ```
-- **Backend returns (201):**
+- **Response 201**
   ```json
   { "success": true, "message": "Enquiry received", "data": { "id": "enq-1024" } }
   ```
-- **Errors:** `422` validation · `429` rate limited
-
-### 3.7 `GET /api/requests` (My Requests)
-- **Auth:** bearer
-- **Frontend sends:** nothing
-- **Backend returns (200):**
-  ```json
-  { "success": true, "data": [ { "id": "req-1001", "serviceCategory": "Real Estate", "specificService": "Property Rentals (Residential)", "status": "in_progress", "createdAt": "2026-10-22", "comments": "2BHK in Gachibowli" } ] }
-  ```
-  → `ServiceRequest[]`, current user only, newest-first
-
-### 3.8 `GET /api/requests/:id` (Request Detail)
-- **Auth:** bearer
-- **Frontend sends:** path param `id`
-- **Backend returns (200):** `{ "success": true, "data": ServiceRequest }`
-- **Errors:** `404` not found / not owned
-
-### 3.9 `POST /api/requests` ("Request this service")
-- **Auth:** bearer
-- **Frontend sends:**
-  ```json
-  { "serviceCategory": "Real Estate", "specificService": "Property Rentals (Residential)", "comments": "Looking for a 2BHK" }
-  ```
-  | field | type | required | notes |
-  | --- | --- | --- | --- |
-  | serviceCategory | string | yes | one of 4 |
-  | specificService | string | yes | sub-service of category |
-  | comments | string | no | ≤ 2000 |
-- **Backend returns (201):** `{ "success": true, "data": ServiceRequest }` (status `"new"`, `createdAt` today)
-- **Side effect:** create notification "Request received"
-
-### 3.10 `PATCH /api/requests/:id` (admin — future)
-- **Auth:** bearer (admin)
-- **Frontend sends:** `{ "status": "in_progress" }`
-- **Backend returns (200):** `ServiceRequest`
-- Transitions: `new → in_progress → completed`, or `→ cancelled`. `409` if invalid.
-
-### 3.11 `GET /api/notifications`
-- **Auth:** bearer
-- **Frontend sends:** nothing
-- **Backend returns (200):** `{ "success": true, "data": AppNotification[] }` (newest-first)
-
-### 3.12 `PATCH /api/notifications/:id/read`
-- **Auth:** bearer
-- **Frontend sends:** path `id`
-- **Backend returns (200):** `{ "success": true, "data": AppNotification }`
-
-### 3.13 `POST /api/notifications/read-all`
-- **Auth:** bearer
-- **Frontend sends:** nothing
-- **Backend returns (200):** `{ "success": true, "data": AppNotification[] }` (all `read:true`)
+- **Errors:** `422` validation · `429` rate-limited
 
 ---
 
-## 4. Validation rules (authoritative)
+## 5. Client requests (app)
+
+### 5.1 `GET /api/requests`
+- **Auth:** Bearer
+- **Response 200**
+  ```json
+  { "success": true, "data": [
+    { "id": "req-1001", "serviceCategory": "Real Estate",
+      "specificService": "Property rentals (Residential & Commercial)",
+      "status": "in_progress", "createdAt": "2026-10-22",
+      "comments": "2BHK in Gachibowli" }
+  ] }
+  ```
+
+### 5.2 `GET /api/requests/:id`
+- **Auth:** Bearer — **Response 200:** `{ "success": true, "data": ServiceRequest }`
+- **Errors:** `404` not found / not owned
+
+### 5.3 `POST /api/requests`
+- **Auth:** Bearer
+- **Request**
+  ```json
+  { "serviceCategory": "Real Estate", "specificService": "Property loans (Purchase / Construction)", "comments": "Looking for a 2BHK" }
+  ```
+  | Field | Type | Req | Rules |
+  | --- | --- | --- | --- |
+  | `serviceCategory` | string | yes | one of 4 |
+  | `specificService` | string | yes | sub-service of category |
+  | `comments` | string | no | ≤ 2000 |
+- **Response 201:** `{ "success": true, "data": ServiceRequest }` (status `"new"`, `createdAt` today)
+- **Side effect:** create an `AppNotification` titled “Request received”
+
+### 5.4 `PATCH /api/requests/:id` (admin only — future)
+- **Auth:** Bearer (staff) — **Request:** `{ "status": "in_progress" }` — **Response 200:** `ServiceRequest`
+- Allowed transitions: `new → in_progress → completed`, or `→ cancelled`. `409` if invalid.
+
+---
+
+## 6. Client notifications
+
+### 6.1 `GET /api/notifications`
+- **Auth:** Bearer — **Response 200:** `{ "success": true, "data": AppNotification[] }`
+
+### 6.2 `PATCH /api/notifications/:id/read`
+- **Auth:** Bearer — **Response 200:** `{ "success": true, "data": AppNotification }`
+
+### 6.3 `POST /api/notifications/read-all`
+- **Auth:** Bearer — **Response 200:** `{ "success": true, "data": AppNotification[] }` (all `read: true`)
+
+---
+
+## 7. Admin panel
+
+All admin endpoints require a **staff** bearer token. For now there is a **single role** (`admin`); enforce staff authorization.
+
+### 7.1 `GET /api/admin/stats`
+- **Request:** none
+- **Response 200:**
+  ```json
+  { "success": true, "data": {
+      "totalEnquiries": 7, "newEnquiries": 2, "converted": 1,
+      "openRequests": 3, "completedRequests": 1,
+      "byService": [ { "name": "Real Estate", "count": 2 } ],
+      "byStatus": [ { "status": "new", "count": 2 } ]
+  } }
+  ```
+
+### 7.2 `GET /api/admin/enquiries`
+- **Query:** `?status=<EnquiryStatus>&q=<search>` (both optional)
+- **Response 200:** `{ "success": true, "data": Enquiry[] }`
+
+### 7.3 `GET /api/admin/enquiries/:id`
+- **Response 200:** `{ "success": true, "data": Enquiry }` — `404` if missing
+
+### 7.4 `PATCH /api/admin/enquiries/:id`
+- **Request** (any subset):
+  ```json
+  { "status": "contacted", "priority": "high", "assignedTo": "st-2", "followUpAt": "2026-10-28" }
+  ```
+  | Field | Type | Rules |
+  | --- | --- | --- |
+  | `status` | EnquiryStatus | pipeline stage |
+  | `priority` | Priority | low/medium/high |
+  | `assignedTo` | string \| null | staff id or null |
+  | `followUpAt` | string \| null | `YYYY-MM-DD` |
+- **Response 200:** `{ "success": true, "data": Enquiry }`
+
+### 7.5 `POST /api/admin/enquiries/:id/notes`
+- **Request:** `{ "text": "Called client, scheduled site visit." }`
+  - `author` is taken from the token (do not trust client)
+- **Response 200:** `{ "success": true, "data": Enquiry }` (new note appended)
+
+### 7.6 `GET /api/admin/clients`
+- **Response 200:** `{ "success": true, "data": ClientRecord[] }`
+
+### 7.7 `GET /api/admin/requests`
+- **Query:** `?status=<RequestStatus>` (optional)
+- **Response 200:** `{ "success": true, "data": AdminRequest[] }`
+
+### 7.8 `GET /api/admin/staff`
+- **Response 200:** `{ "success": true, "data": Staff[] }`
+
+### 7.9 `POST /api/admin/notifications/broadcast`
+- **Request:**
+  ```json
+  { "title": "New service available", "message": "We now offer ...", "audience": "all" }
+  ```
+  | Field | Type | Req | Rules |
+  | --- | --- | --- | --- |
+  | `title` | string | yes | 1–120 |
+  | `message` | string | yes | 1–2000 |
+  | `audience` | `"all"` \| `"verified"` | yes | recipient scope |
+- **Response 200:** `{ "success": true, "data": { "id": "ntf-broadcast-1", "recipients": 5 } }`
+
+---
+
+## 8. Validation rules (authoritative)
 
 | Field | Rule |
 | --- | --- |
-| mobile | exactly 10 digits (starts 6–9) |
-| otp | exactly 6 digits |
-| pinCode | exactly 6 digits (first 1–9) |
-| email | valid email (optional in profile, required in enquiry) |
-| name / fullName | 2–80 chars, trimmed |
-| serviceCategory | one of the 4 categories |
-| specificService | must exist in chosen category |
-| comments | ≤ 2000 chars |
-| consent | must be `true` |
+| `mobile` | exactly 10 digits, starts 6–9 |
+| `otp` | exactly 6 digits |
+| `pinCode` | exactly 6 digits, first digit 1–9 (optional/empty allowed on enquiry) |
+| `email` | valid email (optional in profile; required in enquiry) |
+| `name` / `fullName` | 2–80 chars, trimmed |
+| `serviceCategory` | one of the 4 categories |
+| `specificService` | must exist within the chosen category |
+| `comments` / `text` | ≤ 2000 chars |
+| `consent` | must be `true` |
+| `priority` | `low` \| `medium` \| `high` |
+| `status` (enquiry) | `new` \| `contacted` \| `qualified` \| `converted` \| `lost` |
+| `status` (request) | `new` \| `in_progress` \| `completed` \| `cancelled` |
 
 ---
 
-## 5. Error codes & rate limits
+## 9. Error codes & rate limits
 
 | HTTP | Meaning | Example message |
 | --- | --- | --- |
 | 400 | bad request / wrong OTP | "Invalid or expired OTP." |
 | 401 | missing/invalid token | "Authentication required." |
-| 403 | forbidden | "You do not have access." |
+| 403 | forbidden (non-staff) | "You do not have access." |
 | 404 | not found / not owned | "Request not found." |
 | 409 | invalid state transition | "Cannot move a completed request." |
-| 422 | validation failed | "Validation failed." + `errors` |
+| 422 | validation failed | "Validation failed." + `errors` map |
 | 429 | rate limited | "Too many requests. Try again in 60s." |
 | 500 | server error | "Something went wrong." |
 
-Rate limits: `/api/otp/send` — 3/mobile/10min, 10/IP/10min. `/api/otp/verify` — 5 attempts/OTP.
+**Rate limits**: `POST /api/otp/send` — 3/mobile/10min, 10/IP/10min. `POST /api/otp/verify` — 5 attempts per OTP.
 
 ---
 
-## 6. Current frontend mock → endpoint mapping
+## 10. Frontend mock → endpoint map (what to wire)
 
-| Frontend (built) | Mock function | Endpoint to implement |
+| Frontend feature | Mock (current) | Endpoint to implement |
 | --- | --- | --- |
-| Marketing "Send Verification Code" | (simulated) | `POST /api/enquiries` + `POST /api/otp/send` |
-| App OTP step verify (`Login.tsx`) | `otpSend` / `otpVerify` (`mockApi.ts`) | `POST /api/otp/send` / `POST /api/otp/verify` |
-| Dashboard / My Requests count | `fetchRequests` | `GET /api/requests` |
-| Request Detail | `fetchRequest` | `GET /api/requests/:id` |
+| Marketing “Send Verification Code” | simulated | `POST /api/enquiries` + `POST /api/otp/send` |
+| App OTP step | `otpSend` / `otpVerify` | `POST /api/otp/send` / `POST /api/otp/verify` |
+| Dashboard / My Requests | `fetchRequests` | `GET /api/requests` |
+| Request detail | `fetchRequest` | `GET /api/requests/:id` |
 | Request this service | `createRequest` | `POST /api/requests` |
-| Notifications list | `fetchNotifications` | `GET /api/notifications` |
+| Notifications | `fetchNotifications` | `GET /api/notifications` |
 | Mark all read | `markAllNotificationsRead` | `POST /api/notifications/read-all` |
-| Profile save | (local only) | `PATCH /api/me` |
+| Profile save | local only | `PATCH /api/me` |
+| Admin overview | `fetchStats` | `GET /api/admin/stats` |
+| Admin enquiries list/detail | `fetchEnquiries` / `fetchEnquiry` | `GET /api/admin/enquiries` / `:id` |
+| Admin status/assign | `updateEnquiryStatus` / `assignEnquiry` | `PATCH /api/admin/enquiries/:id` |
+| Admin notes | `addEnquiryNote` | `POST /api/admin/enquiries/:id/notes` |
+| Admin clients | `fetchClients` | `GET /api/admin/clients` |
+| Admin requests | `fetchRequests` | `GET /api/admin/requests` |
+| Admin team | `fetchStaff` | `GET /api/admin/staff` |
+| Admin broadcast | simulated | `POST /api/admin/notifications/broadcast` |
 
 ---
 
-## 7. Backend hand-off checklist
-1. Implement §3 endpoints with the exact request/response shapes above.
-2. Return `token` from `/api/otp/verify`; the app will store it and send `Authorization: Bearer`.
-3. Keep `ServiceRequest.status` transitions and date format (`YYYY-MM-DD`).
-4. Scope `/api/requests` & `/api/notifications` to the authenticated user.
-5. Marketing will call `/api/enquiries` then `/api/otp/send` before redirecting to the app.
-6. Frontend will then replace `apps/app/src/lib/mockApi.ts` internals and `apps/marketing/src/lib/api.ts` with real `fetch` calls — **no page rewrites**.
+## 11. Backend acceptance checklist
+1. `POST /api/otp/verify` returns a `token` + `user`; app stores it and sends `Authorization: Bearer`.
+2. `/api/requests` and `/api/notifications` are scoped to the token's user.
+3. `/api/admin/*` requires a staff token (single role now).
+4. Dates returned as `YYYY-MM-DD`; enums returned exactly as defined in §1.
+5. Status transitions enforced server-side (not just UI).
+6. `author` on notes / `source` / `createdAt` set server-side, never trusted from client.
+7. All list endpoints newest-first.
 
-_End of contract._
+_End of specification._

@@ -40,3 +40,57 @@ export interface AppNotification {
   createdAt: string;
   read: boolean;
 }
+
+/* ----------------------------- Admin panel ----------------------------- */
+
+export type EnquiryStatus =
+  | "new"
+  | "contacted"
+  | "qualified"
+  | "converted"
+  | "lost";
+
+export type Priority = "low" | "medium" | "high";
+
+export type StaffRole = "admin" | "agent";
+
+export interface Staff {
+  id: string;
+  name: string;
+  email: string;
+  role: StaffRole;
+  active: boolean;
+}
+
+export interface EnquiryNote {
+  id: string;
+  author: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface Enquiry {
+  id: string;
+  fullName: string;
+  email: string;
+  mobile: string;
+  serviceCategory: string;
+  specificService: string;
+  pinCode: string;
+  comments: string;
+  consent: boolean;
+  status: EnquiryStatus;
+  priority: Priority;
+  assignedTo: string | null;
+  followUpAt: string | null;
+  source: string;
+  createdAt: string;
+  notes: EnquiryNote[];
+}
+
+export interface ClientRecord extends User {
+  id: string;
+  joinedAt: string;
+  requestsCount: number;
+  verified: boolean;
+}
