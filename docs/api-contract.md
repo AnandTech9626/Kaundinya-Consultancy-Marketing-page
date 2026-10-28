@@ -430,6 +430,36 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 | Admin requests | `fetchRequests` | `GET /api/admin/requests` |
 | Admin team | `fetchStaff` | `GET /api/admin/staff` |
 | Admin broadcast | simulated | `POST /api/admin/notifications/broadcast` |
+| Property search | `fetchProperties` | `GET /api/properties` |
+| Property detail | `fetchProperty` | `GET /api/properties/:id` |
+| List property | `submitListing` | `POST /api/properties` |
+| Site visits | `fetchSiteVisits` / `bookSiteVisit` | `GET` / `POST /api/site-visits` |
+| Valuation | `bookValuation` / `fetchValuations` | `POST` / `GET /api/valuations` |
+| Admin pipeline | `fetchPipeline` / `updatePipelineStatus` | `GET /api/admin/pipeline` / `PATCH /api/admin/pipeline/:id` |
+| Insurance plans | `fetchInsurancePlans` | `GET /api/insurance/plans` |
+| Needs analysis | `estimateInsuranceNeeds` | `POST /api/insurance/needs-analysis` |
+| Network hospitals | `fetchHospitals` | `GET /api/insurance/network-hospitals` |
+| Vehicle lookup | `lookupVehicle` | `POST /api/insurance/motor/vehicle-lookup` |
+| Motor quote | `getMotorQuote` | `POST /api/insurance/motor/quote` |
+| Motor checkout | `purchaseMotorPolicy` | `POST /api/insurance/motor/checkout` |
+| Policy vault | `fetchPolicies` / `downloadPolicy` | `GET /api/policies` / `GET /api/policies/:id/download` |
+| Measurements | `fetchMeasurements` / `bookMeasurement` | `GET` / `POST /api/home-services/measurements` |
+| Jobs | `fetchJobs` / `fetchJob` / `createJob` | `GET /api/jobs`, `GET /api/jobs/:id`, `POST /api/home-services/jobs` |
+| Start-Job OTP | `requestJobStartOtp` | `POST /api/jobs/:id/start-otp` |
+| Job rating | `rateJob` | `POST /api/jobs/:id/rating` |
+| Document portal | `fetchDocuments` / `uploadDocument` | `GET` / `POST /api/documents` |
+| Printouts | `fetchPrintJobs` / `createPrintJob` | `GET` / `POST /api/printouts` |
+| Interiors | `fetchInteriorConsultations` / `createInteriorConsultation` | `GET` / `POST /api/interiors/consultations` |
+| EMI calculator | `calculateEmi` | `POST /api/loans/emi/calculate` |
+| Eligibility | `estimateLoanEligibility` | `POST /api/loans/eligibility` |
+| Loan applications | `fetchLoanApplications` / `fetchLoanApplication` / `submitLoanApplication` | `GET` / `GET /:id` / `POST /api/loans/applications` |
+| Credit health | `checkCreditHealth` | `POST /api/loans/credit-check` |
+| GSTIN lookup | `lookupGstin` | `POST /api/loans/business/gstin-lookup` |
+| Admin properties | `fetchAdminProperties` / `updatePropertyStatus` | `GET /api/admin/properties` / `PATCH /api/admin/properties/:id` |
+| Admin valuations | `fetchAdminValuations` / `updateValuationStatus` | `GET /api/admin/valuations` / `PATCH /api/admin/valuations/:id` |
+| Admin site visits | `fetchAdminSiteVisits` / `updateSiteVisitStatus` / `assignSiteVisitAdviser` | `GET` / `PATCH /api/admin/site-visits/:id` |
+| Admin dispatch | `fetchAdminJobs` / `assignJobTechnician` / `updateJobStatus` | `GET` / `PATCH /api/admin/jobs/:id` |
+| Admin renewals | `fetchAdminRenewals` / `sendRenewalReminder` | `GET /api/admin/renewals` / `POST /api/admin/renewals/:id/remind` |
 
 ---
 
@@ -442,27 +472,47 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 6. `author` on notes / `source` / `createdAt` set server-side, never trusted from client.
 7. All list endpoints newest-first.
 
-## 12. Module-specific APIs (planned — UI to be built in phases)
+## 12. Module-specific APIs (UI built for all modules — backend pending)
 
 > These extend the generic request model into the full 4-module experiences.
 > See `docs/roadmap-modules.md` for phasing. Implement in `apps/api`; the frontend will
-> consume them from `apps/app` (and `apps/admin`). **Not yet built** — this is the contract to build against.
+> consume them from `apps/app` (and `apps/admin`). **Backend not built.**
+>
+> **UI status (2026-10-28):** Phase 0 and all four module UIs are built against mocks in
+> `apps/app/src/lib/mockApi.ts` + `moduleData.ts`, and the admin module screens in
+> `apps/admin/src/lib/mockApi.ts` + `moduleAdminData.ts`. The shapes below match those
+> mocks exactly. Every mock function maps to an endpoint in §10; nothing in the UI waits
+> on an API that is not documented here.
+>
+> Static catalog/stages come from `packages/config` (`SERVICE_CATALOG`, `MODULE_STAGES`,
+> `MODULE_META`, `COMPLIANCE`) — the backend only needs to persist records, not serve the
+> catalog. Payments, Vahan, bureau pulls, GSTIN, OTP SMS and file storage are mocked in
+> the UI and must be integrated server-side.
 
 ### 12.1 Shared additions
 
 **New enums**
 | Enum | Allowed values |
 | --- | --- |
-| `Module` | `"real-estate"`, `"insurance"`, `"home-services"`, `"loans"` |
+| `Module` | `"real-estate"`, `"insurance"`, `"property-home-services"`, `"loans"` |
 | `ListingType` | `"rent"`, `"sale"` |
-| `PropertyType` | `"apartment"`, `"villa"`, `"plot"`, `"commercial"` |
-| `PlanType` | `"life"`, `"health"`, `"motor"` |
-| `JobStatus` | `"accepted"`, `"assigned"`, `"en_route"`, `"in_progress"`, `"rating"`, `"completed"` |
-| `LoanStage` | `"application"`, `"verified"`, `"submitted"`, `"approved"`, `"disbursed"`, `"rejected"` |
+| `PropertyType` | `"Apartment"`, `"Villa"`, `"Independent House"`, `"Plot"`, `"Commercial"` |
+| `PropertyStatus` | `"draft"`, `"active"`, `"sold"`, `"rented"` |
+| `ValuationStatus` | `"requested"`, `"scheduled"`, `"completed"` |
+| `InsuranceType` | `"life"`, `"health"`, `"motor"`, `"property"` |
+| `FamilyOption` | `"self"`, `"couple"`, `"parents"`, `"family"` |
+| `RealEstateStage` | `"submitted"`, `"matching"`, `"site_visit"`, `"negotiation"`, `"documentation"`, `"closed"` |
+| `InsuranceStage` | `"needs_analysis"`, `"quotes"`, `"consultation"`, `"application"`, `"issued"` |
+| `JobStatus` | `"requested"`, `"assigned"`, `"en_route"`, `"in_progress"`, `"completed"` |
+| `LoanStage` | `"application"`, `"verified"`, `"submitted"`, `"approved"`, `"disbursed"` |
+| `SiteVisitStatus` | `"requested"`, `"confirmed"`, `"completed"`, `"cancelled"` |
 
 **New shared types**
 | Type | Fields |
 | --- | --- |
+| `ServiceCatalogItem` | `id`, `categoryId`, `name`, `summary`, `pricing?`, `tiers?`, `issueTypes?`, `documents?`, `highlights?` |
+| `ModuleStage` | `id`, `label`, `description?` |
+| `RequestEnvelope` | `id`, `module`, `serviceId`, `title`, `status`, `assignedTo`, `createdAt`, `updatedAt`, `details` |
 | `FileAsset` | `id`, `url`, `name`, `mimeType`, `size` |
 | `Payment` | `id`, `method` (`"upi"`/`"card"`/`"netbanking"`), `amount` (paise), `status` (`"created"`/`"paid"`/`"failed"`), `createdAt` |
 | `Pagination` (optional) | `?page=&limit=` on long lists |
@@ -473,16 +523,19 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 
 | Method | Endpoint | Auth | Frontend sends | Response |
 | --- | --- | --- | --- | --- |
-| GET | `/api/properties` | none | `?listingType=rent\|sale&location=&budgetMin=&budgetMax=&bhk=` | `PropertyListing[]` |
+| GET | `/api/properties` | none | `?listingType=rent\|sale&location=&budgetMax=&bhk=` | `PropertyListing[]` (active only for public) |
 | GET | `/api/properties/:id` | none | path `id` | `PropertyListing` |
-| POST | `/api/properties` | Bearer | owner listing wizard payload (below) | `PropertyListing` |
+| POST | `/api/properties` | Bearer | `SubmitListingInput` (below) | `PropertyListing` (status `draft`) |
 | POST | `/api/properties/:id/photos` | Bearer | multipart files | `FileAsset[]` |
-| POST | `/api/valuations` | Bearer | `{ propertyType, location, contactName, mobile, preferredSlot }` | `{ id, status }` |
-| POST | `/api/site-visits` | Bearer | `{ propertyId, slot (ISO), name, mobile }` | `SiteVisit` |
+| POST | `/api/valuations` | Bearer | `{ ownerName, mobile, propertyType, location, pincode, expectedPrice?, notes? }` | `ValuationRequest` |
+| GET | `/api/valuations` | Bearer | — | `ValuationRequest[]` |
+| POST | `/api/site-visits` | Bearer | `{ propertyId, date, slot, clientName, mobile, notes? }` | `SiteVisit` |
 | GET | `/api/site-visits` | Bearer | — | `SiteVisit[]` |
 
-**`PropertyListing`**: `id, title, listingType, propertyType, bhk, location, latitude, longitude, price, priceUnit ("month"|"total"), amenities[], images (FileAsset[]), reraAgentNumber, status ("draft"|"active"|"sold"|"rented"), createdAt`
-**`SiteVisit`**: `id, propertyId, slot (ISO), status ("requested"|"confirmed"|"done"|"cancelled"), adviserId`
+**`PropertyListing`** (matches `packages/config`): `id, title, description, listingType, propertyType, bhk, location, city, pincode, latitude?, longitude?, price, priceUnit ("month"|"total"), areaSqft, furnishing?, amenities[], images? (string[] -> FileAsset[] later), reraAgentNumber?, status ("draft"|"active"|"sold"|"rented"), featured?, createdAt`
+**`SubmitListingInput`**: `title, description, listingType, propertyType, bhk, location, pincode, price, areaSqft, furnishing?, amenities[], images?`
+**`SiteVisit`**: `id, propertyId, propertyTitle, clientName, mobile, date, slot, status ("requested"|"confirmed"|"completed"|"cancelled"), notes?, createdAt`
+**`ValuationRequest`**: `id, ownerName, mobile, propertyType, location, pincode, expectedPrice?, notes?, status ("requested"|"scheduled"|"completed"), createdAt`
 
 ---
 
@@ -490,21 +543,26 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 
 | Method | Endpoint | Auth | Frontend sends | Response |
 | --- | --- | --- | --- | --- |
-| GET | `/api/insurance/plans` | none | `?type=life\|health\|motor&insurer=&age=&familySize=` | `InsurancePlan[]` |
-| POST | `/api/insurance/needs-analysis` | Bearer | `{ type, age, income, dependents, smoking, liabilities }` | `{ recommendedCoverage, estimatedPremium }` |
-| POST | `/api/insurance/compare` | Bearer | `{ planIds: string[] }` | `InsurancePlan[]` |
-| POST | `/api/insurance/quotes` | Bearer | needs profile | `PolicyQuote[]` |
+| GET | `/api/insurance/plans` | none | `?type=life\|health\|motor\|property&familyOption=self\|couple\|parents` | `InsurancePlan[]` |
+| POST | `/api/insurance/needs-analysis` | Bearer | `{ type, age, annualIncome, dependents, smoker, liabilities }` | `InsuranceEstimate` |
 | GET | `/api/insurance/network-hospitals` | none | `?pincode=` | `Hospital[]` |
-| POST | `/api/insurance/motor/vehicle-lookup` | Bearer | `{ registrationNumber }` (Vahan) | `VehicleInfo` |
-| POST | `/api/insurance/motor/checkout` | Bearer | `{ planId, vehicle }` | `{ paymentIntentId, amount }` |
+| POST | `/api/insurance/motor/vehicle-lookup` | Bearer | `{ registrationNumber }` (Vahan) | `VehicleInfo \| null` |
+| POST | `/api/insurance/motor/quote` | Bearer | `{ vehicle }` | `VehicleQuote` |
+| POST | `/api/insurance/motor/checkout` | Bearer | `{ planId, vehicle, addOns[] }` (payment mocked in UI) | `PolicyRecord` |
 | GET | `/api/policies` | Bearer | `?expiringInDays=30` | `PolicyRecord[]` (Policy Vault) |
 | GET | `/api/policies/:id` | Bearer | path `id` | `PolicyRecord` |
+| GET | `/api/policies/:id/download` | Bearer | path `id` | `{ fileName }` (or a signed PDF URL) |
+| POST | `/api/requests` | Bearer | `{ serviceCategory: "Insurance", specificService, comments }` | `ServiceRequest` (consultation lead) |
 
-**`InsurancePlan`**: `id, type, insurer, name, sumInsured, premium, tenure, features[], cashlessNetwork?, pospLicense`
-**`PolicyQuote`**: `id, planId, premium, addons[], validTill`
+**`InsurancePlan`**: `id, type ("life"|"health"|"motor"|"property"), insurer, name, sumInsured, premium (annual), tenureYears, features[], cashlessNetwork?, pospLicense?, familyOption? ("self"|"couple"|"parents"|"family")`
+**`InsuranceNeedsProfile`**: `type, age, annualIncome, dependents, smoker, liabilities`
+**`InsuranceEstimate`**: `recommendedCoverage, estimatedPremium, basis`
 **`Hospital`**: `id, name, address, pincode, cashless (bool), distanceKm?`
 **`VehicleInfo`**: `registrationNumber, make, model, fuelType, year, engineCC`
-**`PolicyRecord`**: `id, policyNumber, type, insurer, validFrom, validTo, pdfUrl (FileAsset), status`
+**`VehicleQuote`**: `plan (InsurancePlan), vehicle (VehicleInfo), addOns[], totalPremium`
+**`PolicyRecord`**: `id, type ("Life & Term"|"Health"|"Motor"|"Property"), provider, policyNumber, coverAmount, premium, renewalDate, status ("active"|"expiring"|"lapsed"), holder?, validFrom?, pdfUrl?`
+
+> Plan comparison in the UI is client-side over `GET /api/insurance/plans` (no compare endpoint required). Insurance consultation CTAs create a normal `/api/requests` lead; a dedicated endpoint can replace it later without UI changes.
 
 ---
 
@@ -512,23 +570,28 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 
 | Method | Endpoint | Auth | Frontend sends | Response |
 | --- | --- | --- | --- | --- |
-| GET | `/api/home-services/catalog` | none | — | `HomeServiceItem[]` |
-| POST | `/api/home-services/measurements` | Bearer | `{ serviceId, address, slot, name, mobile }` | `MeasurementBooking` |
-| POST | `/api/home-services/jobs` | Bearer | `{ serviceId, issueType?, address, slot?, notes? }` | `Job` |
-| GET | `/api/jobs` | Bearer | — | `Job[]` |
-| GET | `/api/jobs/:id` | Bearer | path `id` | `Job` |
-| POST | `/api/jobs/:id/start-otp` | Bearer | — | `{ expiresInSeconds }` |
-| POST | `/api/jobs/:id/verify-start` | technician | `{ otp }` | `Job` |
-| POST | `/api/jobs/:id/rating` | Bearer | `{ stars (1–5), comment? }` | `JobRating` |
+| GET | `/api/home-services/catalog` | none | — | `ServiceCatalogItem[]` (optional — UI uses `packages/config` statically) |
+| GET | `/api/home-services/measurements` | Bearer | — | `MeasurementBooking[]` |
+| POST | `/api/home-services/measurements` | Bearer | `{ serviceId, serviceName, address, pincode, date, slot }` | `MeasurementBooking` |
+| POST | `/api/home-services/jobs` | Bearer | `{ serviceId, serviceName, issueTypes[], address, pincode, date?, slot?, amount? }` | `JobRecord` |
+| GET | `/api/jobs` | Bearer | — | `JobRecord[]` |
+| GET | `/api/jobs/:id` | Bearer | path `id` | `JobRecord` |
+| POST | `/api/jobs/:id/start-otp` | Bearer | — | `{ otp, expiresInSeconds }` |
+| POST | `/api/jobs/:id/verify-start` | technician | `{ otp }` | `JobRecord` |
+| POST | `/api/jobs/:id/rating` | Bearer | `{ stars (1–5), comment? }` | `JobRecord` |
+| GET | `/api/documents` | Bearer | — | `DocumentRecord[]` |
 | POST | `/api/documents` | Bearer | multipart (`docType`, file) → watermark | `DocumentRecord` |
-| POST | `/api/printouts` | Bearer | `{ fileId, copies }` (auto-delete after print) | `PrintJob` |
-| POST | `/api/interiors/consultations` | Bearer | `{ style?, budget?, name, mobile }` | `{ id }` |
+| GET | `/api/printouts` | Bearer | — | `PrintJob[]` |
+| POST | `/api/printouts` | Bearer | `{ fileName, copies }` (auto-delete after print) | `PrintJob` |
+| GET | `/api/interiors/consultations` | Bearer | — | `InteriorConsultation[]` |
+| POST | `/api/interiors/consultations` | Bearer | `{ name, mobile, style, budget, notes? }` | `InteriorConsultation` |
 
-**`HomeServiceItem`**: `id, name, category, pricingModel ("fixed"|"per_sqft"), basePrice, unit, issueTypes[], image?`
-**`MeasurementBooking`**: `id, serviceId, address, slot, status`
-**`Job`**: `id, serviceId, issueType, clientName, mobile, address, status (JobStatus), technician { id, name, phone }?, createdAt`
-**`DocumentRecord`**: `id, docType, file (FileAsset), watermark ("For Kaundinya ID Update Only"), createdAt`
-**`PrintJob`**: `id, fileId, copies, price, status, autoDeletedAt`
+**`ServiceCatalogItem`**: `id, categoryId, name, summary, pricing? { model ("fixed"|"per-sqft"|"from"|"quote"), amount?, unit?, note? }, tiers?[], issueTypes?[], documents?[], highlights?[]`
+**`MeasurementBooking`**: `id, serviceId, serviceName, address, pincode, date, slot, status ("requested"|"scheduled"|"completed"), createdAt`
+**`JobRecord`**: `id, serviceId?, serviceName, status ("requested"|"assigned"|"en_route"|"in_progress"|"completed"), technician?, technicianPhone?, scheduledAt?, startOtp?, rating?, ratingComment?, address?, issueTypes?[], amount?, createdAt?`
+**`DocumentRecord`**: `id, docType, fileName, watermark ("For Kaundinya ID Update Only"), createdAt`
+**`PrintJob`**: `id, fileName, copies, price, status ("queued"|"printing"|"completed"), autoDeletedAt, createdAt`
+**`InteriorConsultation`**: `id, name, mobile, style, budget, notes?, status ("requested"|"contacted"), createdAt`
 
 ---
 
@@ -536,35 +599,51 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 
 | Method | Endpoint | Auth | Frontend sends | Response |
 | --- | --- | --- | --- | --- |
-| POST | `/api/loans/emi/calculate` | none | `{ principal, annualRate, tenureMonths }` | `{ emi, totalInterest, totalPayable }` |
-| POST | `/api/loans/eligibility` | Bearer | `{ monthlyIncome, obligations, age, employmentType }` | `{ eligibleAmount, maxTenure }` |
-| POST | `/api/loans/applications` | Bearer | loan application payload (below) | `LoanApplication` |
+| POST | `/api/loans/emi/calculate` | none | `{ principal, annualRate, tenureMonths }` | `EmiResult` |
+| POST | `/api/loans/eligibility` | Bearer | `{ monthlyIncome, obligations, age, employmentType }` | `LoanEligibility` |
+| POST | `/api/loans/applications` | Bearer | `{ loanType, amount, tenureMonths, monthlyIncome, employmentType, purpose, documents[], propertyId? }` | `LoanApplication` |
 | GET | `/api/loans/applications` | Bearer | — | `LoanApplication[]` |
 | GET | `/api/loans/applications/:id` | Bearer | path `id` | `LoanApplication` |
-| POST | `/api/loans/documents` | Bearer | multipart (payslip/ITR, auto-compress) | `FileAsset` |
-| POST | `/api/loans/credit-check` | Bearer | `{ consent: true }` (soft pull) | `{ scoreBand, eligibleProducts[] }` |
-| POST | `/api/loans/personal/profile` | Bearer | `{ employmentType ("salaried"\|"self_employed"), corporateEmail?, business? }` | `{ ok }` |
-| POST | `/api/loans/business/gstin-lookup` | Bearer | `{ gstin }` | `{ legalName, address }` |
+| POST | `/api/loans/documents` | Bearer | multipart (payslip/ITR, auto-compress) — optional, UI currently sends file names with the application | `FileAsset` |
+| POST | `/api/loans/credit-check` | Bearer | `{ consent: true }` (soft pull) | `CreditHealth` |
+| POST | `/api/loans/business/gstin-lookup` | Bearer | `{ gstin }` | `GstinInfo \| null` |
 
-**`LoanApplication`**: `id, loanType ("home"|"personal"|"business"|"lap"), stage (LoanStage), amountRequested, propertyId?, personalProfile?, businessProfile?, documents (FileAsset[]), createdAt`
+**`LoanApplication`**: `id, loanType ("Home"|"Personal"|"Business"|"Mortgage"), amount, status (LoanStage), bank, createdAt, monthlyIncome?, tenureMonths?, employmentType? ("salaried"|"self-employed"), purpose?, documents? (string[] now → FileAsset[] later), advisor?, propertyId?`
+**`EmiResult`**: `emi, totalInterest, totalPayable`
+**`LoanEligibility`**: `eligibleAmount, maxTenureMonths, estimatedEmi, note`
+**`CreditHealth`**: `scoreBand ("excellent"|"good"|"fair"|"needs_work"), eligibleProducts[], note`
+**`GstinInfo`**: `gstin, legalName, address, turnover`
 
 ---
 
-### 12.6 Admin pipeline additions
+### 12.6 Admin module screens
 
-| Method | Endpoint | Auth | Purpose |
+| Method | Endpoint | Body / query | Response |
 | --- | --- | --- | --- |
-| GET | `/api/admin/properties` | staff | List/moderate listings |
-| PATCH | `/api/admin/properties/:id` | staff | Approve / reject / change status |
-| GET | `/api/admin/valuations` | staff | Valuation requests queue |
-| GET | `/api/admin/site-visits` | staff | Site-visit schedule |
-| GET | `/api/admin/renewals` | staff | Policies expiring (30 days) |
-| POST | `/api/admin/renewals/trigger` | staff | Send renewal reminders |
-| GET | `/api/admin/jobs` | staff | Job dispatch board |
-| PATCH | `/api/admin/jobs/:id` | staff | Assign technician / advance status |
-| GET | `/api/admin/loans` | staff | Loan pipeline (5 stages) |
-| PATCH | `/api/admin/loans/:id` | staff | Advance stage / assign adviser |
-| GET | `/api/admin/ratings` | staff | Job ratings |
+| GET | `/api/admin/pipeline?module=` | module | `PipelineRecord[]` |
+| PATCH | `/api/admin/pipeline/:id` | `{ status }` | `PipelineRecord` |
+| GET | `/api/admin/properties` | — | `AdminProperty[]` |
+| PATCH | `/api/admin/properties/:id` | `{ status ("draft"\|"active"\|"sold"\|"rented"\|"rejected") }` | `AdminProperty` |
+| GET | `/api/admin/valuations` | — | `AdminValuation[]` |
+| PATCH | `/api/admin/valuations/:id` | `{ status ("requested"\|"scheduled"\|"completed") }` | `AdminValuation` |
+| GET | `/api/admin/site-visits` | — | `AdminSiteVisit[]` |
+| PATCH | `/api/admin/site-visits/:id` | `{ status? , adviserId? }` | `AdminSiteVisit` |
+| GET | `/api/admin/jobs` | — | `AdminJob[]` |
+| PATCH | `/api/admin/jobs/:id` | `{ technicianId?, status? }` | `AdminJob` |
+| GET | `/api/admin/renewals` | — | `AdminRenewal[]` |
+| POST | `/api/admin/renewals/:id/remind` | — | `AdminRenewal` (reminderSent=true) |
+
+**`PipelineRecord`**: `id, module, title, clientName, status (module stage id), assignedTo, createdAt, value?`
+**`AdminProperty`**: `id, title, ownerName, location, pincode, listingType ("Rent"|"Sale"), price, status, submittedAt`
+**`AdminValuation`**: `id, ownerName, mobile, propertyType, location, expectedPrice, status, createdAt`
+**`AdminSiteVisit`**: `id, propertyTitle, clientName, mobile, date, slot, status, adviserId`
+**`AdminJob`**: `id, serviceName, clientName, mobile, address, status, technicianId, scheduledAt, amount, rating`
+**`AdminRenewal`**: `id, clientName, provider, policyType, policyNumber, renewalDate, premium, reminderSent`
+
+The stage ids are exactly `MODULE_STAGES` in `packages/config`; the pipeline board renders
+columns from that constant and `PATCH` moves a record between them. Loan and job boards can
+reuse the same `PATCH /api/admin/pipeline/:id` once records are normalized, or keep the
+dedicated endpoints above.
 
 ### 12.7 Payments & uploads (shared)
 | Method | Endpoint | Auth | Purpose |
