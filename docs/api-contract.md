@@ -421,6 +421,7 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 | Request this service | `createRequest` | `POST /api/requests` |
 | Notifications | `fetchNotifications` | `GET /api/notifications` |
 | Mark all read | `markAllNotificationsRead` | `POST /api/notifications/read-all` |
+| Mark one read | `markNotificationRead` | `PATCH /api/notifications/:id/read` |
 | Profile save | local only | `PATCH /api/me` |
 | Admin overview | `fetchStats` | `GET /api/admin/stats` |
 | Admin enquiries list/detail | `fetchEnquiries` / `fetchEnquiry` | `GET /api/admin/enquiries` / `:id` |
@@ -428,7 +429,8 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 | Admin notes | `addEnquiryNote` | `POST /api/admin/enquiries/:id/notes` |
 | Admin clients | `fetchClients` | `GET /api/admin/clients` |
 | Admin requests | `fetchRequests` | `GET /api/admin/requests` |
-| Admin team | `fetchStaff` | `GET /api/admin/staff` |
+| Admin team | `fetchStaff` / `createStaff` / `updateStaff` | `GET` / `POST /api/admin/staff`, `PATCH /api/admin/staff/:id` |
+| Admin services | `fetchAdminServices` / `updateServiceActive` / `updateServicePricing` | `GET /api/admin/services`, `PATCH /api/admin/services/:id` |
 | Admin broadcast | simulated | `POST /api/admin/notifications/broadcast` |
 | Property search | `fetchProperties` | `GET /api/properties` |
 | Property detail | `fetchProperty` | `GET /api/properties/:id` |
@@ -632,6 +634,11 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 | PATCH | `/api/admin/jobs/:id` | `{ technicianId?, status? }` | `AdminJob` |
 | GET | `/api/admin/renewals` | — | `AdminRenewal[]` |
 | POST | `/api/admin/renewals/:id/remind` | — | `AdminRenewal` (reminderSent=true) |
+| GET | `/api/admin/staff` | — | `Staff[]` |
+| POST | `/api/admin/staff` | `{ name, email, role }` | `Staff` |
+| PATCH | `/api/admin/staff/:id` | `{ name?, email?, role?, active? }` | `Staff` |
+| GET | `/api/admin/services` | — | `AdminService[]` |
+| PATCH | `/api/admin/services/:id` | `{ active?, pricingLabel? }` | `AdminService` |
 
 **`PipelineRecord`**: `id, module, title, clientName, status (module stage id), assignedTo, createdAt, value?`
 **`AdminProperty`**: `id, title, ownerName, location, pincode, listingType ("Rent"|"Sale"), price, status, submittedAt`
@@ -639,6 +646,7 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 **`AdminSiteVisit`**: `id, propertyTitle, clientName, mobile, date, slot, status, adviserId`
 **`AdminJob`**: `id, serviceName, clientName, mobile, address, status, technicianId, scheduledAt, amount, rating`
 **`AdminRenewal`**: `id, clientName, provider, policyType, policyNumber, renewalDate, premium, reminderSent`
+**`AdminService`**: `id, categoryId (Module), name, summary, pricingLabel, active (bool)`
 
 The stage ids are exactly `MODULE_STAGES` in `packages/config`; the pipeline board renders
 columns from that constant and `PATCH` moves a record between them. Loan and job boards can
@@ -652,6 +660,32 @@ dedicated endpoints above.
 | POST | `/api/payments/:id/confirm` | Bearer | Confirm payment |
 | POST | `/api/uploads` | Bearer | Generic secure upload → `FileAsset` |
 
-**Integrations the backend must own:** Vahan (vehicle), credit bureau soft pull, banking partner APIs, UPI/payment gateway, KYC/OCR + secure storage, SMS/OTP (auth + Start-Job OTP), maps/pincode, PDF generation + compression, e-sign (future). See `docs/roadmap-modules.md` for the mapping.
+**Integrations the backend must own:** Vahan (vehicle), credit bureau soft pull, banking partner APIs, UPI/payment gateway, KYC/OCR + secure storage, SMS/OTP (auth + Start-Job OTP), maps/pincode, PDF generation + compression, e-sign (future). See §13 for free-vs-paid reality and `docs/roadmap-modules.md` for the mapping.
+
+---
+
+## 13. Third-party integrations: free vs paid (checked 28 Oct 2026)
+
+> "Open source" is not the same as "free API". The app/code can use free open-source libraries,
+> but most India-specific **data** APIs are paid in production. Most provide a free
+> sandbox/trial; that is enough to build and demo, not to run a business.
+> Prices below are public list prices and change often — get quotes before go-live.
+
+| Need | Free option? | Production cost / access | Recommended approach |
+| --- | --- | --- | --- |
+| **Vahan RC lookup** | No public free API. Official Vahan web search is free but personal fields are masked; API access goes through authorised providers. | ~₹1.50–₹3.00+ per successful call. Example: RTO Sarthi from ₹1.50; Eko ₹3.00 + GST. Small trials (10–1,000 calls). | Pay-per-success provider; cache the result; call only after the user enters an RC. |
+| **Credit bureau soft pull (CIBIL/Experian)** | Sandbox is free. Production is not free and is **regulatory**, not just commercial. | Per-pull fee negotiated with the bureau; aggregators add ~₹2–₹15/pull. **CICRA:** you must be a Credit Institution or ride a partner bank/NBFC. | Do not integrate directly now. Partner with a lender/aggregator; UI should show a score band, never a live score. |
+| **GSTIN verification** | Free manual check on the GST portal; free sandbox/demo credits from API vendors. | API from ~₹0.10–₹1.20 per call (GSTVerify, GSTIN.cloud, API Sathi, Infyner). Official GSTN API requires a GSP licence. | Start with a pay-per-call provider; cache 30 days; verify only for business-loan applicants. |
+| **OTP / transactional SMS** | Trial credits only. | ₹0.11–₹0.25 per SMS in India (Fast2SMS, MSG91, Gupshup). Twilio is ~₹7. DLT registration + approved templates are mandatory. | MSG91/Fast2SMS for India; add voice fallback for failed OTPs. |
+| **UPI / payments** | No. Setup is free; per-transaction fee. | Razorpay 2% + 18% GST; Cashfree ~1.95% + GST. UPI MDR changes from 15 Oct 2026: 0% up to ₹2,000, 0.4% above ₹2,000 (cap ₹300). | Razorpay or Cashfree behind a `PaymentProvider` abstraction; never hardcode one gateway. |
+| **Maps / pincode** | Yes for pincode: open datasets and free pincode APIs (no SLA). OSM/Nominatim is free under its usage policy. Google Maps is paid. | Free pincode data has no uptime guarantee; paid maps have quotas. | Bundle an India pincode dataset on the server; use OSM for maps only if the usage policy is respected. |
+| **File storage** | Yes: **Cloudflare R2 free tier** — 10 GB-month, 1M Class A, 10M Class B, free egress. | $0.015/GB-month after the free tier. | Use R2; implement watermark + auto-delete server-side (not in the browser). |
+| **PDF generation/compression** | Yes: open-source `pdf-lib` / `jsPDF` / `puppeteer`. | Compute only. | Generate policy/valuation PDFs in the Worker/API; no paid PDF API needed. |
+| **KYC / OCR** | DigiLocker / API Setu can be free but require partner onboarding and approval (not instant self-serve). OCR is paid. | Approval-based for DigiLocker; OCR from paid KYC vendors. | Use DigiLocker for document fetch; add an OCR vendor later only if needed. |
+| **e-Sign** | No. | Paid per signature through an eSign provider. | Phase later; not needed for the current MVP flows. |
+
+**What this means for the current UI:** every integration above is **mocked** in `apps/app/src/lib/mockApi.ts` / `apps/admin/src/lib/mockApi.ts`. You can build, demo and test the whole product without buying any API keys. Before go-live, budget for at least Vahan, SMS and the payment gateway; bureau access needs a lender/regulatory partnership and is the longest lead item.
+
+**Illustrative monthly cost at low volume** (1,000 Vahan checks, 500 GSTIN checks, 500 OTPs, 100 bureau pulls, ₹1,00,000 payments): roughly ₹5,000–₹10,000/month excluding bureau contract fees and GST. Treat this as a planning number, not a quote.
 
 _End of specification._

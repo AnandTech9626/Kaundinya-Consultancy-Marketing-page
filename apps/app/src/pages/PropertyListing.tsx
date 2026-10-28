@@ -146,6 +146,15 @@ export function PropertyListing() {
               Create another listing
             </button>
           </div>
+
+          <div className="border-t border-border-subtle pt-4">
+            <Link
+              to="/home-services"
+              className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover"
+            >
+              Book cleaning, nets or AC service before move-in →
+            </Link>
+          </div>
         </Card>
       </div>
     );

@@ -439,7 +439,7 @@ export function PropertyDetail() {
                 .
               </p>
               <Link
-                to="/loans"
+                to={`/loans/apply?type=home&propertyId=${property.id}&propertyTitle=${encodeURIComponent(property.title)}&amount=${Math.round(property.price * 0.8)}&purpose=${encodeURIComponent(`Home purchase — ${property.title}`)}`}
                 className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover"
               >
                 Check loan eligibility

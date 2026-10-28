@@ -1,9 +1,66 @@
 import { useEffect, useState } from "react";
-import { Bell, CheckCheck } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  Bell,
+  CalendarDays,
+  CheckCheck,
+  ChevronRight,
+  ClipboardList,
+  Coins,
+  RefreshCw,
+  ShieldCheck,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
 import { Badge, Card, Skeleton } from "@kaundinya/ui";
-import type { AppNotification } from "@kaundinya/config";
-import { fetchNotifications, markAllNotificationsRead } from "../lib/mockApi";
+import type { AppNotification, NotificationKind } from "@kaundinya/config";
+import {
+  fetchNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
+
+const KIND_META: Record<
+  NotificationKind,
+  { icon: LucideIcon; label: string; className: string }
+> = {
+  request: {
+    icon: ClipboardList,
+    label: "Request",
+    className: "bg-gold-light text-[#B8860B]",
+  },
+  job: {
+    icon: Wrench,
+    label: "Job",
+    className: "bg-blue-50 text-blue-600",
+  },
+  loan: {
+    icon: Coins,
+    label: "Loan",
+    className: "bg-emerald-50 text-emerald-600",
+  },
+  renewal: {
+    icon: RefreshCw,
+    label: "Renewal",
+    className: "bg-amber-50 text-amber-600",
+  },
+  policy: {
+    icon: ShieldCheck,
+    label: "Policy",
+    className: "bg-gold-light text-[#B8860B]",
+  },
+  site_visit: {
+    icon: CalendarDays,
+    label: "Site visit",
+    className: "bg-purple-50 text-purple-600",
+  },
+  system: {
+    icon: Bell,
+    label: "Update",
+    className: "bg-gold-light text-[#B8860B]",
+  },
+};
 
 export function Notifications() {
   const { data, loading, error, refetch } = useAsync(fetchNotifications);
@@ -18,6 +75,16 @@ export function Notifications() {
   const markAllRead = () => {
     setItems((prev) => prev.map((n) => ({ ...n, read: true })));
     void markAllNotificationsRead();
+  };
+
+  const openNotification = (notification: AppNotification) => {
+    if (notification.read) return;
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === notification.id ? { ...item, read: true } : item
+      )
+    );
+    void markNotificationRead(notification.id);
   };
 
   return (
@@ -83,27 +150,56 @@ export function Notifications() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {items.map((n) => (
-            <Card key={n.id} className="p-4 sm:p-5">
-              <div className="flex items-start gap-3">
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                    n.read ? "bg-ivory text-muted" : "bg-gold-light text-[#B8860B]"
-                  }`}
-                >
-                  <Bell className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-charcoal">{n.title}</p>
-                    {!n.read && <Badge variant="gold">New</Badge>}
+          {items.map((n) => {
+            const meta = KIND_META[n.kind ?? "system"];
+            const Icon = meta.icon;
+            const card = (
+              <Card hoverable={Boolean(n.href)} className="p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                      n.read ? "bg-ivory text-muted" : meta.className
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
                   </div>
-                  <p className="text-xs text-muted leading-relaxed mt-0.5">{n.message}</p>
-                  <p className="text-[11px] text-muted-light mt-1.5">{n.createdAt}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-bold text-charcoal">{n.title}</p>
+                      {!n.read && <Badge variant="gold">New</Badge>}
+                    </div>
+                    <p className="text-xs text-muted leading-relaxed mt-0.5">
+                      {n.message}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
+                        {meta.label}
+                      </span>
+                      <span className="text-[11px] text-muted-light">
+                        {n.createdAt}
+                      </span>
+                    </div>
+                  </div>
+                  {n.href && (
+                    <ChevronRight className="w-4 h-4 text-muted-light shrink-0 mt-2" />
+                  )}
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+
+            return n.href ? (
+              <Link
+                key={n.id}
+                to={n.href}
+                onClick={() => openNotification(n)}
+                className="block"
+              >
+                {card}
+              </Link>
+            ) : (
+              <div key={n.id}>{card}</div>
+            );
+          })}
         </div>
       )}
     </div>
