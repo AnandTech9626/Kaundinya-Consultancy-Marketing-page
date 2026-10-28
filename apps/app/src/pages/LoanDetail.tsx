@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import {
+  AlertTriangle,
   ArrowLeft,
   Briefcase,
   CheckCircle2,
@@ -212,6 +213,29 @@ export function LoanDetail() {
           </Link>
         </Card>
       </div>
+
+      {(loan.status === "application" || loan.status === "verified") && (
+        <Card className="p-5 border-amber-200 bg-amber-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-extrabold text-charcoal">
+                Is this application moving slowly?
+              </p>
+              <p className="text-xs text-muted mt-0.5">
+                If verification is taking longer than expected, a Kaundinya financial
+                advisor can review the file and suggest the next step.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/services/loans"
+            className="inline-flex items-center gap-2 whitespace-nowrap px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-xs font-bold"
+          >
+            Consult an advisor
+          </Link>
+        </Card>
+      )}
     </div>
   );
 }

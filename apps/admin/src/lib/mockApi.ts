@@ -17,12 +17,14 @@ import {
   ADMIN_JOBS,
   ADMIN_PROPERTIES,
   ADMIN_RENEWALS,
+  ADMIN_SERVICES,
   ADMIN_SITE_VISITS,
   ADMIN_VALUATIONS,
   type AdminJob,
   type AdminProperty,
   type AdminPropertyStatus,
   type AdminRenewal,
+  type AdminService,
   type AdminSiteVisit,
   type AdminValuation,
   type AdminValuationStatus,
@@ -44,7 +46,8 @@ let valuationsStore: AdminValuation[] = [...ADMIN_VALUATIONS];
 let siteVisitsStore: AdminSiteVisit[] = [...ADMIN_SITE_VISITS];
 let jobsStore: AdminJob[] = [...ADMIN_JOBS];
 let renewalsStore: AdminRenewal[] = [...ADMIN_RENEWALS];
-const staffStore: Staff[] = [...STAFF];
+let servicesStore: AdminService[] = [...ADMIN_SERVICES];
+let staffStore: Staff[] = [...STAFF];
 
 export function fetchEnquiries(): Promise<Enquiry[]> {
   return delay([...enquiriesStore]);
@@ -104,8 +107,60 @@ export function fetchRequests(): Promise<AdminRequest[]> {
   return delay([...requestsStore]);
 }
 
+export function fetchAdminServices(): Promise<AdminService[]> {
+  return delay([...servicesStore]);
+}
+
+export function updateServiceActive(
+  id: string,
+  active: boolean
+): Promise<AdminService | null> {
+  servicesStore = servicesStore.map((service) =>
+    service.id === id ? { ...service, active } : service
+  );
+  return delay(servicesStore.find((service) => service.id === id) ?? null);
+}
+
+export function updateServicePricing(
+  id: string,
+  pricingLabel: string
+): Promise<AdminService | null> {
+  servicesStore = servicesStore.map((service) =>
+    service.id === id ? { ...service, pricingLabel } : service
+  );
+  return delay(servicesStore.find((service) => service.id === id) ?? null);
+}
+
 export function fetchStaff(): Promise<Staff[]> {
   return delay([...staffStore]);
+}
+
+export interface StaffInput {
+  name: string;
+  email: string;
+  role: Staff["role"];
+}
+
+export function createStaff(input: StaffInput): Promise<Staff> {
+  const created: Staff = {
+    id: `st-${Date.now()}`,
+    name: input.name,
+    email: input.email,
+    role: input.role,
+    active: true,
+  };
+  staffStore = [...staffStore, created];
+  return delay(created);
+}
+
+export function updateStaff(
+  id: string,
+  input: Partial<Pick<Staff, "name" | "email" | "role" | "active">>
+): Promise<Staff | null> {
+  staffStore = staffStore.map((member) =>
+    member.id === id ? { ...member, ...input } : member
+  );
+  return delay(staffStore.find((member) => member.id === id) ?? null);
 }
 
 export function fetchPipeline(

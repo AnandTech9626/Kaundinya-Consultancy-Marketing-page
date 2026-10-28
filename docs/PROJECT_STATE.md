@@ -129,9 +129,11 @@ npm run typecheck:admin ; npm run build:admin
 - Dashboard quick module cards + sidebar entries for all four modules.
 
 ## 7. Docs (hand-off)
-- **`docs/api-contract.md`** — complete API spec. **§10 now maps every mock function to an
-  endpoint**; §12 defines all module endpoints + exact JS payload shapes (UI-built). Send to
-  the backend team as the source of truth.
+- **`docs/api-contract.md`** — complete API spec. **§10 maps every mock function to an
+  endpoint**; §12 defines all module endpoints + exact JS payload shapes (UI-built);
+  **§13 covers free-vs-paid third-party integrations** (Vahan, bureau, GSTIN, SMS, UPI,
+  storage, DigiLocker) with 2026 pricing/regulatory notes. Send to the backend team as the
+  source of truth.
 - **`docs/roadmap-modules.md`** — phased plan for the 4 modules (all UI phases implemented).
 
 ## 8. Secrets / credentials (NOT in repo)
@@ -152,11 +154,17 @@ npm run typecheck:admin ; npm run build:admin
 
 ### Can do now (no backend)
 - Backend hand-off only: share `docs/api-contract.md` §10/§12 and wire the mock internals.
-- Optional polish: Team add/edit, Services manage, richer charts, mobile tables, app favicon,
-  remove dead code (`marketing/src/lib/api.ts`, legacy `redirectToApp`).
+- Optional polish: richer admin charts, mobile table refinements, remove dead marketing code
+  (`marketing/src/lib/api.ts`, legacy `redirectToApp` — marketing is locked, ask first).
 - Optional: admin Stitch designs (partially started — Admin project `17393593163600204216`,
   Admin Login screen done; Overview generation was timing out).
-- Optional: route-level code splitting for `apps/app` (build is ~515 kB; warning only).
+
+### Frontend polish — DONE
+- Module notifications feed (renewal/job/loan/site-visit) with deep links + single-read.
+- Property → loan application prefill (`propertyId`, amount, purpose).
+- Admin Team add/edit/deactivate and Services management (price/active).
+- App favicon; route-level code splitting for app + admin (main chunks now < 500 kB).
+- Stalled-loan advisor prompt; listing success move-in cross-sell.
 
 ## 10. Conventions / rules
 - **Never touch `apps/api`.**
@@ -166,6 +174,11 @@ npm run typecheck:admin ; npm run build:admin
 - No secrets committed.
 
 ## 11. Session log
+- **2026-10-28 (final polish)** — Module notifications feed, property→loan prefill, admin
+  Team/Services management, app favicon, route-level code splitting, stalled-loan prompt,
+  listing cross-sell. Contract added admin staff/services + single-notification read.
+  **Merged to `developer` and `main`:** commit `c77fbeb` (previous batch). New polish
+  commits remain on `sagar/dev` until merged.
 - **2026-10-28 (later)** — Completed all remaining UI: Module 1.4–1.5, Module 3 (catalog,
   booking, measurements, jobs/OTP/rating, documents, printouts, interiors), Module 2
   (hub/calculator/compare, health, motor, policy vault), Module 4 (EMI, eligibility,

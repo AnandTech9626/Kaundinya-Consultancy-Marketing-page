@@ -24,7 +24,9 @@ import type {
   VehicleInfo,
   VehicleQuote,
 } from "@kaundinya/config";
+import { MODULE_STAGES } from "@kaundinya/config";
 import { MOCK_NOTIFICATIONS, MOCK_REQUESTS } from "./mockData";
+import { formatDate } from "./formats";
 import {
   DOCUMENTS,
   HOSPITALS,
@@ -86,13 +88,107 @@ export function createRequest(input: CreateRequestInput): Promise<ServiceRequest
   return delay(created);
 }
 
+const readNotificationIds = new Set<string>();
+
+function moduleNotifications(): AppNotification[] {
+  const items: AppNotification[] = [];
+
+  const expiringPolicy = policiesStore.find(
+    (policy) => policy.status === "expiring"
+  );
+  if (expiringPolicy) {
+    items.push({
+      id: `ntf-renewal-${expiringPolicy.id}`,
+      kind: "renewal",
+      title: "Policy renewal due",
+      message: `${expiringPolicy.provider} ${expiringPolicy.type.toLowerCase()} policy renews on ${formatDate(expiringPolicy.renewalDate)}. Review it before it lapses.`,
+      createdAt: isoToday(),
+      read: false,
+      href: "/insurance/policies",
+    });
+  }
+
+  const activeJob = jobsStore.find((job) =>
+    ["assigned", "en_route", "in_progress"].includes(job.status)
+  );
+  if (activeJob) {
+    const stage =
+      MODULE_STAGES["property-home-services"].find(
+        (item) => item.id === activeJob.status
+      )?.label ?? activeJob.status;
+    items.push({
+      id: `ntf-job-${activeJob.id}-${activeJob.status}`,
+      kind: "job",
+      title: `Job ${stage.toLowerCase()}`,
+      message: `${activeJob.serviceName}${activeJob.technician ? ` · ${activeJob.technician}` : ""}. Open the tracker for the next step.`,
+      createdAt: isoToday(),
+      read: false,
+      href: `/jobs/${activeJob.id}`,
+    });
+  }
+
+  const approvedLoan = loansStore.find((loan) => loan.status === "approved");
+  if (approvedLoan) {
+    items.push({
+      id: `ntf-loan-${approvedLoan.id}-${approvedLoan.status}`,
+      kind: "loan",
+      title: "Loan approved",
+      message: `Your ${approvedLoan.loanType.toLowerCase()} loan is approved${approvedLoan.bank ? ` by ${approvedLoan.bank}` : ""}. Next step: disbursal.`,
+      createdAt: isoToday(),
+      read: false,
+      href: `/loans/applications/${approvedLoan.id}`,
+    });
+  }
+
+  const confirmedVisit = siteVisitsStore.find(
+    (visit) => visit.status === "confirmed"
+  );
+  if (confirmedVisit) {
+    items.push({
+      id: `ntf-visit-${confirmedVisit.id}-${confirmedVisit.status}`,
+      kind: "site_visit",
+      title: "Site visit confirmed",
+      message: `${confirmedVisit.propertyTitle} on ${formatDate(confirmedVisit.date)} at ${confirmedVisit.slot}.`,
+      createdAt: isoToday(),
+      read: false,
+      href: `/real-estate/${confirmedVisit.propertyId}`,
+    });
+  }
+
+  return items;
+}
+
+function allNotifications() {
+  return [...moduleNotifications(), ...notificationsStore].sort((a, b) =>
+    b.createdAt.localeCompare(a.createdAt)
+  );
+}
+
+function withReadState(list: AppNotification[]) {
+  return list.map((notification) => ({
+    ...notification,
+    read: notification.read || readNotificationIds.has(notification.id),
+  }));
+}
+
 export function fetchNotifications(): Promise<AppNotification[]> {
-  return delay([...notificationsStore]);
+  return delay(withReadState(allNotifications()));
+}
+
+export function markNotificationRead(id: string): Promise<void> {
+  readNotificationIds.add(id);
+  notificationsStore = notificationsStore.map((notification) =>
+    notification.id === id ? { ...notification, read: true } : notification
+  );
+  return delay(undefined, 200);
 }
 
 export function markAllNotificationsRead(): Promise<AppNotification[]> {
+  allNotifications().forEach((notification) =>
+    readNotificationIds.add(notification.id)
+  );
   notificationsStore = notificationsStore.map((n) => ({ ...n, read: true }));
-  return delay([...notificationsStore]);
+  return delay(withReadState(allNotifications()));
 }
 
 /* --------------------------- Real Estate (Module 1) --------------------------- */
