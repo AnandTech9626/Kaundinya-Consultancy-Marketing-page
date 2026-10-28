@@ -442,4 +442,137 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 6. `author` on notes / `source` / `createdAt` set server-side, never trusted from client.
 7. All list endpoints newest-first.
 
+## 12. Module-specific APIs (planned — UI to be built in phases)
+
+> These extend the generic request model into the full 4-module experiences.
+> See `docs/roadmap-modules.md` for phasing. Implement in `apps/api`; the frontend will
+> consume them from `apps/app` (and `apps/admin`). **Not yet built** — this is the contract to build against.
+
+### 12.1 Shared additions
+
+**New enums**
+| Enum | Allowed values |
+| --- | --- |
+| `Module` | `"real-estate"`, `"insurance"`, `"home-services"`, `"loans"` |
+| `ListingType` | `"rent"`, `"sale"` |
+| `PropertyType` | `"apartment"`, `"villa"`, `"plot"`, `"commercial"` |
+| `PlanType` | `"life"`, `"health"`, `"motor"` |
+| `JobStatus` | `"accepted"`, `"assigned"`, `"en_route"`, `"in_progress"`, `"rating"`, `"completed"` |
+| `LoanStage` | `"application"`, `"verified"`, `"submitted"`, `"approved"`, `"disbursed"`, `"rejected"` |
+
+**New shared types**
+| Type | Fields |
+| --- | --- |
+| `FileAsset` | `id`, `url`, `name`, `mimeType`, `size` |
+| `Payment` | `id`, `method` (`"upi"`/`"card"`/`"netbanking"`), `amount` (paise), `status` (`"created"`/`"paid"`/`"failed"`), `createdAt` |
+| `Pagination` (optional) | `?page=&limit=` on long lists |
+
+---
+
+### 12.2 Real Estate
+
+| Method | Endpoint | Auth | Frontend sends | Response |
+| --- | --- | --- | --- | --- |
+| GET | `/api/properties` | none | `?listingType=rent\|sale&location=&budgetMin=&budgetMax=&bhk=` | `PropertyListing[]` |
+| GET | `/api/properties/:id` | none | path `id` | `PropertyListing` |
+| POST | `/api/properties` | Bearer | owner listing wizard payload (below) | `PropertyListing` |
+| POST | `/api/properties/:id/photos` | Bearer | multipart files | `FileAsset[]` |
+| POST | `/api/valuations` | Bearer | `{ propertyType, location, contactName, mobile, preferredSlot }` | `{ id, status }` |
+| POST | `/api/site-visits` | Bearer | `{ propertyId, slot (ISO), name, mobile }` | `SiteVisit` |
+| GET | `/api/site-visits` | Bearer | — | `SiteVisit[]` |
+
+**`PropertyListing`**: `id, title, listingType, propertyType, bhk, location, latitude, longitude, price, priceUnit ("month"|"total"), amenities[], images (FileAsset[]), reraAgentNumber, status ("draft"|"active"|"sold"|"rented"), createdAt`
+**`SiteVisit`**: `id, propertyId, slot (ISO), status ("requested"|"confirmed"|"done"|"cancelled"), adviserId`
+
+---
+
+### 12.3 Insurance
+
+| Method | Endpoint | Auth | Frontend sends | Response |
+| --- | --- | --- | --- | --- |
+| GET | `/api/insurance/plans` | none | `?type=life\|health\|motor&insurer=&age=&familySize=` | `InsurancePlan[]` |
+| POST | `/api/insurance/needs-analysis` | Bearer | `{ type, age, income, dependents, smoking, liabilities }` | `{ recommendedCoverage, estimatedPremium }` |
+| POST | `/api/insurance/compare` | Bearer | `{ planIds: string[] }` | `InsurancePlan[]` |
+| POST | `/api/insurance/quotes` | Bearer | needs profile | `PolicyQuote[]` |
+| GET | `/api/insurance/network-hospitals` | none | `?pincode=` | `Hospital[]` |
+| POST | `/api/insurance/motor/vehicle-lookup` | Bearer | `{ registrationNumber }` (Vahan) | `VehicleInfo` |
+| POST | `/api/insurance/motor/checkout` | Bearer | `{ planId, vehicle }` | `{ paymentIntentId, amount }` |
+| GET | `/api/policies` | Bearer | `?expiringInDays=30` | `PolicyRecord[]` (Policy Vault) |
+| GET | `/api/policies/:id` | Bearer | path `id` | `PolicyRecord` |
+
+**`InsurancePlan`**: `id, type, insurer, name, sumInsured, premium, tenure, features[], cashlessNetwork?, pospLicense`
+**`PolicyQuote`**: `id, planId, premium, addons[], validTill`
+**`Hospital`**: `id, name, address, pincode, cashless (bool), distanceKm?`
+**`VehicleInfo`**: `registrationNumber, make, model, fuelType, year, engineCC`
+**`PolicyRecord`**: `id, policyNumber, type, insurer, validFrom, validTo, pdfUrl (FileAsset), status`
+
+---
+
+### 12.4 Property Management & Home Services
+
+| Method | Endpoint | Auth | Frontend sends | Response |
+| --- | --- | --- | --- | --- |
+| GET | `/api/home-services/catalog` | none | — | `HomeServiceItem[]` |
+| POST | `/api/home-services/measurements` | Bearer | `{ serviceId, address, slot, name, mobile }` | `MeasurementBooking` |
+| POST | `/api/home-services/jobs` | Bearer | `{ serviceId, issueType?, address, slot?, notes? }` | `Job` |
+| GET | `/api/jobs` | Bearer | — | `Job[]` |
+| GET | `/api/jobs/:id` | Bearer | path `id` | `Job` |
+| POST | `/api/jobs/:id/start-otp` | Bearer | — | `{ expiresInSeconds }` |
+| POST | `/api/jobs/:id/verify-start` | technician | `{ otp }` | `Job` |
+| POST | `/api/jobs/:id/rating` | Bearer | `{ stars (1–5), comment? }` | `JobRating` |
+| POST | `/api/documents` | Bearer | multipart (`docType`, file) → watermark | `DocumentRecord` |
+| POST | `/api/printouts` | Bearer | `{ fileId, copies }` (auto-delete after print) | `PrintJob` |
+| POST | `/api/interiors/consultations` | Bearer | `{ style?, budget?, name, mobile }` | `{ id }` |
+
+**`HomeServiceItem`**: `id, name, category, pricingModel ("fixed"|"per_sqft"), basePrice, unit, issueTypes[], image?`
+**`MeasurementBooking`**: `id, serviceId, address, slot, status`
+**`Job`**: `id, serviceId, issueType, clientName, mobile, address, status (JobStatus), technician { id, name, phone }?, createdAt`
+**`DocumentRecord`**: `id, docType, file (FileAsset), watermark ("For Kaundinya ID Update Only"), createdAt`
+**`PrintJob`**: `id, fileId, copies, price, status, autoDeletedAt`
+
+---
+
+### 12.5 Loans
+
+| Method | Endpoint | Auth | Frontend sends | Response |
+| --- | --- | --- | --- | --- |
+| POST | `/api/loans/emi/calculate` | none | `{ principal, annualRate, tenureMonths }` | `{ emi, totalInterest, totalPayable }` |
+| POST | `/api/loans/eligibility` | Bearer | `{ monthlyIncome, obligations, age, employmentType }` | `{ eligibleAmount, maxTenure }` |
+| POST | `/api/loans/applications` | Bearer | loan application payload (below) | `LoanApplication` |
+| GET | `/api/loans/applications` | Bearer | — | `LoanApplication[]` |
+| GET | `/api/loans/applications/:id` | Bearer | path `id` | `LoanApplication` |
+| POST | `/api/loans/documents` | Bearer | multipart (payslip/ITR, auto-compress) | `FileAsset` |
+| POST | `/api/loans/credit-check` | Bearer | `{ consent: true }` (soft pull) | `{ scoreBand, eligibleProducts[] }` |
+| POST | `/api/loans/personal/profile` | Bearer | `{ employmentType ("salaried"\|"self_employed"), corporateEmail?, business? }` | `{ ok }` |
+| POST | `/api/loans/business/gstin-lookup` | Bearer | `{ gstin }` | `{ legalName, address }` |
+
+**`LoanApplication`**: `id, loanType ("home"|"personal"|"business"|"lap"), stage (LoanStage), amountRequested, propertyId?, personalProfile?, businessProfile?, documents (FileAsset[]), createdAt`
+
+---
+
+### 12.6 Admin pipeline additions
+
+| Method | Endpoint | Auth | Purpose |
+| --- | --- | --- | --- |
+| GET | `/api/admin/properties` | staff | List/moderate listings |
+| PATCH | `/api/admin/properties/:id` | staff | Approve / reject / change status |
+| GET | `/api/admin/valuations` | staff | Valuation requests queue |
+| GET | `/api/admin/site-visits` | staff | Site-visit schedule |
+| GET | `/api/admin/renewals` | staff | Policies expiring (30 days) |
+| POST | `/api/admin/renewals/trigger` | staff | Send renewal reminders |
+| GET | `/api/admin/jobs` | staff | Job dispatch board |
+| PATCH | `/api/admin/jobs/:id` | staff | Assign technician / advance status |
+| GET | `/api/admin/loans` | staff | Loan pipeline (5 stages) |
+| PATCH | `/api/admin/loans/:id` | staff | Advance stage / assign adviser |
+| GET | `/api/admin/ratings` | staff | Job ratings |
+
+### 12.7 Payments & uploads (shared)
+| Method | Endpoint | Auth | Purpose |
+| --- | --- | --- | --- |
+| POST | `/api/payments` | Bearer | Create payment intent (UPI/card) |
+| POST | `/api/payments/:id/confirm` | Bearer | Confirm payment |
+| POST | `/api/uploads` | Bearer | Generic secure upload → `FileAsset` |
+
+**Integrations the backend must own:** Vahan (vehicle), credit bureau soft pull, banking partner APIs, UPI/payment gateway, KYC/OCR + secure storage, SMS/OTP (auth + Start-Job OTP), maps/pincode, PDF generation + compression, e-sign (future). See `docs/roadmap-modules.md` for the mapping.
+
 _End of specification._
