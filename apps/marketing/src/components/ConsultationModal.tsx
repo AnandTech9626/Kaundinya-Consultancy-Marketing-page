@@ -114,7 +114,7 @@ export default function ConsultationModal() {
       newErrors.fullName = "Please enter your full name.";
     }
 
-    if (formData.email.trim() && !/^[^s@]+@[^s@]+.[^s@]+$/.test(formData.email.trim())) {
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       newErrors.email = "Please enter a valid email address.";
     }
 

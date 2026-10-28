@@ -23,12 +23,12 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          PUBLIC_APP_URL: https://kaundinya-app.attack-surface.workers.dev
+          PUBLIC_APP_URL: https://app.kaundinya.workers.dev
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: kaundinyaconsultancy
+          projectName: kaundinya
           directory: apps/marketing/dist

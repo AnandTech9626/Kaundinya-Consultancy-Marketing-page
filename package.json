@@ -10,12 +10,15 @@
   "scripts": {
     "dev": "npm run dev --workspace @kaundinya/marketing",
     "dev:app": "npm run dev --workspace @kaundinya/app",
+    "dev:admin": "npm run dev --workspace @kaundinya/admin",
     "build": "npm run build --workspace @kaundinya/marketing",
     "build:app": "npm run build --workspace @kaundinya/app",
+    "build:admin": "npm run build --workspace @kaundinya/admin",
     "preview": "npm run preview --workspace @kaundinya/marketing",
     "astro": "npm run astro --workspace @kaundinya/marketing",
     "check": "npm run check --workspace @kaundinya/marketing",
-    "typecheck:app": "npm run typecheck --workspace @kaundinya/app"
+    "typecheck:app": "npm run typecheck --workspace @kaundinya/app",
+    "typecheck:admin": "npm run typecheck --workspace @kaundinya/admin"
   },
   "devDependencies": {
     "wrangler": "^4.111.0"
