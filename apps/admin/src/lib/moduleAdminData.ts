@@ -1,3 +1,35 @@
+import { SERVICE_CATALOG } from "@kaundinya/config";
+import type { ServiceCatalogItem, ServiceCategoryId } from "@kaundinya/config";
+
+export interface AdminService {
+  id: string;
+  categoryId: ServiceCategoryId;
+  name: string;
+  summary: string;
+  pricingLabel: string;
+  active: boolean;
+}
+
+function pricingLabel(item: ServiceCatalogItem) {
+  if (!item.pricing) return "Custom quote";
+  const { model, amount, unit } = item.pricing;
+  if (model === "per-sqft" && amount) return `₹${amount}/${unit}`;
+  if (model === "fixed") {
+    return amount === 0 ? "Free" : `₹${amount}${unit ? `/${unit}` : ""}`;
+  }
+  if (model === "from" && amount) return `From ₹${amount}`;
+  return "Custom quote";
+}
+
+export const ADMIN_SERVICES: AdminService[] = SERVICE_CATALOG.map((item) => ({
+  id: item.id,
+  categoryId: item.categoryId,
+  name: item.name,
+  summary: item.summary,
+  pricingLabel: pricingLabel(item),
+  active: true,
+}));
+
 export type AdminPropertyStatus =
   | "draft"
   | "active"

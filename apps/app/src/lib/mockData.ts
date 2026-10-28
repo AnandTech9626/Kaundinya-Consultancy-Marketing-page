@@ -65,6 +65,8 @@ export const MOCK_NOTIFICATIONS: AppNotification[] = [
     message: "Your Real Estate rental request is now in progress.",
     createdAt: "2026-10-23",
     read: false,
+    kind: "request",
+    href: "/requests/req-1001",
   },
   {
     id: "ntf-3",
@@ -72,5 +74,7 @@ export const MOCK_NOTIFICATIONS: AppNotification[] = [
     message: "Pigeon safety nets installation has been marked as completed.",
     createdAt: "2026-10-16",
     read: true,
+    kind: "job",
+    href: "/jobs/job-5002",
   },
 ];

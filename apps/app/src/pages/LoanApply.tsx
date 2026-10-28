@@ -58,12 +58,19 @@ export function LoanApply() {
   const { user } = useAuth();
   const [params] = useSearchParams();
   const initialType = TYPE_MAP[params.get("type") ?? "home"] ?? "Home";
+  const linkedPropertyId = params.get("propertyId") ?? undefined;
+  const linkedPropertyTitle = params.get("propertyTitle") ?? "";
+  const amountParam = Number(params.get("amount"));
+  const initialAmount =
+    Number.isFinite(amountParam) && amountParam > 0
+      ? Math.min(Math.max(amountParam, 100000), TYPE_MAX[initialType])
+      : 3000000;
 
   const [loanType, setLoanType] = useState<LoanType>(initialType);
   const [employment, setEmployment] =
     useState<"salaried" | "self-employed">("salaried");
-  const [purpose, setPurpose] = useState("");
-  const [amount, setAmount] = useState(3000000);
+  const [purpose, setPurpose] = useState(params.get("purpose") ?? "");
+  const [amount, setAmount] = useState(initialAmount);
   const [tenure, setTenure] = useState(240);
   const [income, setIncome] = useState(100000);
   const [gstin, setGstin] = useState("");
@@ -100,6 +107,7 @@ export function LoanApply() {
         employmentType: employment,
         purpose: purpose.trim() || TYPE_LABEL[loanType],
         documents: files.length > 0 ? files.map((file) => file.name) : requiredDocs,
+        propertyId: linkedPropertyId,
       });
       setCreated(loan);
     } catch {
@@ -181,6 +189,21 @@ export function LoanApply() {
           Four short steps. We verify documents and route your file to the right lender.
         </p>
       </div>
+
+      {linkedPropertyId && (
+        <Card className="p-4 border-gold/40 bg-gold-light/40 flex items-start gap-3">
+          <div className="w-9 h-9 rounded-full bg-white text-[#B8860B] flex items-center justify-center shrink-0">
+            <Building2 className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-charcoal">Linked property</p>
+            <p className="text-xs text-muted">
+              {linkedPropertyTitle || linkedPropertyId} · loan amount prefilled from the
+              property price.
+            </p>
+          </div>
+        </Card>
+      )}
 
       <Card className="p-5 sm:p-6">
         <Wizard
@@ -417,6 +440,14 @@ export function LoanApply() {
                         {files.length > 0 ? `${files.length} uploaded` : "To collect"}
                       </span>
                     </div>
+                    {linkedPropertyId && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted">Linked property</span>
+                        <span className="font-bold text-charcoal text-right max-w-[60%]">
+                          {linkedPropertyTitle || linkedPropertyId}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-start gap-2 rounded-xl border border-gold/30 bg-gold-light/60 p-3">
