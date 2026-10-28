@@ -1,46 +1,63 @@
 import {
   createContext,
+  useCallback,
   useContext,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
 import type { User } from "@kaundinya/config";
-
-const STORAGE_KEY = "kaundinya.user";
+import { api } from "./api";
+import { clearSession, readSession, writeSession, type Session } from "./session";
 
 interface AuthContextValue {
   user: User | null;
-  login: (user: User) => void;
+  token: string | null;
+  login: (session: Session) => void;
+  updateUser: (user: User) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as User) : null;
-    } catch {
-      return null;
+  const [session, setSession] = useState<Session | null>(() => readSession());
+
+  const login = useCallback((next: Session) => {
+    writeSession(next);
+    setSession(next);
+  }, []);
+
+  const updateUser = useCallback((user: User) => {
+    setSession((current) => {
+      if (!current) return current;
+      const next = { ...current, user };
+      writeSession(next);
+      return next;
+    });
+  }, []);
+
+  const logout = useCallback(() => {
+    const token = session?.token;
+    clearSession();
+    setSession(null);
+    if (token) {
+      void api.post("/auth/logout").catch(() => undefined);
     }
-  });
+  }, [session?.token]);
 
-  const login = (next: User) => {
-    setUser(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user: session?.user ?? null,
+      token: session?.token ?? null,
+      login,
+      updateUser,
+      logout,
+    }),
+    [session, login, updateUser, logout]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

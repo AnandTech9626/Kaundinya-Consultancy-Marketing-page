@@ -31,7 +31,7 @@ export function Printouts() {
 
   const jobs = data ?? [];
   const copyCount = Math.max(1, Math.min(50, Number(copies) || 1));
-  const price = copyCount * 10;
+  const price = copyCount * 5;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -105,7 +105,7 @@ export function Printouts() {
                   Live price
                 </p>
                 <p className="text-xs text-muted">
-                  ₹10 per page × {copyCount} {copyCount === 1 ? "copy" : "copies"}
+                  ₹5 per page × {copyCount} {copyCount === 1 ? "copy" : "copies"}
                 </p>
               </div>
               <p className="text-xl font-extrabold text-charcoal">{formatINR(price)}</p>

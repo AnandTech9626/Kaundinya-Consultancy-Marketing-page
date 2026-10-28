@@ -6,23 +6,27 @@ import { useAuth } from "../lib/auth";
 export function AuthCallback() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { login } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
-    const mobile = (params.get("mobile") ?? "").replace(/\D/g, "");
-    if (mobile.length >= 10) {
-      login({ name: "Kaundinya Client", email: "", mobile });
+    if (user) {
       navigate("/dashboard", { replace: true });
+      return;
+    }
+
+    const mobile = (params.get("mobile") ?? "").replace(/\D/g, "");
+    if (mobile.length === 10) {
+      navigate(`/login?mobile=${mobile}&step=otp`, { replace: true });
     } else {
       navigate("/login", { replace: true });
     }
-  }, [login, navigate, params]);
+  }, [navigate, params, user]);
 
   return (
     <div className="min-h-screen bg-ivory flex items-center justify-center">
       <div className="flex items-center gap-2 text-sm text-muted">
         <Spinner />
-        Verifying your session...
+        Redirecting to sign in...
       </div>
     </div>
   );

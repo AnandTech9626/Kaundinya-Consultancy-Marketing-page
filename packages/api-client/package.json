@@ -1,0 +1,10 @@
+{
+  "name": "@kaundinya/api-client",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared typed HTTP client for the Kaundinya API",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

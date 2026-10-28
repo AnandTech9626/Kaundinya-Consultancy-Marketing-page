@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { CheckCircle2, ShieldCheck, User, MapPin } from "lucide-react";
 import { Badge, Button, Card, FormField, Input } from "@kaundinya/ui";
 import { useAuth } from "../lib/auth";
-import { fetchRequests } from "../lib/mockApi";
+import { fetchRequests, updateProfile } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 
 function initials(name: string): string {
@@ -21,7 +21,7 @@ function formatMobile(raw: string): string {
 }
 
 export function Profile() {
-  const { user, login } = useAuth();
+  const { user, updateUser } = useAuth();
   const { data } = useAsync(fetchRequests);
   const requestCount = data?.length ?? 0;
 
@@ -29,14 +29,29 @@ export function Profile() {
   const [email, setEmail] = useState(user?.email ?? "");
   const [pinCode, setPinCode] = useState("");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (user) {
-      login({ ...user, name, email });
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await updateProfile({
+        name: name.trim(),
+        email: email.trim(),
+        pinCode: pinCode.trim(),
+      });
+      updateUser(updated);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not save your changes. Try again."
+      );
+    } finally {
+      setSaving(false);
     }
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
   };
 
   const displayName = name.trim() || user?.name || "Client";
@@ -167,14 +182,17 @@ export function Profile() {
               </section>
 
               {/* Save bar */}
-              <div className="flex items-center gap-3 border-t border-border-subtle pt-4">
-                <Button type="submit">Save Changes</Button>
+              <div className="flex flex-wrap items-center gap-3 border-t border-border-subtle pt-4">
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
                 {saved && (
                   <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600">
                     <CheckCircle2 className="w-4 h-4" />
                     Saved
                   </span>
                 )}
+                {error && <span className="text-sm text-rose-600">{error}</span>}
               </div>
             </form>
           </Card>

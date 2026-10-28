@@ -16,6 +16,7 @@
     "preview:workers": "vite build && wrangler dev"
   },
   "dependencies": {
+    "@kaundinya/api-client": "*",
     "@kaundinya/config": "*",
     "@kaundinya/tokens": "*",
     "@kaundinya/ui": "*",
