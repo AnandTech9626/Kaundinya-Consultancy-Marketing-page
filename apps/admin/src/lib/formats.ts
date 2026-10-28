@@ -9,6 +9,18 @@ export function formatDate(iso: string): string {
   });
 }
 
+export function formatINR(value: number): string {
+  if (value >= 10000000) {
+    const crore = value / 10000000;
+    return `₹${crore % 1 === 0 ? crore : crore.toFixed(2)} Cr`;
+  }
+  if (value >= 100000) {
+    const lakh = value / 100000;
+    return `₹${lakh % 1 === 0 ? lakh : lakh.toFixed(2)} L`;
+  }
+  return `₹${value.toLocaleString("en-IN")}`;
+}
+
 export function formatMobile(raw: string): string {
   let digits = raw.replace(/\D/g, "");
   if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);

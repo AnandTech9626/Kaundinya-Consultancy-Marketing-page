@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Circle, CircleDot } from "lucide-react";
-import { Badge, Card, Skeleton } from "@kaundinya/ui";
+import { ArrowLeft } from "lucide-react";
+import { Badge, Card, Skeleton, StatusTimeline } from "@kaundinya/ui";
 import { fetchRequest } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { STATUS_META, STATUS_ORDER } from "../lib/status";
@@ -75,7 +75,6 @@ export function RequestDetail() {
   }
 
   const Icon = getServiceIcon(iconNameFor(request.serviceCategory));
-  const activeIndex = STATUS_ORDER.indexOf(request.status);
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -124,40 +123,14 @@ export function RequestDetail() {
 
       <Card className="p-6">
         <h2 className="text-base font-extrabold text-charcoal tracking-tight mb-5">Status</h2>
-        <div className="space-y-0">
-          {STATUS_ORDER.map((status, i) => {
-            const meta = STATUS_META[status];
-            const reached = i <= activeIndex;
-            const isCurrent = i === activeIndex;
-            return (
-              <div key={status} className="flex gap-3">
-                <div className="flex flex-col items-center">
-                  {reached ? (
-                    <CheckCircle2 className="w-5 h-5 text-gold" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-border-subtle" />
-                  )}
-                  {i < STATUS_ORDER.length - 1 && (
-                    <span
-                      className={`w-0.5 flex-1 my-1 ${reached ? "bg-gold" : "bg-border-subtle"}`}
-                    />
-                  )}
-                </div>
-                <div className="pb-6">
-                  <p className={`text-sm font-bold ${isCurrent ? "text-charcoal" : "text-muted"}`}>
-                    {meta.label}
-                  </p>
-                  {isCurrent && (
-                    <p className="text-xs text-muted flex items-center gap-1 mt-0.5">
-                      <CircleDot className="w-3 h-3 text-gold" />
-                      Current stage
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <StatusTimeline
+          stages={STATUS_ORDER.map((status) => ({
+            id: status,
+            label: STATUS_META[status].label,
+          }))}
+          currentId={request.status}
+          cancelled={request.status === "cancelled"}
+        />
       </Card>
     </div>
   );

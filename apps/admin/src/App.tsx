@@ -8,6 +8,12 @@ import { Enquiries } from "./pages/Enquiries";
 import { EnquiryDetail } from "./pages/EnquiryDetail";
 import { Clients } from "./pages/Clients";
 import { Requests } from "./pages/Requests";
+import { Pipeline } from "./pages/Pipeline";
+import { Properties } from "./pages/Properties";
+import { Valuations } from "./pages/Valuations";
+import { SiteVisits } from "./pages/SiteVisits";
+import { Dispatch } from "./pages/Dispatch";
+import { Renewals } from "./pages/Renewals";
 import { Team } from "./pages/Team";
 import { Services } from "./pages/Services";
 import { Notifications } from "./pages/Notifications";
@@ -26,6 +32,12 @@ export default function App() {
               <Route path="/enquiries/:id" element={<EnquiryDetail />} />
               <Route path="/clients" element={<Clients />} />
               <Route path="/requests" element={<Requests />} />
+              <Route path="/pipeline" element={<Pipeline />} />
+              <Route path="/properties" element={<Properties />} />
+              <Route path="/valuations" element={<Valuations />} />
+              <Route path="/site-visits" element={<SiteVisits />} />
+              <Route path="/dispatch" element={<Dispatch />} />
+              <Route path="/renewals" element={<Renewals />} />
               <Route path="/team" element={<Team />} />
               <Route path="/services" element={<Services />} />
               <Route path="/notifications" element={<Notifications />} />
