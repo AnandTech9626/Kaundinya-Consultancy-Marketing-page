@@ -11,14 +11,17 @@
     "dev": "npm run dev --workspace @kaundinya/marketing",
     "dev:app": "npm run dev --workspace @kaundinya/app",
     "dev:admin": "npm run dev --workspace @kaundinya/admin",
+    "dev:api": "npm run dev --workspace @kaundinya/api",
     "build": "npm run build --workspace @kaundinya/marketing",
     "build:app": "npm run build --workspace @kaundinya/app",
     "build:admin": "npm run build --workspace @kaundinya/admin",
+    "build:api": "npm run build --workspace @kaundinya/api",
     "preview": "npm run preview --workspace @kaundinya/marketing",
     "astro": "npm run astro --workspace @kaundinya/marketing",
     "check": "npm run check --workspace @kaundinya/marketing",
     "typecheck:app": "npm run typecheck --workspace @kaundinya/app",
-    "typecheck:admin": "npm run typecheck --workspace @kaundinya/admin"
+    "typecheck:admin": "npm run typecheck --workspace @kaundinya/admin",
+    "typecheck:api": "npm run typecheck --workspace @kaundinya/api"
   },
   "devDependencies": {
     "wrangler": "^4.111.0"
