@@ -6,7 +6,7 @@ import { fetchRequests } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { REQUEST_STATUS } from "../lib/status";
 import { formatDate, formatMobile } from "../lib/formats";
-import { STAFF } from "../lib/mockData";
+import { useStaff } from "../lib/staff";
 
 const FILTERS: (RequestStatus | "all")[] = [
   "all",
@@ -20,8 +20,10 @@ export function Requests() {
   const { data, loading, error, refetch } = useAsync(fetchRequests);
   const [status, setStatus] = useState<RequestStatus | "all">("all");
 
+  const staff = useStaff();
+
   const staffName = (id: string | null) =>
-    id ? STAFF.find((s) => s.id === id)?.name ?? "—" : "Unassigned";
+    id ? staff.find((s) => s.id === id)?.name ?? "—" : "Unassigned";
 
   const filtered = useMemo(() => {
     const list = data ?? [];

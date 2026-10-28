@@ -9,5 +9,6 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || "kaundinya_jwt_super_secret_production_key_2026",
   corsOrigin: process.env.CORS_ORIGIN || "*",
   devOtp: process.env.DEV_OTP || "123456",
+  staffDefaultPassword: process.env.STAFF_DEFAULT_PASSWORD || "kaundinya123",
   isDev: (process.env.NODE_ENV || "development") === "development",
 };

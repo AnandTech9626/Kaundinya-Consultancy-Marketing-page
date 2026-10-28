@@ -9,6 +9,7 @@ import {
   updateStaff,
 } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
+import { invalidateStaff } from "../lib/staff";
 import { initials } from "../lib/formats";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -86,6 +87,7 @@ export function Team() {
         await createStaff({ name: name.trim(), email: email.trim(), role });
       }
       resetForm();
+      invalidateStaff();
       refetch();
     } catch {
       setFormError("We couldn't save this member. Please try again.");
@@ -98,6 +100,7 @@ export function Team() {
     setBusy(member.id);
     try {
       await updateStaff(member.id, { active: !member.active });
+      invalidateStaff();
       refetch();
     } finally {
       setBusy(null);

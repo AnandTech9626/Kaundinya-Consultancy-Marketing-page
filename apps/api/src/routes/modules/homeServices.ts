@@ -6,6 +6,7 @@ import {
   MeasurementBookingModel,
   PrintJobModel,
 } from "../../db/models/HomeServices.js";
+import { StaffModel } from "../../db/models/Staff.js";
 import { adminAuthMiddleware, authMiddleware } from "../../middleware/auth.js";
 import { errorResponse, successResponse } from "../../utils/response.js";
 
@@ -212,7 +213,21 @@ adminHomeServicesRoutes.get("/jobs", async (c) => {
 adminHomeServicesRoutes.patch("/jobs/:id", async (c) => {
   const id = c.req.param("id");
   const body = await c.req.json();
-  const updated = await JobRecordModel.findOneAndUpdate({ id }, { $set: body }, { new: true });
+  const update: Record<string, unknown> = { ...body };
+
+  // Keep the human-readable technician name in sync with the assigned staff id.
+  if (typeof body.technicianId === "string") {
+    const staff = body.technicianId
+      ? await StaffModel.findOne({ id: body.technicianId })
+      : null;
+    update.technician = staff ? staff.name : null;
+  }
+
+  const updated = await JobRecordModel.findOneAndUpdate(
+    { id },
+    { $set: update },
+    { new: true }
+  );
   if (!updated) return errorResponse(c, "Job not found.", 404);
   return successResponse(c, updated);
 });

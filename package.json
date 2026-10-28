@@ -24,6 +24,7 @@
     "typecheck:api": "npm run typecheck --workspace @kaundinya/api"
   },
   "devDependencies": {
+    "mongodb-memory-server": "^11.3.0",
     "wrangler": "^4.111.0"
   },
   "engines": {

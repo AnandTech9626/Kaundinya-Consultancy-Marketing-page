@@ -48,6 +48,7 @@ export interface IJobRecord extends Document {
   serviceName: string;
   status: "requested" | "assigned" | "en_route" | "in_progress" | "completed";
   technician?: string;
+  technicianId?: string;
   technicianPhone?: string;
   scheduledAt?: string;
   startOtp?: string;
@@ -73,6 +74,7 @@ const JobRecordSchema = new Schema<IJobRecord>(
       index: true,
     },
     technician: { type: String },
+    technicianId: { type: String },
     technicianPhone: { type: String },
     scheduledAt: { type: String },
     startOtp: { type: String },

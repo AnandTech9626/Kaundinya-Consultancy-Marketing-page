@@ -1,9 +1,12 @@
 import { Hono } from "hono";
+import { config } from "../config.js";
 import { EnquiryModel } from "../db/models/Enquiry.js";
 import { ServiceRequestModel } from "../db/models/ServiceRequest.js";
 import { StaffModel } from "../db/models/Staff.js";
 import { UserModel } from "../db/models/User.js";
 import { adminAuthMiddleware } from "../middleware/auth.js";
+import { hashPassword } from "../services/password.js";
+import { ensureStaffSeeded } from "../services/staff.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 export const adminGeneralRoutes = new Hono();
@@ -92,38 +95,94 @@ adminGeneralRoutes.get("/clients", async (c) => {
 // GET /api/admin/staff
 adminGeneralRoutes.get("/staff", async (c) => {
   try {
-    let staff = await StaffModel.find();
-
-    // If no staff exists, seed initial staff members from CRM defaults
-    if (staff.length === 0) {
-      staff = await StaffModel.insertMany([
-        {
-          id: "st-1",
-          name: "Kaundinya Admin",
-          email: "admin@kaundinya.com",
-          role: "admin",
-          active: true,
-        },
-        {
-          id: "st-2",
-          name: "Harika Garre",
-          email: "harika@kaundinya.com",
-          role: "agent",
-          active: true,
-        },
-        {
-          id: "st-3",
-          name: "Suresh Varma",
-          email: "suresh@kaundinya.com",
-          role: "agent",
-          active: true,
-        },
-      ]);
-    }
-
+    await ensureStaffSeeded();
+    const staff = await StaffModel.find();
     return successResponse(c, staff);
   } catch (err) {
     console.error("[Get Admin Staff Error]", err);
     return errorResponse(c, "Failed to fetch staff members.", 500);
+  }
+});
+
+// POST /api/admin/staff
+adminGeneralRoutes.post("/staff", async (c) => {
+  try {
+    const body = await c.req.json().catch(() => null);
+    if (!body) return errorResponse(c, "Invalid request body.", 422);
+
+    const name = String(body.name ?? "").trim();
+    const email = String(body.email ?? "").trim().toLowerCase();
+    const role = body.role === "admin" ? "admin" : "agent";
+
+    if (name.length < 2) {
+      return errorResponse(c, "Enter a valid name.", 422, { name: "Name is too short." });
+    }
+    if (!email) {
+      return errorResponse(c, "Enter a valid email address.", 422, {
+        email: "Email is required.",
+      });
+    }
+
+    const existing = await StaffModel.findOne({ email });
+    if (existing) {
+      return errorResponse(c, "A staff member with this email already exists.", 409);
+    }
+
+    const created = await StaffModel.create({
+      id: `st-${Date.now()}`,
+      name,
+      email,
+      role,
+      active: true,
+      passwordHash: hashPassword(
+        String(body.password || config.staffDefaultPassword)
+      ),
+    });
+
+    return successResponse(
+      c,
+      {
+        id: created.id,
+        name: created.name,
+        email: created.email,
+        role: created.role,
+        active: created.active,
+      },
+      undefined,
+      201
+    );
+  } catch (err) {
+    console.error("[Create Staff Error]", err);
+    return errorResponse(c, "Failed to create staff member.", 500);
+  }
+});
+
+// PATCH /api/admin/staff/:id
+adminGeneralRoutes.patch("/staff/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const body = await c.req.json().catch(() => null);
+    if (!body) return errorResponse(c, "Invalid request body.", 422);
+
+    const update: Record<string, unknown> = {};
+    if (typeof body.name === "string") update.name = body.name.trim();
+    if (typeof body.email === "string") update.email = body.email.trim().toLowerCase();
+    if (body.role === "admin" || body.role === "agent") update.role = body.role;
+    if (typeof body.active === "boolean") update.active = body.active;
+    if (typeof body.password === "string" && body.password.length >= 4) {
+      update.passwordHash = hashPassword(body.password);
+    }
+
+    const updated = await StaffModel.findOneAndUpdate(
+      { id },
+      { $set: update },
+      { new: true }
+    );
+
+    if (!updated) return errorResponse(c, "Staff member not found.", 404);
+    return successResponse(c, updated);
+  } catch (err) {
+    console.error("[Update Staff Error]", err);
+    return errorResponse(c, "Failed to update staff member.", 500);
   }
 });

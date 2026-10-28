@@ -4,6 +4,18 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Button, Card, FormField, Input } from "@kaundinya/ui";
 import { SITE_INFO } from "@kaundinya/config";
 import { useAuth } from "../lib/auth";
+import { ApiError } from "../lib/api";
+import { adminLogin } from "../lib/mockApi";
+
+function describeError(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 0) return error.message;
+    if (error.status === 401) return "Invalid email or password.";
+    if (error.fieldErrors?.email) return error.fieldErrors.email;
+    return error.message;
+  }
+  return "Sign in failed. Please try again.";
+}
 
 export function Login() {
   const navigate = useNavigate();
@@ -11,15 +23,26 @@ export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!email.trim() || password.length < 4) {
       setError("Enter your email and password (min 4 characters).");
       return;
     }
-    login({ id: "st-1", name: "Sampath Krishna Goud", email: email.trim(), role: "admin", active: true });
-    navigate("/overview", { replace: true });
+
+    setError(null);
+    setSubmitting(true);
+    try {
+      const session = await adminLogin(email.trim(), password);
+      login(session);
+      navigate("/overview", { replace: true });
+    } catch (err) {
+      setError(describeError(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -73,9 +96,15 @@ export function Login() {
 
             {error && <p className="text-[11px] text-rose-600 -mt-2">{error}</p>}
 
-            <Button type="submit" className="w-full">
-              Sign In
-              <ArrowRight className="w-4 h-4" />
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? (
+                "Signing in..."
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </Button>
           </form>
         </Card>

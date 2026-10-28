@@ -7,7 +7,7 @@ import {
   fetchAdminSiteVisits,
   updateSiteVisitStatus,
 } from "../lib/mockApi";
-import { STAFF } from "../lib/mockData";
+import { useStaff } from "../lib/staff";
 import type { AdminVisitStatus } from "../lib/moduleAdminData";
 import { useAsync } from "../lib/useAsync";
 import { formatDate, formatMobile } from "../lib/formats";
@@ -22,6 +22,7 @@ const STATUS_BADGE: Record<AdminVisitStatus, BadgeVariant> = {
 export function SiteVisits() {
   const { data, loading, error, refetch } = useAsync(fetchAdminSiteVisits);
   const [busy, setBusy] = useState<string | null>(null);
+  const staff = useStaff();
 
   const visits = data ?? [];
   const upcoming = visits.filter(
@@ -126,7 +127,7 @@ export function SiteVisits() {
                         disabled={busy === `${visit.id}-assign`}
                       >
                         <option value="">Unassigned</option>
-                        {STAFF.filter((member) => member.active).map((member) => (
+                        {staff.filter((member) => member.active).map((member) => (
                           <option key={member.id} value={member.id}>
                             {member.name}
                           </option>

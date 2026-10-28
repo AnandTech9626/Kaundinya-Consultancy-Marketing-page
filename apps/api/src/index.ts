@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { config } from "./config.js";
 import { connectDB, isDbConnected } from "./db/connect.js";
 import { adminGeneralRoutes } from "./routes/admin.js";
+import { adminAuthRoutes } from "./routes/adminAuth.js";
 import { authRoutes } from "./routes/auth.js";
 import { adminEnquiryRoutes, enquiryRoutes } from "./routes/enquiries.js";
 import {
@@ -78,6 +79,9 @@ app.route("/", realEstateRoutes);
 app.route("/", insuranceRoutes);
 app.route("/", homeServicesRoutes);
 app.route("/", loansRoutes);
+
+// Admin Auth
+app.route("/admin/auth", adminAuthRoutes);
 
 // Admin Routes
 app.route("/admin/enquiries", adminEnquiryRoutes);
