@@ -15,6 +15,7 @@ const JOB_BADGE: Record<string, BadgeVariant> = {
   en_route: "warning",
   in_progress: "info",
   completed: "success",
+  cancelled: "danger",
 };
 
 function stageLabel(status: string) {
@@ -26,8 +27,11 @@ export function JobTracker() {
   const { data: measurements } = useAsync(fetchMeasurements);
 
   const allJobs = jobs ?? [];
-  const active = allJobs.filter((job) => job.status !== "completed");
+  const active = allJobs.filter(
+    (job) => !["completed", "cancelled"].includes(job.status),
+  );
   const completed = allJobs.filter((job) => job.status === "completed");
+  const cancelled = allJobs.filter((job) => job.status === "cancelled");
 
   const renderJob = (job: (typeof allJobs)[number]) => {
     const index = STAGES.findIndex((stage) => stage.id === job.status);
@@ -143,6 +147,15 @@ export function JobTracker() {
                 Completed
               </h2>
               {completed.map(renderJob)}
+            </div>
+          )}
+
+          {cancelled.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-extrabold text-charcoal tracking-tight">
+                Cancelled
+              </h2>
+              {cancelled.map(renderJob)}
             </div>
           )}
         </>

@@ -27,3 +27,17 @@
     color: #171717;
   }
 }
+
+/* Global XS corner radius for cards, panels and sidebar buttons */
+@layer utilities {
+  .rounded-xs,
+  .rounded,
+  .rounded-sm,
+  .rounded-md,
+  .rounded-lg,
+  .rounded-xl,
+  .rounded-2xl,
+  .rounded-3xl {
+    border-radius: 0.125rem !important;
+  }
+}

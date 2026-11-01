@@ -20,7 +20,7 @@ Rules:
 
 `.github/workflows/ci.yml` runs on every pull request to `developer` and `main`:
 
-1. `npm ci`
+1. `npm install --no-package-lock --no-audit --no-fund` (not `npm ci`: the lockfile is generated on Windows and omits Linux native bindings for `lightningcss`, `@tailwindcss/oxide` and `@rolldown/binding`, which makes `npm ci` produce builds with missing native modules)
 2. `npm run check` — `astro check` (typecheck)
 3. `npm run build` — `astro build`
 

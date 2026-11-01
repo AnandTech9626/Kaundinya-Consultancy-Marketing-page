@@ -5,21 +5,10 @@ import type {
   ServiceCategoryId,
   Staff,
 } from "@kaundinya/config";
+import type { AdminRequest } from "./mockData";
+import type { PipelineRecord } from "./pipelineData";
 import {
-  ADMIN_REQUESTS,
-  CLIENTS,
-  ENQUIRIES,
-  STAFF,
-  type AdminRequest,
-} from "./mockData";
-import { PIPELINE_RECORDS, type PipelineRecord } from "./pipelineData";
-import {
-  ADMIN_JOBS,
-  ADMIN_PROPERTIES,
-  ADMIN_RENEWALS,
   ADMIN_SERVICES,
-  ADMIN_SITE_VISITS,
-  ADMIN_VALUATIONS,
   type AdminJob,
   type AdminProperty,
   type AdminPropertyStatus,
@@ -30,85 +19,197 @@ import {
   type AdminValuationStatus,
   type AdminVisitStatus,
 } from "./moduleAdminData";
+import type { AdminSession } from "./session";
+import { ApiError, api } from "./api";
 
-const LATENCY_MS = 550;
+/**
+ * Admin data layer.
+ *
+ * Talks to the live Hono API. Exported names/signatures match the previous
+ * mock layer so screens stay untouched. Services have no backend endpoint yet,
+ * so they remain derived from the static service catalog.
+ */
 
-function delay<T>(value: T, ms = LATENCY_MS): Promise<T> {
-  return new Promise((resolve) => setTimeout(() => resolve(value), ms));
+const NOT_FOUND = 404;
+
+function isNotFound(error: unknown): boolean {
+  return error instanceof ApiError && error.status === NOT_FOUND;
 }
 
-let enquiriesStore: Enquiry[] = [...ENQUIRIES];
-let clientsStore: ClientRecord[] = [...CLIENTS];
-let requestsStore: AdminRequest[] = [...ADMIN_REQUESTS];
-let pipelineStore: PipelineRecord[] = [...PIPELINE_RECORDS];
-let propertiesStore: AdminProperty[] = [...ADMIN_PROPERTIES];
-let valuationsStore: AdminValuation[] = [...ADMIN_VALUATIONS];
-let siteVisitsStore: AdminSiteVisit[] = [...ADMIN_SITE_VISITS];
-let jobsStore: AdminJob[] = [...ADMIN_JOBS];
-let renewalsStore: AdminRenewal[] = [...ADMIN_RENEWALS];
-let servicesStore: AdminService[] = [...ADMIN_SERVICES];
-let staffStore: Staff[] = [...STAFF];
+/* -------------------------------- Mapping -------------------------------- */
+
+interface ApiProperty {
+  id: string;
+  title: string;
+  listingType: "rent" | "sale";
+  location: string;
+  pincode: string;
+  price: number;
+  status: AdminPropertyStatus;
+  createdAt: string;
+}
+
+function toAdminProperty(raw: ApiProperty): AdminProperty {
+  return {
+    id: raw.id,
+    title: raw.title,
+    ownerName: "—",
+    location: raw.location,
+    pincode: raw.pincode,
+    listingType: raw.listingType === "rent" ? "Rent" : "Sale",
+    price: raw.price,
+    status: raw.status,
+    submittedAt: raw.createdAt,
+  };
+}
+
+interface ApiValuation {
+  id: string;
+  ownerName: string;
+  mobile: string;
+  propertyType: string;
+  location: string;
+  expectedPrice?: number;
+  status: AdminValuationStatus;
+  createdAt: string;
+}
+
+function toAdminValuation(raw: ApiValuation): AdminValuation {
+  return { ...raw, expectedPrice: raw.expectedPrice ?? 0 };
+}
+
+interface ApiSiteVisit {
+  id: string;
+  propertyTitle: string;
+  clientName: string;
+  mobile: string;
+  date: string;
+  slot: string;
+  status: AdminVisitStatus;
+  adviserId?: string | null;
+}
+
+function toAdminSiteVisit(raw: ApiSiteVisit): AdminSiteVisit {
+  return { ...raw, adviserId: raw.adviserId ?? null };
+}
+
+interface ApiJob {
+  id: string;
+  serviceName: string;
+  clientName?: string;
+  mobile: string;
+  address?: string;
+  status: string;
+  technicianId?: string | null;
+  scheduledAt?: string | null;
+  amount?: number;
+  rating?: number | null;
+}
+
+function toAdminJob(raw: ApiJob): AdminJob {
+  return {
+    id: raw.id,
+    serviceName: raw.serviceName,
+    clientName: raw.clientName || "Client",
+    mobile: raw.mobile,
+    address: raw.address || "—",
+    status: raw.status,
+    technicianId: raw.technicianId ?? null,
+    scheduledAt: raw.scheduledAt ?? null,
+    amount: raw.amount ?? 0,
+    rating: raw.rating ?? null,
+  };
+}
+
+interface ApiPipeline {
+  id: string;
+  module: string;
+  title: string;
+  clientName: string;
+  status: string;
+  assignedTo: string | null;
+  createdAt: string;
+  value?: number | string;
+}
+
+function toPipelineRecord(raw: ApiPipeline): PipelineRecord {
+  const value =
+    typeof raw.value === "number"
+      ? `₹${raw.value.toLocaleString("en-IN")}`
+      : raw.value;
+
+  return {
+    id: raw.id,
+    module: (raw.module as ServiceCategoryId) ?? "loans",
+    title: raw.title,
+    clientName: raw.clientName,
+    status: raw.status,
+    assignedTo: raw.assignedTo,
+    createdAt: raw.createdAt,
+    value,
+  };
+}
+
+/* --------------------------------- Auth ---------------------------------- */
+
+export function adminLogin(email: string, password: string): Promise<AdminSession> {
+  return api.post<AdminSession>("/admin/auth/login", { email, password });
+}
+
+/* ------------------------------- Enquiries ------------------------------- */
 
 export function fetchEnquiries(): Promise<Enquiry[]> {
-  return delay([...enquiriesStore]);
+  return api.get<Enquiry[]>("/admin/enquiries");
 }
 
-export function fetchEnquiry(id: string): Promise<Enquiry | null> {
-  return delay(enquiriesStore.find((e) => e.id === id) ?? null);
+export async function fetchEnquiry(id: string): Promise<Enquiry | null> {
+  try {
+    return await api.get<Enquiry>(`/admin/enquiries/${id}`);
+  } catch (error) {
+    if (isNotFound(error)) return null;
+    throw error;
+  }
 }
 
 export function updateEnquiryStatus(
   id: string,
   status: EnquiryStatus
 ): Promise<Enquiry | null> {
-  enquiriesStore = enquiriesStore.map((e) => (e.id === id ? { ...e, status } : e));
-  return delay(enquiriesStore.find((e) => e.id === id) ?? null);
+  return api.patch<Enquiry>(`/admin/enquiries/${id}`, { status });
 }
 
 export function assignEnquiry(
   id: string,
   staffId: string | null
 ): Promise<Enquiry | null> {
-  enquiriesStore = enquiriesStore.map((e) =>
-    e.id === id ? { ...e, assignedTo: staffId } : e
-  );
-  return delay(enquiriesStore.find((e) => e.id === id) ?? null);
+  return api.patch<Enquiry>(`/admin/enquiries/${id}`, { assignedTo: staffId });
 }
 
 export function addEnquiryNote(
   id: string,
-  author: string,
+  _author: string,
   text: string
 ): Promise<Enquiry | null> {
-  enquiriesStore = enquiriesStore.map((e) =>
-    e.id === id
-      ? {
-          ...e,
-          notes: [
-            ...e.notes,
-            {
-              id: `note-${Date.now()}`,
-              author,
-              text,
-              createdAt: new Date().toISOString().slice(0, 10),
-            },
-          ],
-        }
-      : e
-  );
-  return delay(enquiriesStore.find((e) => e.id === id) ?? null);
+  // The API derives the note author from the signed-in staff token.
+  return api.post<Enquiry>(`/admin/enquiries/${id}/notes`, { text });
 }
 
+/* -------------------------------- Clients -------------------------------- */
+
 export function fetchClients(): Promise<ClientRecord[]> {
-  return delay([...clientsStore]);
+  return api.get<ClientRecord[]>("/admin/clients");
 }
 
 export function fetchRequests(): Promise<AdminRequest[]> {
-  return delay([...requestsStore]);
+  return api.get<AdminRequest[]>("/admin/requests");
 }
 
+/* -------------------------------- Services ------------------------------- */
+
+let servicesStore: AdminService[] = [...ADMIN_SERVICES];
+
 export function fetchAdminServices(): Promise<AdminService[]> {
-  return delay([...servicesStore]);
+  return Promise.resolve([...servicesStore]);
 }
 
 export function updateServiceActive(
@@ -118,7 +219,7 @@ export function updateServiceActive(
   servicesStore = servicesStore.map((service) =>
     service.id === id ? { ...service, active } : service
   );
-  return delay(servicesStore.find((service) => service.id === id) ?? null);
+  return Promise.resolve(servicesStore.find((service) => service.id === id) ?? null);
 }
 
 export function updateServicePricing(
@@ -128,11 +229,13 @@ export function updateServicePricing(
   servicesStore = servicesStore.map((service) =>
     service.id === id ? { ...service, pricingLabel } : service
   );
-  return delay(servicesStore.find((service) => service.id === id) ?? null);
+  return Promise.resolve(servicesStore.find((service) => service.id === id) ?? null);
 }
 
+/* --------------------------------- Staff --------------------------------- */
+
 export function fetchStaff(): Promise<Staff[]> {
-  return delay([...staffStore]);
+  return api.get<Staff[]>("/admin/staff");
 }
 
 export interface StaffInput {
@@ -142,131 +245,137 @@ export interface StaffInput {
 }
 
 export function createStaff(input: StaffInput): Promise<Staff> {
-  const created: Staff = {
-    id: `st-${Date.now()}`,
-    name: input.name,
-    email: input.email,
-    role: input.role,
-    active: true,
-  };
-  staffStore = [...staffStore, created];
-  return delay(created);
+  return api.post<Staff>("/admin/staff", input);
 }
 
 export function updateStaff(
   id: string,
   input: Partial<Pick<Staff, "name" | "email" | "role" | "active">>
 ): Promise<Staff | null> {
-  staffStore = staffStore.map((member) =>
-    member.id === id ? { ...member, ...input } : member
-  );
-  return delay(staffStore.find((member) => member.id === id) ?? null);
+  return api.patch<Staff>(`/admin/staff/${id}`, input);
 }
 
-export function fetchPipeline(
+/* -------------------------------- Pipeline ------------------------------- */
+
+export async function fetchPipeline(
   module: ServiceCategoryId
 ): Promise<PipelineRecord[]> {
-  return delay(pipelineStore.filter((record) => record.module === module));
+  const records = await api.get<ApiPipeline[]>("/admin/pipeline", {
+    query: { module },
+  });
+  return records.map(toPipelineRecord);
 }
 
-export function updatePipelineStatus(
+export async function updatePipelineStatus(
   id: string,
   status: string
 ): Promise<PipelineRecord | null> {
-  pipelineStore = pipelineStore.map((record) =>
-    record.id === id ? { ...record, status } : record
-  );
-  return delay(pipelineStore.find((record) => record.id === id) ?? null);
+  const updated = await api.patch<ApiPipeline>(`/admin/pipeline/${id}`, { status });
+  return toPipelineRecord(updated);
 }
 
-export function fetchAdminProperties(): Promise<AdminProperty[]> {
-  return delay([...propertiesStore]);
+/* ------------------------------- Real estate ------------------------------ */
+
+export async function fetchAdminProperties(): Promise<AdminProperty[]> {
+  const properties = await api.get<ApiProperty[]>("/admin/properties");
+  return properties.map(toAdminProperty);
 }
 
-export function updatePropertyStatus(
+export async function updatePropertyStatus(
   id: string,
   status: AdminPropertyStatus
 ): Promise<AdminProperty | null> {
-  propertiesStore = propertiesStore.map((property) =>
-    property.id === id ? { ...property, status } : property
-  );
-  return delay(propertiesStore.find((property) => property.id === id) ?? null);
+  const updated = await api.patch<ApiProperty>(`/admin/properties/${id}`, { status });
+  return toAdminProperty(updated);
 }
 
-export function fetchAdminValuations(): Promise<AdminValuation[]> {
-  return delay([...valuationsStore]);
+export async function fetchAdminValuations(): Promise<AdminValuation[]> {
+  const valuations = await api.get<ApiValuation[]>("/admin/valuations");
+  return valuations.map(toAdminValuation);
 }
 
-export function updateValuationStatus(
+export async function updateValuationStatus(
   id: string,
   status: AdminValuationStatus
 ): Promise<AdminValuation | null> {
-  valuationsStore = valuationsStore.map((valuation) =>
-    valuation.id === id ? { ...valuation, status } : valuation
-  );
-  return delay(valuationsStore.find((valuation) => valuation.id === id) ?? null);
+  const updated = await api.patch<ApiValuation>(`/admin/valuations/${id}`, { status });
+  return toAdminValuation(updated);
 }
 
-export function fetchAdminSiteVisits(): Promise<AdminSiteVisit[]> {
-  return delay([...siteVisitsStore]);
+export async function fetchAdminSiteVisits(): Promise<AdminSiteVisit[]> {
+  const visits = await api.get<ApiSiteVisit[]>("/admin/site-visits");
+  return visits.map(toAdminSiteVisit);
 }
 
-export function updateSiteVisitStatus(
+export async function updateSiteVisitStatus(
   id: string,
   status: AdminVisitStatus
 ): Promise<AdminSiteVisit | null> {
-  siteVisitsStore = siteVisitsStore.map((visit) =>
-    visit.id === id ? { ...visit, status } : visit
-  );
-  return delay(siteVisitsStore.find((visit) => visit.id === id) ?? null);
+  const updated = await api.patch<ApiSiteVisit>(`/admin/site-visits/${id}`, { status });
+  return toAdminSiteVisit(updated);
 }
 
-export function assignSiteVisitAdviser(
+export async function assignSiteVisitAdviser(
   id: string,
   adviserId: string | null
 ): Promise<AdminSiteVisit | null> {
-  siteVisitsStore = siteVisitsStore.map((visit) =>
-    visit.id === id ? { ...visit, adviserId } : visit
-  );
-  return delay(siteVisitsStore.find((visit) => visit.id === id) ?? null);
+  const updated = await api.patch<ApiSiteVisit>(`/admin/site-visits/${id}`, {
+    adviserId,
+  });
+  return toAdminSiteVisit(updated);
 }
 
-export function fetchAdminJobs(): Promise<AdminJob[]> {
-  return delay([...jobsStore]);
+/* ----------------------------- Home services ----------------------------- */
+
+export async function fetchAdminJobs(): Promise<AdminJob[]> {
+  const jobs = await api.get<ApiJob[]>("/admin/jobs");
+  return jobs.map(toAdminJob);
 }
 
-export function assignJobTechnician(
+export async function assignJobTechnician(
   id: string,
   technicianId: string | null
 ): Promise<AdminJob | null> {
-  jobsStore = jobsStore.map((job) =>
-    job.id === id ? { ...job, technicianId } : job
-  );
-  return delay(jobsStore.find((job) => job.id === id) ?? null);
+  const updated = await api.patch<ApiJob>(`/admin/jobs/${id}`, { technicianId });
+  return toAdminJob(updated);
 }
 
-export function updateJobStatus(
+export async function updateJobStatus(
   id: string,
   status: string
 ): Promise<AdminJob | null> {
-  jobsStore = jobsStore.map((job) =>
-    job.id === id ? { ...job, status } : job
-  );
-  return delay(jobsStore.find((job) => job.id === id) ?? null);
+  const updated = await api.patch<ApiJob>(`/admin/jobs/${id}`, { status });
+  return toAdminJob(updated);
+}
+
+/* ------------------------------- Renewals -------------------------------- */
+
+interface ApiRenewal {
+  id: string;
+  clientName: string;
+  provider: string;
+  policyType: string;
+  policyNumber: string;
+  renewalDate: string;
+  premium: number;
+  reminderSent: boolean;
 }
 
 export function fetchAdminRenewals(): Promise<AdminRenewal[]> {
-  return delay([...renewalsStore]);
+  return api.get<ApiRenewal[]>("/admin/renewals");
 }
 
-export function sendRenewalReminder(
+export async function sendRenewalReminder(
   id: string
 ): Promise<AdminRenewal | null> {
-  renewalsStore = renewalsStore.map((renewal) =>
-    renewal.id === id ? { ...renewal, reminderSent: true } : renewal
+  await api.post<{ id: string; reminderSent: boolean }>(
+    `/admin/renewals/${id}/remind`
   );
-  return delay(renewalsStore.find((renewal) => renewal.id === id) ?? null);
+  const renewals = await fetchAdminRenewals();
+  return renewals.find((renewal) => renewal.id === id) ?? null;
 }
+
+/* --------------------------------- Stats --------------------------------- */
 
 export interface AdminStats {
   totalEnquiries: number;
@@ -279,25 +388,5 @@ export interface AdminStats {
 }
 
 export function fetchStats(): Promise<AdminStats> {
-  const byServiceMap = new Map<string, number>();
-  enquiriesStore.forEach((e) =>
-    byServiceMap.set(e.serviceCategory, (byServiceMap.get(e.serviceCategory) ?? 0) + 1)
-  );
-
-  const statuses: EnquiryStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
-  const stats: AdminStats = {
-    totalEnquiries: enquiriesStore.length,
-    newEnquiries: enquiriesStore.filter((e) => e.status === "new").length,
-    converted: enquiriesStore.filter((e) => e.status === "converted").length,
-    openRequests: requestsStore.filter(
-      (r) => r.status === "new" || r.status === "in_progress"
-    ).length,
-    completedRequests: requestsStore.filter((r) => r.status === "completed").length,
-    byService: Array.from(byServiceMap.entries()).map(([name, count]) => ({ name, count })),
-    byStatus: statuses.map((status) => ({
-      status,
-      count: enquiriesStore.filter((e) => e.status === status).length,
-    })),
-  };
-  return delay(stats);
+  return api.get<AdminStats>("/admin/stats");
 }

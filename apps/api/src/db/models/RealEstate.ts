@@ -16,7 +16,7 @@ export interface IPropertyListing extends Document {
   furnishing?: string;
   amenities: string[];
   images: string[];
-  status: "draft" | "active" | "sold" | "rented";
+  status: "draft" | "active" | "sold" | "rented" | "rejected";
   featured: boolean;
   createdAt: string;
 }
@@ -40,7 +40,7 @@ const PropertyListingSchema = new Schema<IPropertyListing>(
     images: { type: [String], default: [] },
     status: {
       type: String,
-      enum: ["draft", "active", "sold", "rented"],
+      enum: ["draft", "active", "sold", "rented", "rejected"],
       default: "draft",
       index: true,
     },

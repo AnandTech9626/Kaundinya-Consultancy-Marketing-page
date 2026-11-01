@@ -1,4 +1,4 @@
- export interface EnquiryPayload {
+export interface EnquiryPayload {
   fullName: string;
   email: string;
   mobile: string;
@@ -9,60 +9,96 @@
   consent: boolean;
 }
 
-export interface ApiResponse<T = any> {
+export interface OtpSendData {
+  expiresInSeconds: number;
+  devOtp?: string;
+}
+
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;
   isBackendConfigured: boolean;
+  status?: number;
+  errors?: Record<string, string>;
 }
 
-/**
- * Submit an enquiry to the configured backend API endpoint.
- * If PUBLIC_API_BASE_URL is not set or network fails, returns a truthful status
- * with alternative phone contact options.
- */
-export async function submitEnquiry(payload: EnquiryPayload): Promise<ApiResponse> {
-  const apiBaseUrl = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.PUBLIC_API_BASE_URL : '';
+function getApiBaseUrl(): string {
+  const raw =
+    typeof import.meta !== "undefined" && import.meta.env
+      ? import.meta.env.PUBLIC_API_BASE_URL
+      : "";
+  return typeof raw === "string" ? raw.replace(/\/$/, "") : "";
+}
+
+async function postJson<T>(
+  path: string,
+  body: unknown,
+): Promise<ApiResponse<T>> {
+  const apiBaseUrl = getApiBaseUrl();
 
   if (!apiBaseUrl) {
     return {
       success: false,
       isBackendConfigured: false,
-      message: "The online submission server is currently being connected. Please try again shortly or reach out through the enquiry form."
+      message:
+        "The online submission server is currently being connected. Please try again shortly or reach out through the enquiry form.",
     };
   }
 
   try {
-    const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/enquiries`, {
-      method: 'POST',
+    const response = await fetch(`${apiBaseUrl}${path}`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+    const payload = (await response.json().catch(() => null)) as
+      | {
+          success?: boolean;
+          message?: string;
+          data?: T;
+          errors?: Record<string, string>;
+        }
+      | null;
+
+    if (!response.ok || !payload?.success) {
       return {
         success: false,
         isBackendConfigured: true,
-        message: errorData.message || `Server responded with status ${response.status}. Please call our team directly.`
+        status: response.status,
+        message:
+          payload?.message ||
+          `Server responded with status ${response.status}. Please call our team directly.`,
+        errors: payload?.errors,
       };
     }
 
-    const data = await response.json();
     return {
       success: true,
       isBackendConfigured: true,
-      message: "Your inquiry has been received. Our team will contact you shortly.",
-      data
+      status: response.status,
+      message: payload.message || "OK",
+      data: payload.data,
     };
-  } catch (err: any) {
+  } catch {
     return {
       success: false,
       isBackendConfigured: true,
-      message: "Unable to reach the server. Please try again shortly."
+      message: "Unable to reach the server. Please try again shortly.",
     };
   }
+}
+
+export function submitEnquiry(
+  payload: EnquiryPayload,
+): Promise<ApiResponse<{ id: string }>> {
+  return postJson<{ id: string }>("/api/enquiries", payload);
+}
+
+export function sendOtp(mobile: string): Promise<ApiResponse<OtpSendData>> {
+  return postJson<OtpSendData>("/api/otp/send", { mobile });
 }

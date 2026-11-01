@@ -11,7 +11,6 @@ import {
   Wrench,
 } from "lucide-react";
 import {
-  Badge,
   Button,
   CalendarSlotPicker,
   Card,
@@ -24,23 +23,9 @@ import {
 } from "@kaundinya/ui";
 import type { SlotValue } from "@kaundinya/ui";
 import { SERVICE_CATALOG } from "@kaundinya/config";
-import type {
-  JobRecord,
-  MeasurementBooking,
-  ServiceCatalogItem,
-} from "@kaundinya/config";
+import type { JobRecord, MeasurementBooking } from "@kaundinya/config";
 import { bookMeasurement, createJob } from "../lib/mockApi";
 import { useAuth } from "../lib/auth";
-import { formatINR } from "../lib/formats";
-
-function pricingLabel(service: ServiceCatalogItem) {
-  if (!service.pricing) return "Custom quote";
-  const { model, amount, unit } = service.pricing;
-  if (model === "per-sqft" && amount) return `₹${amount}/${unit}`;
-  if (model === "fixed") return amount === 0 ? "Free" : `₹${amount}${unit ? `/${unit}` : ""}`;
-  if (model === "from") return `From ₹${amount}`;
-  return "Custom quote";
-}
 
 export function HomeServiceDetail() {
   const { serviceId } = useParams();
@@ -125,7 +110,6 @@ export function HomeServiceDetail() {
           pincode,
           date: slot.date,
           slot: slot.slot,
-          amount: service.pricing?.amount,
         });
         setCreatedJob(job);
       }
@@ -203,10 +187,12 @@ export function HomeServiceDetail() {
                   <h1 className="text-xl sm:text-2xl font-extrabold text-charcoal tracking-tight">
                     {service.name}
                   </h1>
-                  <Badge variant="gold">{pricingLabel(service)}</Badge>
                 </div>
                 <p className="text-sm text-muted leading-relaxed mt-1">
                   {service.summary}
+                </p>
+                <p className="mt-1 text-[11px] text-muted">
+                  Price is confirmed by our team after inspection.
                 </p>
               </div>
             </div>
@@ -241,11 +227,6 @@ export function HomeServiceDetail() {
                       <p className="text-xs font-extrabold text-charcoal">{tier.label}</p>
                       {tier.description && (
                         <p className="text-[11px] text-muted mt-0.5">{tier.description}</p>
-                      )}
-                      {tier.priceHint && (
-                        <p className="text-sm font-extrabold text-charcoal mt-2">
-                          {tier.priceHint}
-                        </p>
                       )}
                     </button>
                   ))}
@@ -401,7 +382,6 @@ export function HomeServiceDetail() {
                   {service.tiers.map((tier) => (
                     <option key={tier.id} value={tier.id}>
                       {tier.label}
-                      {tier.priceHint ? ` · ${tier.priceHint}` : ""}
                     </option>
                   ))}
                 </Select>
@@ -463,16 +443,6 @@ export function HomeServiceDetail() {
                 />
               </FormField>
             </div>
-
-            {!isMeasurement && service.pricing?.amount !== undefined && (
-              <p className="text-xs text-muted">
-                Indicative amount:{" "}
-                <span className="font-bold text-charcoal">
-                  {formatINR(service.pricing.amount)}
-                </span>
-                {service.pricing.note ? ` · ${service.pricing.note}` : ""}
-              </p>
-            )}
 
             {error && <p className="text-[11px] text-rose-600">{error}</p>}
 

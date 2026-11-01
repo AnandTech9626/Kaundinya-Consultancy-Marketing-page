@@ -7,15 +7,17 @@ import { fetchEnquiries } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { ENQUIRY_STATUS, ENQUIRY_STATUS_ORDER, PRIORITY } from "../lib/status";
 import { formatDate, formatMobile } from "../lib/formats";
-import { STAFF } from "../lib/mockData";
+import { useStaff } from "../lib/staff";
 
 export function Enquiries() {
   const { data, loading, error, refetch } = useAsync(fetchEnquiries);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<EnquiryStatus | "all">("all");
 
+  const staff = useStaff();
+
   const staffName = (id: string | null) =>
-    id ? STAFF.find((s) => s.id === id)?.name ?? "—" : "Unassigned";
+    id ? staff.find((s) => s.id === id)?.name ?? "—" : "Unassigned";
 
   const filtered = useMemo(() => {
     const list = data ?? [];

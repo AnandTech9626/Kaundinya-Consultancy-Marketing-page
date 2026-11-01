@@ -1,46 +1,105 @@
 import {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
 import type { User } from "@kaundinya/config";
-
-const STORAGE_KEY = "kaundinya.user";
+import { api, ApiError } from "./api";
+import {
+  clearSession,
+  readSession,
+  writeRememberedMobile,
+  writeSession,
+  type Session,
+} from "./session";
 
 interface AuthContextValue {
   user: User | null;
-  login: (user: User) => void;
+  token: string | null;
+  ready: boolean;
+  login: (session: Session) => void;
+  updateUser: (user: User) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as User) : null;
-    } catch {
-      return null;
+  const [session, setSession] = useState<Session | null>(() => readSession());
+  const [ready, setReady] = useState(false);
+
+  const login = useCallback((next: Session) => {
+    writeSession(next);
+    setSession(next);
+  }, []);
+
+  const updateUser = useCallback((user: User) => {
+    setSession((current) => {
+      if (!current) return current;
+      const next = { ...current, user };
+      writeSession(next);
+      return next;
+    });
+  }, []);
+
+  const logout = useCallback(() => {
+    if (session?.token) {
+      void api.post("/auth/logout").catch(() => undefined);
     }
-  });
+    clearSession();
+    setSession(null);
+  }, [session?.token]);
 
-  const login = (next: User) => {
-    setUser(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  };
+  useEffect(() => {
+    const token = session?.token;
+    if (!token) {
+      setReady(true);
+      return;
+    }
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
-  };
+    let cancelled = false;
+    (async () => {
+      try {
+        const me = await api.get<User>("/me");
+        if (cancelled) return;
+        updateUser(me);
+        writeRememberedMobile(me.mobile);
+      } catch (err) {
+        if (cancelled) return;
+        // Network hiccups should not hold the app on the loader; keep the
+        // cached session. A true 401 is handled by the API client.
+        if (err instanceof ApiError && err.status === 401) {
+          clearSession();
+          setSession(null);
+        }
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    })();
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user: session?.user ?? null,
+      token: session?.token ?? null,
+      ready,
+      login,
+      updateUser,
+      logout,
+    }),
+    [session, ready, login, updateUser, logout],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

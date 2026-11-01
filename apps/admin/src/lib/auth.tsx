@@ -1,41 +1,57 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import type { Staff } from "@kaundinya/config";
-
-const STORAGE_KEY = "kaundinya.admin";
+import { api } from "./api";
+import {
+  clearAdminSession,
+  readAdminSession,
+  writeAdminSession,
+  type AdminSession,
+} from "./session";
 
 interface AuthContextValue {
   staff: Staff | null;
-  login: (staff: Staff) => void;
+  token: string | null;
+  login: (session: AdminSession) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [staff, setStaff] = useState<Staff | null>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as Staff) : null;
-    } catch {
-      return null;
+  const [session, setSession] = useState<AdminSession | null>(() => readAdminSession());
+
+  const login = useCallback((next: AdminSession) => {
+    writeAdminSession(next);
+    setSession(next);
+  }, []);
+
+  const logout = useCallback(() => {
+    const token = session?.token;
+    clearAdminSession();
+    setSession(null);
+    if (token) {
+      void api.post("/auth/logout").catch(() => undefined);
     }
-  });
+  }, [session?.token]);
 
-  const login = (next: Staff) => {
-    setStaff(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  };
-
-  const logout = () => {
-    setStaff(null);
-    localStorage.removeItem(STORAGE_KEY);
-  };
-
-  return (
-    <AuthContext.Provider value={{ staff, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      staff: session?.staff ?? null,
+      token: session?.token ?? null,
+      login,
+      logout,
+    }),
+    [session, login, logout]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

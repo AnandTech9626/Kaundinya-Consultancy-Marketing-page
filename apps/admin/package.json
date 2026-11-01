@@ -15,6 +15,7 @@
     "deploy": "vite build && wrangler deploy"
   },
   "dependencies": {
+    "@kaundinya/api-client": "*",
     "@kaundinya/config": "*",
     "@kaundinya/tokens": "*",
     "@kaundinya/ui": "*",

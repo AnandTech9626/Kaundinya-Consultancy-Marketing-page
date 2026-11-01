@@ -7,6 +7,7 @@ export interface IStaff extends Document {
   email: string;
   role: StaffRole;
   active: boolean;
+  passwordHash?: string;
 }
 
 const StaffSchema = new Schema<IStaff>(
@@ -16,6 +17,7 @@ const StaffSchema = new Schema<IStaff>(
     email: { type: String, required: true, unique: true },
     role: { type: String, enum: ["admin", "agent"], default: "agent" },
     active: { type: Boolean, default: true },
+    passwordHash: { type: String, default: "", select: false },
   },
   {
     timestamps: true,
