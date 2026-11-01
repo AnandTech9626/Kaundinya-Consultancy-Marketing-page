@@ -148,22 +148,58 @@ export interface PropertyFilters {
   listingType?: "rent" | "sale" | "all";
   bhk?: string;
   location?: string;
-  maxBudget?: number;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
-export async function fetchProperties(
-  filters: PropertyFilters = {}
-): Promise<PropertyListing[]> {
+function propertyQuery(filters: PropertyFilters) {
   const query: Record<string, string | number> = {};
   if (filters.listingType && filters.listingType !== "all") {
     query.listingType = filters.listingType;
   }
   if (filters.bhk) query.bhk = filters.bhk;
   if (filters.location) query.location = filters.location;
-  if (filters.maxBudget) query.budgetMax = filters.maxBudget;
+  if (filters.minPrice) query.minPrice = filters.minPrice;
+  if (filters.maxPrice) query.maxPrice = filters.maxPrice;
+  return query;
+}
 
-  const list = await api.get<PropertyListing[]>("/properties", { query });
+async function fetchPropertyList(
+  path: string,
+  filters: PropertyFilters = {},
+): Promise<PropertyListing[]> {
+  const list = await api.get<PropertyListing[]>(path, {
+    query: propertyQuery(filters),
+  });
   return list.map(toProperty);
+}
+
+export function fetchProperties(
+  filters: PropertyFilters = {},
+): Promise<PropertyListing[]> {
+  return fetchPropertyList("/properties", filters);
+}
+
+export function fetchBuyProperties(
+  filters: PropertyFilters = {},
+): Promise<PropertyListing[]> {
+  return fetchPropertyList("/properties/buy", filters);
+}
+
+export function fetchRentProperties(
+  filters: PropertyFilters = {},
+): Promise<PropertyListing[]> {
+  return fetchPropertyList("/properties/rent", filters);
+}
+
+export function fetchSaleProperties(
+  filters: PropertyFilters = {},
+): Promise<PropertyListing[]> {
+  return fetchPropertyList("/properties/sale", filters);
+}
+
+export function fetchMyProperties(): Promise<PropertyListing[]> {
+  return api.get<PropertyListing[]>("/properties/mine").then((list) => list.map(toProperty));
 }
 
 export async function fetchProperty(id: string): Promise<PropertyListing | null> {
@@ -220,14 +256,33 @@ export interface SubmitListingInput {
   furnishing?: string;
   amenities: string[];
   images?: string[];
+  files?: File[];
 }
 
 export async function submitListing(input: SubmitListingInput): Promise<PropertyListing> {
-  const created = await api.post<PropertyListing>("/properties", {
-    ...input,
+  const { files, ...payload } = input;
+  const path =
+    payload.listingType === "rent" ? "/properties/rent-out" : "/properties/sell";
+  const created = await api.post<PropertyListing>(path, {
+    ...payload,
     images: input.images ?? [],
   });
-  return toProperty(created);
+
+  let property = toProperty(created);
+
+  if (files && files.length > 0) {
+    const form = new FormData();
+    for (const file of files) {
+      form.append("photos", file);
+    }
+    const assets = await api.postForm<Array<{ url: string }>>(
+      `/properties/${property.id}/photos`,
+      form,
+    );
+    property = { ...property, images: assets.map((asset) => asset.url) };
+  }
+
+  return property;
 }
 
 export function fetchValuations(): Promise<ValuationRequest[]> {
@@ -247,6 +302,7 @@ export interface BookValuationInput {
 export function bookValuation(input: BookValuationInput): Promise<ValuationRequest> {
   return api.post<ValuationRequest>("/valuations", {
     ownerName: input.ownerName,
+    mobile: input.mobile,
     propertyType: input.propertyType,
     location: input.location,
     pincode: input.pincode,
@@ -334,12 +390,16 @@ export interface BookMeasurementInput {
   pincode: string;
   date: string;
   slot: string;
+  notes?: string;
 }
 
 export function bookMeasurement(
   input: BookMeasurementInput
 ): Promise<MeasurementBooking> {
-  return api.post<MeasurementBooking>("/home-services/measurements", input);
+  return api.post<MeasurementBooking>("/home-services/measurements", {
+    ...input,
+    notes: input.notes,
+  });
 }
 
 export async function fetchJobs(): Promise<JobRecord[]> {
@@ -361,10 +421,11 @@ export interface CreateJobInput {
   serviceName: string;
   issueTypes: string[];
   address: string;
-  pincode: string;
+  pincode?: string;
   date?: string;
   slot?: string;
   amount?: number;
+  notes?: string;
 }
 
 export async function createJob(input: CreateJobInput): Promise<JobRecord> {
@@ -372,10 +433,12 @@ export async function createJob(input: CreateJobInput): Promise<JobRecord> {
     serviceId: input.serviceId,
     serviceName: input.serviceName,
     issueTypes: input.issueTypes,
-    address: [input.address, input.pincode].filter(Boolean).join(", "),
+    address: input.address,
+    pincode: input.pincode,
     date: input.date,
     slot: input.slot,
     amount: input.amount,
+    notes: input.notes,
   });
   return toJob(created);
 }
@@ -407,11 +470,14 @@ export function fetchDocuments(): Promise<DocumentRecord[]> {
 
 export interface UploadDocumentInput {
   docType: string;
-  fileName: string;
+  file: File;
 }
 
 export function uploadDocument(input: UploadDocumentInput): Promise<DocumentRecord> {
-  return api.post<DocumentRecord>("/documents", input);
+  const form = new FormData();
+  form.append("docType", input.docType);
+  form.append("file", input.file);
+  return api.postForm<DocumentRecord>("/documents", form);
 }
 
 export async function fetchPrintJobs(): Promise<PrintJob[]> {
@@ -420,12 +486,17 @@ export async function fetchPrintJobs(): Promise<PrintJob[]> {
 }
 
 export interface CreatePrintJobInput {
-  fileName: string;
+  file: File;
   copies: number;
 }
 
 export async function createPrintJob(input: CreatePrintJobInput): Promise<PrintJob> {
-  return toPrintJob(await api.post<PrintJob>("/printouts", input));
+  const form = new FormData();
+  form.append("copies", String(input.copies));
+  form.append("file", input.file);
+  return toPrintJob(
+    await api.postForm<PrintJob>("/printouts", form),
+  );
 }
 
 export function fetchInteriorConsultations(): Promise<InteriorConsultation[]> {
@@ -445,6 +516,7 @@ export function createInteriorConsultation(
 ): Promise<InteriorConsultation> {
   return api.post<InteriorConsultation>("/interiors/consultations", {
     name: input.name,
+    mobile: input.mobile,
     style: input.style,
     budget: input.budget,
     notes: input.notes,
@@ -550,4 +622,61 @@ export interface UpdateProfileInput {
 
 export function updateProfile(input: UpdateProfileInput): Promise<User> {
   return api.patch<User>("/me", input);
+}
+
+export interface LoginMethod {
+  exists: boolean;
+  hasPin: boolean;
+  profileComplete: boolean;
+}
+
+export function checkLoginMethod(mobile: string): Promise<LoginMethod> {
+  return api.post<LoginMethod>("/auth/login-method", { mobile });
+}
+
+export function pinLogin(
+  mobile: string,
+  pin: string
+): Promise<OtpVerifyResult> {
+  return api.post<OtpVerifyResult>("/auth/pin/login", { mobile, pin });
+}
+
+export function setPin(pin: string, currentPin?: string): Promise<User> {
+  return api.post<User>("/auth/pin/set", { pin, currentPin });
+}
+
+export function changePin(currentPin: string, newPin: string): Promise<User> {
+  return api.post<User>("/auth/pin/change", { currentPin, newPin });
+}
+
+/* --------------------------- Unified requests --------------------------- */
+
+export interface MyRequestItem {
+  id: string;
+  reference: string;
+  title: string;
+  module: "Real Estate" | "Home Services";
+  status: string;
+  statusLabel: string;
+  createdAt: string;
+  href: string;
+}
+
+export interface MyRequestsPage {
+  items: MyRequestItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export function fetchMyRequests(
+  params: {
+    module?: string;
+    status?: string;
+    q?: string;
+    page?: number;
+    limit?: number;
+  } = {}
+): Promise<MyRequestsPage> {
+  return api.get<MyRequestsPage>("/my/requests", { query: params });
 }

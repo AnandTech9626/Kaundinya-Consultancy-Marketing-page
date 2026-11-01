@@ -1,25 +1,43 @@
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  ArrowRight,
+  CheckCircle2,
   ClipboardList,
   Loader2,
-  CheckCircle2,
-  Sparkles,
-  ArrowRight,
+  Search,
 } from "lucide-react";
 import { Badge, Card, Skeleton, StatCard } from "@kaundinya/ui";
+import type { BadgeVariant } from "@kaundinya/ui";
 import { MODULE_META, type ServiceCategoryId } from "@kaundinya/config";
 import { useAuth } from "../lib/auth";
-import { fetchRequests } from "../lib/mockApi";
+import { fetchMyRequests, type MyRequestItem } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
-import { STATUS_META } from "../lib/status";
+import { formatDate } from "../lib/formats";
 import { getServiceIcon } from "../lib/icons";
 
 const QUICK_MODULES: { id: ServiceCategoryId; to: string }[] = [
   { id: "real-estate", to: "/real-estate" },
-  { id: "insurance", to: "/insurance" },
   { id: "property-home-services", to: "/home-services" },
-  { id: "loans", to: "/loans" },
 ];
+
+const IN_PROGRESS = new Set([
+  "assigned",
+  "en_route",
+  "in_progress",
+  "scheduled",
+  "contacted",
+  "confirmed",
+]);
+const NEW = new Set(["requested", "draft"]);
+
+function statusVariant(status: string): BadgeVariant {
+  if (status === "completed" || status === "active") return "success";
+  if (status === "cancelled") return "danger";
+  if (status === "requested" || status === "draft") return "warning";
+  if (status === "sold" || status === "rented") return "neutral";
+  return "info";
+}
 
 function DashboardSkeleton() {
   return (
@@ -32,50 +50,68 @@ function DashboardSkeleton() {
           </Card>
         ))}
       </div>
-      <div className="space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Card key={i} className="p-5">
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="h-3 w-32 mt-2" />
-          </Card>
+      <Card className="p-5 space-y-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
         ))}
-      </div>
+      </Card>
     </div>
   );
 }
 
 export function Dashboard() {
   const { user } = useAuth();
-  const { data, loading, error, refetch } = useAsync(fetchRequests);
-  const requests = data ?? [];
+  const { data, loading, error, refetch } = useAsync(
+    () => fetchMyRequests({ limit: 50 }),
+    [],
+  );
 
-  const total = requests.length;
-  const inProgress = requests.filter((r) => r.status === "in_progress").length;
-  const completed = requests.filter((r) => r.status === "completed").length;
-  const newCount = requests.filter((r) => r.status === "new").length;
-  const recent = requests.slice(0, 4);
+  const [module, setModule] = useState<"" | "Real Estate" | "Home Services">(
+    "",
+  );
+  const [status, setStatus] = useState("");
+  const [search, setSearch] = useState("");
+
+  const all = data?.items ?? [];
+
+  const statuses = useMemo(
+    () => Array.from(new Set(all.map((item) => item.status))).sort(),
+    [all],
+  );
+
+  const filtered = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return all.filter((item) => {
+      if (module && item.module !== module) return false;
+      if (status && item.status !== status) return false;
+      if (!needle) return true;
+      return (
+        item.title.toLowerCase().includes(needle) ||
+        item.reference.toLowerCase().includes(needle) ||
+        item.statusLabel.toLowerCase().includes(needle)
+      );
+    });
+  }, [all, module, status, search]);
+
+  const total = all.length;
+  const newCount = all.filter((item) => NEW.has(item.status)).length;
+  const inProgress = all.filter((item) =>
+    IN_PROGRESS.has(item.status),
+  ).length;
+  const completed = all.filter((item) => item.status === "completed").length;
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
-            Welcome back, {user?.name?.split(" ")[0] ?? "there"} 👋
-          </h1>
-          <p className="text-muted mt-1">
-            Track your service requests and discover what we can help you with.
-          </p>
-        </div>
-        <Link
-          to="/services"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold shadow-md transition-colors"
-        >
-          <Sparkles className="w-4 h-4" />
-          Request a Service
-        </Link>
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
+          Welcome back, {user?.name?.split(" ")[0] ?? "there"}
+        </h1>
+        <p className="text-muted mt-1">
+          Track your Real Estate and Home Services requests in one place.
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {QUICK_MODULES.map(({ id, to }) => {
           const meta = MODULE_META[id];
           const Icon = getServiceIcon(meta.icon);
@@ -85,7 +121,9 @@ export function Dashboard() {
                 <div className="w-9 h-9 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center">
                   <Icon className="w-4 h-4" />
                 </div>
-                <p className="text-sm font-extrabold text-charcoal">{meta.shortName}</p>
+                <p className="text-sm font-extrabold text-charcoal">
+                  {meta.shortName}
+                </p>
                 <p className="text-[11px] text-muted leading-relaxed line-clamp-2">
                   {meta.description}
                 </p>
@@ -109,61 +147,164 @@ export function Dashboard() {
         <DashboardSkeleton />
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Total Requests" value={total} icon={<ClipboardList className="w-5 h-5" />} />
-            <StatCard label="In Progress" value={inProgress} icon={<Loader2 className="w-5 h-5" />} />
-            <StatCard label="Completed" value={completed} icon={<CheckCircle2 className="w-5 h-5" />} />
-            <StatCard label="New" value={newCount} icon={<Sparkles className="w-5 h-5" />} />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard
+              label="Total Requests"
+              value={total}
+              icon={<ClipboardList className="w-5 h-5" />}
+            />
+            <StatCard
+              label="New"
+              value={newCount}
+              icon={<ClipboardList className="w-5 h-5" />}
+            />
+            <StatCard
+              label="In Progress"
+              value={inProgress}
+              icon={<Loader2 className="w-5 h-5" />}
+            />
+            <StatCard
+              label="Completed"
+              value={completed}
+              icon={<CheckCircle2 className="w-5 h-5" />}
+            />
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-extrabold text-charcoal tracking-tight">
-                Recent Requests
-              </h2>
-              {requests.length > 0 && (
-                <Link
-                  to="/requests"
-                  className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover"
+          <section className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-xl font-extrabold text-charcoal tracking-tight">
+                  All requests
+                </h2>
+                <p className="text-[11px] text-muted">
+                  Real Estate and Home Services, newest first.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <div className="flex rounded-lg border border-border-subtle bg-white p-1">
+                  {(["", "Real Estate", "Home Services"] as const).map(
+                    (option) => (
+                      <button
+                        key={option || "all"}
+                        type="button"
+                        onClick={() => setModule(option)}
+                        className={`rounded-md px-3 py-1.5 text-[11px] font-bold transition-colors cursor-pointer ${
+                          module === option
+                            ? "bg-charcoal text-white"
+                            : "text-muted hover:text-charcoal"
+                        }`}
+                      >
+                        {option || "All"}
+                      </button>
+                    ),
+                  )}
+                </div>
+                <select
+                  value={status}
+                  onChange={(event) => setStatus(event.target.value)}
+                  className="rounded-lg border border-border-subtle bg-white px-3 py-1.5 text-[11px] font-bold text-charcoal outline-none focus:border-gold"
                 >
-                  View all
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              )}
+                  <option value="">All statuses</option>
+                  {statuses.map((option) => (
+                    <option key={option} value={option}>
+                      {option.replace(/_/g, " ")}
+                    </option>
+                  ))}
+                </select>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search"
+                    className="w-36 rounded-lg border border-border-subtle bg-white py-1.5 pl-8 pr-3 text-[11px] text-charcoal outline-none focus:border-gold"
+                  />
+                </div>
+              </div>
             </div>
 
-            {recent.length === 0 ? (
+            {filtered.length === 0 ? (
               <Card className="p-10 text-center space-y-3">
-                <p className="text-sm font-bold text-charcoal">No requests yet</p>
-                <p className="text-sm text-muted max-w-sm mx-auto">
-                  You haven't submitted any service requests. Explore our services to get started.
+                <p className="text-sm font-bold text-charcoal">
+                  No requests found
                 </p>
-                <Link
-                  to="/services"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Request your first service
-                </Link>
+                <p className="text-sm text-muted max-w-sm mx-auto">
+                  Requests you raise in Real Estate or Home Services will appear
+                  here.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <Link
+                    to="/real-estate"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold"
+                  >
+                    Real Estate
+                  </Link>
+                  <Link
+                    to="/home-services"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border-subtle bg-white text-charcoal text-sm font-bold hover:border-gold/60"
+                  >
+                    Home Services
+                  </Link>
+                </div>
               </Card>
             ) : (
-              <div className="space-y-3">
-                {recent.map((req) => (
-                  <Card key={req.id} className="p-4 sm:p-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div className="space-y-1">
-                        <p className="text-sm font-bold text-charcoal">{req.specificService}</p>
-                        <p className="text-xs text-muted">{req.serviceCategory}</p>
-                      </div>
-                      <Badge variant={STATUS_META[req.status].badge}>
-                        {STATUS_META[req.status].label}
-                      </Badge>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+              <Card className="overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[760px] text-sm">
+                    <thead>
+                      <tr className="border-b border-border-subtle bg-ivory text-left text-[10px] font-bold uppercase tracking-wider text-muted">
+                        <th className="px-4 py-3">Reference</th>
+                        <th className="px-4 py-3">Request</th>
+                        <th className="px-4 py-3">Module</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Date</th>
+                        <th className="px-4 py-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((item: MyRequestItem) => (
+                        <tr
+                          key={`${item.module}-${item.id}`}
+                          className="border-b border-border-subtle last:border-b-0 hover:bg-ivory/60"
+                        >
+                          <td className="px-4 py-3 text-[11px] font-bold text-muted">
+                            {item.reference}
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="font-bold text-charcoal">
+                              {item.title}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="rounded-full bg-ivory px-2 py-0.5 text-[10px] font-bold text-charcoal-light">
+                              {item.module}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant={statusVariant(item.status)}>
+                              {item.statusLabel}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-[11px] text-muted">
+                            {formatDate(item.createdAt)}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <Link
+                              to={item.href}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-gold hover:text-gold-hover"
+                            >
+                              View
+                              <ArrowRight className="w-3 h-3" />
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
             )}
-          </div>
+          </section>
         </>
       )}
     </div>

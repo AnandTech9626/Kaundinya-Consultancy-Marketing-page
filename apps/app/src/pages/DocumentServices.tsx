@@ -37,7 +37,7 @@ export function DocumentServices() {
     try {
       const created = await uploadDocument({
         docType,
-        fileName: files[0].name,
+        file: files[0],
       });
       setFiles([]);
       setSuccess(

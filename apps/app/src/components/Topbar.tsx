@@ -1,12 +1,15 @@
-import { Menu } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { useNotifications } from "../lib/notifications";
 
 interface TopbarProps {
   onMenuClick: () => void;
+  onProfileClick: () => void;
 }
 
-export function Topbar({ onMenuClick }: TopbarProps) {
+export function Topbar({ onMenuClick, onProfileClick }: TopbarProps) {
   const { user } = useAuth();
+  const { unreadCount, openPanel } = useNotifications();
   const initial = user?.name?.trim().charAt(0).toUpperCase() || "K";
 
   return (
@@ -28,13 +31,35 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
+        <button
+          type="button"
+          onClick={openPanel}
+          aria-label={
+            unreadCount > 0
+              ? `${unreadCount} unread notifications`
+              : "Notifications"
+          }
+          className="relative rounded-lg p-2 text-charcoal transition-colors hover:bg-ivory cursor-pointer"
+        >
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-extrabold text-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </button>
         <div className="text-right hidden sm:block">
           <p className="text-sm font-semibold text-charcoal">{user?.name}</p>
           <p className="text-[11px] text-muted">+91 {user?.mobile}</p>
         </div>
-        <div className="w-9 h-9 rounded-full bg-gold text-charcoal font-bold flex items-center justify-center">
+        <button
+          type="button"
+          onClick={onProfileClick}
+          aria-label="Open profile"
+          className="w-9 h-9 rounded-full bg-gold text-charcoal font-bold flex items-center justify-center transition-shadow hover:ring-2 hover:ring-gold/50 cursor-pointer"
+        >
           {initial}
-        </div>
+        </button>
       </div>
     </header>
   );

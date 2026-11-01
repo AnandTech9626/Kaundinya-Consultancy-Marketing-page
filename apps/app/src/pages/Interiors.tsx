@@ -28,7 +28,7 @@ const PORTFOLIO = [
 ];
 
 const STYLES = ["Warm minimal", "Contemporary", "Traditional", "Industrial", "Scandi"];
-const BUDGETS = ["Under ₹5 L", "₹5–8 L", "₹8–12 L", "₹12–20 L", "₹20 L+"];
+const BUDGETS = ["Essential", "Mid-range", "Premium", "Luxury", "Not sure yet"];
 
 export function Interiors() {
   const { user } = useAuth();

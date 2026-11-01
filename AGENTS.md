@@ -71,3 +71,7 @@ Consult these guides before working on related tasks:
 - [Adding or managing content](https://docs.astro.build/en/guides/content-collections/)
 - [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
 - [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)
+
+## Latest session handoff (2026-11-01)
+For current repo state, servers, test accounts, SSE, staff auth, and the deployment/commit plan, read:
+`C:\Users\Sagar Babu\kaundinya-backend\AGENTS.md`

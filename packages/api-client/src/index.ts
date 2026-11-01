@@ -113,6 +113,51 @@ export function createApiClient(options: ApiClientOptions) {
     return (payload ? payload.data : undefined) as T;
   }
 
+  async function requestForm<T>(path: string, formData: FormData): Promise<T> {
+    const url = buildUrl(baseUrl, apiPath, path);
+    const headers: Record<string, string> = { Accept: "application/json" };
+    const token = options.getToken?.();
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    let response: Response;
+    try {
+      response = await fetchImpl(url, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+    } catch {
+      throw new ApiError(
+        0,
+        "Unable to reach the server. Check your connection and try again.",
+      );
+    }
+
+    if (response.status === 401) options.onUnauthorized?.();
+
+    if (response.status === 204) return undefined as T;
+
+    const text = await response.text();
+    let payload: Envelope<T> | null = null;
+    if (text) {
+      try {
+        payload = JSON.parse(text) as Envelope<T>;
+      } catch {
+        payload = null;
+      }
+    }
+
+    if (!response.ok || payload?.success === false) {
+      throw new ApiError(
+        response.status,
+        payload?.message || `Request failed (${response.status})`,
+        payload?.errors,
+      );
+    }
+
+    return (payload ? payload.data : undefined) as T;
+  }
+
   return {
     get: <T>(path: string, requestOptions?: RequestOptions) =>
       request<T>("GET", path, undefined, requestOptions),
@@ -122,6 +167,8 @@ export function createApiClient(options: ApiClientOptions) {
       request<T>("PATCH", path, body, requestOptions),
     delete: <T>(path: string, requestOptions?: RequestOptions) =>
       request<T>("DELETE", path, undefined, requestOptions),
+    postForm: <T>(path: string, formData: FormData) =>
+      requestForm<T>(path, formData),
   };
 }
 

@@ -40,7 +40,7 @@ export function Printouts() {
     setSubmitError(null);
     try {
       const job = await createPrintJob({
-        fileName: files[0].name,
+        file: files[0],
         copies: copyCount,
       });
       setCreated(job);

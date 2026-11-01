@@ -36,3 +36,6 @@ cloudflare.local.env
 # local preview/dev logs
 preview.log
 app-dev.log
+
+# local Neon usage tracker (not committed)
+neon-tracker.md

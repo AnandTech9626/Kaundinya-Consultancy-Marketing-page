@@ -32,6 +32,7 @@ const JOB_BADGE: Record<string, BadgeVariant> = {
   en_route: "warning",
   in_progress: "info",
   completed: "success",
+  cancelled: "danger",
 };
 
 export function JobDetail() {
@@ -51,11 +52,11 @@ export function JobDetail() {
 
   const backLink = (
     <Link
-      to="/jobs"
+      to="/dashboard"
       className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover"
     >
       <ArrowLeft className="w-4 h-4" />
-      Back to jobs
+      Back to dashboard
     </Link>
   );
 
@@ -252,6 +253,10 @@ export function JobDetail() {
           {job.status === "completed" ? (
             <p className="text-xs text-muted">
               This job is complete. The Start-Job OTP is no longer active.
+            </p>
+          ) : job.status === "cancelled" ? (
+            <p className="text-xs text-muted">
+              This request was cancelled. The Start-Job OTP is no longer active.
             </p>
           ) : displayOtp ? (
             <>

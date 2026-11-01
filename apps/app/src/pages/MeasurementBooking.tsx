@@ -114,10 +114,10 @@ export function MeasurementBooking() {
             </p>
           </div>
           <Link
-            to="/jobs"
+            to="/dashboard"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold"
           >
-            View measurement visits
+            View on dashboard
           </Link>
         </Card>
       </div>
@@ -152,7 +152,6 @@ export function MeasurementBooking() {
                 {MEASURE_SERVICES.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name}
-                    {item.pricing?.amount ? ` · ₹${item.pricing.amount}/sq.ft` : ""}
                   </option>
                 ))}
               </Select>

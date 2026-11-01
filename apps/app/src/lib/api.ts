@@ -6,6 +6,8 @@ const baseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:3000").r
   ""
 );
 
+export const apiBaseUrl = baseUrl;
+
 export const api = createApiClient({
   baseUrl,
   getToken: readToken,
