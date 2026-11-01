@@ -1,7 +1,0 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../lib/auth";
-
-export function ProtectedRoute() {
-  const { staff } = useAuth();
-  return staff ? <Outlet /> : <Navigate to="/login" replace />;
-}
