@@ -10,6 +10,11 @@ export interface User {
   name: string;
   email: string;
   mobile: string;
+  pinCode?: string | null;
+  clientCode?: string | null;
+  profileComplete?: boolean;
+  hasPin?: boolean;
+  memberSince?: string;
 }
 
 export interface ServiceCategory {
@@ -50,6 +55,7 @@ export interface AppNotification {
   read: boolean;
   kind?: NotificationKind;
   href?: string;
+  clientCode?: string | null;
 }
 
 /* ----------------------------- Admin panel ----------------------------- */

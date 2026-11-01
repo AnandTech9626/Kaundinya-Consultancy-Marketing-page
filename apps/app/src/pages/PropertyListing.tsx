@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Info } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { ArrowLeft, CheckCircle2, Circle, Info } from "lucide-react";
 import {
   Card,
   FileDropzone,
@@ -29,7 +29,10 @@ const BHK_OPTIONS = ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "Plot", "Office"];
 const FURNISHING = ["Unfurnished", "Semi-furnished", "Fully furnished"];
 
 export function PropertyListing() {
-  const [intent, setIntent] = useState<"rent" | "sale">("sale");
+  const [params] = useSearchParams();
+  const [intent, setIntent] = useState<"rent" | "sale">(
+    params.get("intent") === "rent" ? "rent" : "sale",
+  );
   const [title, setTitle] = useState("");
   const [propertyType, setPropertyType] =
     useState<PropertyListing["propertyType"]>("Apartment");
@@ -83,7 +86,8 @@ export function PropertyListing() {
         areaSqft: numericArea,
         furnishing,
         amenities,
-        images: files[0] ? [URL.createObjectURL(files[0])] : undefined,
+        images: [],
+        files,
       });
       setCreated(listing);
     } catch {
@@ -210,12 +214,22 @@ export function PropertyListing() {
                     ))}
                   </div>
 
-                  <FormField label="Listing title" htmlFor="listing-title" required>
+                  <FormField
+                    label="Listing title"
+                    htmlFor="listing-title"
+                    required
+                    error={
+                      title.length > 0 && title.trim().length < 6
+                        ? "Use at least 6 characters, e.g. “3 BHK in Gachibowli”."
+                        : undefined
+                    }
+                  >
                     <Input
                       id="listing-title"
                       value={title}
                       onChange={(event) => setTitle(event.target.value)}
                       placeholder="e.g. Spacious 3 BHK with park view"
+                      invalid={title.length > 0 && title.trim().length < 6}
                     />
                   </FormField>
 
@@ -253,7 +267,16 @@ export function PropertyListing() {
                     </FormField>
                   </div>
 
-                  <FormField label="Built-up area (sq.ft)" htmlFor="listing-area" required>
+                  <FormField
+                    label="Built-up area (sq.ft)"
+                    htmlFor="listing-area"
+                    required
+                    error={
+                      area.length > 0 && numericArea === 0
+                        ? "Enter a valid built-up area."
+                        : undefined
+                    }
+                  >
                     <Input
                       id="listing-area"
                       inputMode="numeric"
@@ -262,6 +285,7 @@ export function PropertyListing() {
                         setArea(event.target.value.replace(/\D/g, "").slice(0, 6))
                       }
                       placeholder="1200"
+                      invalid={area.length > 0 && numericArea === 0}
                     />
                   </FormField>
 
@@ -270,7 +294,52 @@ export function PropertyListing() {
                     onChange={setPincode}
                     locality={locality}
                     onLocalityChange={setLocality}
+                    localityError={
+                      locality.length > 0 && locality.trim().length < 2
+                        ? "Enter the area or locality."
+                        : undefined
+                    }
                   />
+
+                  <div className="rounded-lg border border-border-subtle bg-ivory/60 p-3">
+                    <p className="text-[11px] font-bold text-charcoal mb-1.5">
+                      To continue, complete:
+                    </p>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                      {[
+                        {
+                          label: "Listing title (min 6 characters)",
+                          done: title.trim().length >= 6,
+                        },
+                        {
+                          label: "Area / locality",
+                          done: locality.trim().length >= 2,
+                        },
+                        {
+                          label: "6-digit pincode",
+                          done: /^\d{6}$/.test(pincode),
+                        },
+                        {
+                          label: "Built-up area",
+                          done: numericArea > 0,
+                        },
+                      ].map((item) => (
+                        <li
+                          key={item.label}
+                          className={`flex items-center gap-1.5 text-[11px] ${
+                            item.done ? "text-emerald-700" : "text-muted"
+                          }`}
+                        >
+                          {item.done ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                          ) : (
+                            <Circle className="w-3.5 h-3.5 shrink-0" />
+                          )}
+                          {item.label}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               ),
             },

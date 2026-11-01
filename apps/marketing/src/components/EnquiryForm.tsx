@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Loader2, ArrowRight } from "lucide-react";
 import { redirectToAppOtp } from "../lib/routing";
+import { sendOtp, submitEnquiry } from "../lib/api";
 
 const CATEGORY_OPTIONS: Record<string, string[]> = {
   "Real Estate": [
@@ -68,6 +69,8 @@ export default function EnquiryForm() {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [devOtp, setDevOtp] = useState<string | null>(null);
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -76,7 +79,9 @@ export default function EnquiryForm() {
       newErrors.fullName = "Please enter your full name.";
     }
 
-    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+    if (!formData.email.trim()) {
+      newErrors.email = "Please enter your email address.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       newErrors.email = "Please enter a valid email address.";
     }
 
@@ -123,12 +128,47 @@ export default function EnquiryForm() {
 
     if (!validate()) return;
 
+    const cleanMobile = formData.mobile.replace(/\D/g, "").slice(-10);
+
+    setSubmitError(null);
+    setDevOtp(null);
     setIsSubmitting(true);
-    // OTP send will be handled by the backend (POST /api/otp/send) once ready.
-    // For now we simulate the send and hand off to the app's OTP screen.
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    setIsSubmitting(false);
-    redirectToAppOtp(formData.mobile);
+
+    try {
+      const enquiry = await submitEnquiry({
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim(),
+        mobile: cleanMobile,
+        serviceCategory: formData.serviceCategory,
+        specificService: formData.specificService.trim(),
+        pinCode: formData.pinCode.trim(),
+        comments: formData.comments.trim(),
+        consent: formData.consent,
+      });
+
+      if (!enquiry.success) {
+        setSubmitError(enquiry.message);
+        return;
+      }
+
+      const otp = await sendOtp(cleanMobile);
+
+      if (!otp.success) {
+        setSubmitError(otp.message);
+        return;
+      }
+
+      if (otp.data?.devOtp) {
+        setDevOtp(otp.data.devOtp);
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+      }
+
+      redirectToAppOtp(cleanMobile);
+    } catch {
+      setSubmitError("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -189,7 +229,7 @@ export default function EnquiryForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label htmlFor="email" className="block text-xs font-bold text-charcoal mb-1">
-                Email address
+                Email address <span className="text-rose-500">*</span>
               </label>
               <input
                 type="email"
@@ -301,7 +341,15 @@ export default function EnquiryForm() {
           </div>
 
           {/* Row 7: Submit Button */}
-          <div className="pt-2">
+          <div className="pt-2 space-y-2">
+            {submitError && (
+              <p className="text-[11px] text-rose-600">{submitError}</p>
+            )}
+            {devOtp && (
+              <p className="text-[11px] text-emerald-700">
+                Dev OTP: <span className="font-bold tracking-widest">{devOtp}</span>
+              </p>
+            )}
             <button
               type="submit"
               disabled={isSubmitting}

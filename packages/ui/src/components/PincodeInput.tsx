@@ -7,6 +7,7 @@ interface PincodeInputProps {
   onChange: (value: string) => void;
   locality?: string;
   onLocalityChange?: (value: string) => void;
+  localityError?: string;
   label?: string;
   localityLabel?: string;
   className?: string;
@@ -17,6 +18,7 @@ export function PincodeInput({
   onChange,
   locality,
   onLocalityChange,
+  localityError,
   label = "Pincode",
   localityLabel = "Area / locality",
   className = "",
@@ -44,11 +46,16 @@ export function PincodeInput({
         </FormField>
 
         {onLocalityChange && (
-          <FormField label={localityLabel} htmlFor="locality">
+          <FormField
+            label={localityLabel}
+            htmlFor="locality"
+            error={localityError}
+          >
             <Input
               id="locality"
               placeholder="e.g. Gachibowli"
               value={locality ?? ""}
+              invalid={Boolean(localityError)}
               onChange={(event) => onLocalityChange(event.target.value)}
             />
           </FormField>

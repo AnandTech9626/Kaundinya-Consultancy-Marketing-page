@@ -10,28 +10,9 @@ import { AuthCallback } from "./pages/AuthCallback";
 const Dashboard = lazy(() =>
   import("./pages/Dashboard").then((module) => ({ default: module.Dashboard }))
 );
-const Requests = lazy(() =>
-  import("./pages/Requests").then((module) => ({ default: module.Requests }))
-);
-const RequestDetail = lazy(() =>
-  import("./pages/RequestDetail").then((module) => ({
-    default: module.RequestDetail,
-  }))
-);
-const Services = lazy(() =>
-  import("./pages/Services").then((module) => ({ default: module.Services }))
-);
-const ServiceDetail = lazy(() =>
-  import("./pages/ServiceDetail").then((module) => ({
-    default: module.ServiceDetail,
-  }))
-);
-const Profile = lazy(() =>
-  import("./pages/Profile").then((module) => ({ default: module.Profile }))
-);
-const Notifications = lazy(() =>
-  import("./pages/Notifications").then((module) => ({
-    default: module.Notifications,
+const Onboarding = lazy(() =>
+  import("./pages/Onboarding").then((module) => ({
+    default: module.Onboarding,
   }))
 );
 const RealEstate = lazy(() =>
@@ -67,11 +48,6 @@ const MeasurementBooking = lazy(() =>
     default: module.MeasurementBooking,
   }))
 );
-const JobTracker = lazy(() =>
-  import("./pages/JobTracker").then((module) => ({
-    default: module.JobTracker,
-  }))
-);
 const JobDetail = lazy(() =>
   import("./pages/JobDetail").then((module) => ({ default: module.JobDetail }))
 );
@@ -86,39 +62,6 @@ const Printouts = lazy(() =>
 const Interiors = lazy(() =>
   import("./pages/Interiors").then((module) => ({ default: module.Interiors }))
 );
-const Insurance = lazy(() =>
-  import("./pages/Insurance").then((module) => ({ default: module.Insurance }))
-);
-const HealthInsurance = lazy(() =>
-  import("./pages/HealthInsurance").then((module) => ({
-    default: module.HealthInsurance,
-  }))
-);
-const MotorInsurance = lazy(() =>
-  import("./pages/MotorInsurance").then((module) => ({
-    default: module.MotorInsurance,
-  }))
-);
-const PolicyVault = lazy(() =>
-  import("./pages/PolicyVault").then((module) => ({
-    default: module.PolicyVault,
-  }))
-);
-const Loans = lazy(() =>
-  import("./pages/Loans").then((module) => ({ default: module.Loans }))
-);
-const LoanApply = lazy(() =>
-  import("./pages/LoanApply").then((module) => ({ default: module.LoanApply }))
-);
-const LoanDetail = lazy(() =>
-  import("./pages/LoanDetail").then((module) => ({ default: module.LoanDetail }))
-);
-const CreditHealth = lazy(() =>
-  import("./pages/CreditHealth").then((module) => ({
-    default: module.CreditHealth,
-  }))
-);
-
 function RouteFallback() {
   return (
     <div className="min-h-[50vh] flex items-center justify-center">
@@ -136,13 +79,16 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route element={<ProtectedRoute />}>
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route element={<AppShell />}>
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/requests" element={<Requests />} />
-                <Route path="/requests/:id" element={<RequestDetail />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/services/:slug" element={<ServiceDetail />} />
-                <Route path="/real-estate" element={<RealEstate />} />
+                <Route
+                  path="/real-estate"
+                  element={<Navigate to="/real-estate/buy" replace />}
+                />
+                <Route path="/real-estate/buy" element={<RealEstate mode="buy" />} />
+                <Route path="/real-estate/rent" element={<RealEstate mode="rent" />} />
+                <Route path="/real-estate/sell" element={<RealEstate mode="sell" />} />
                 <Route path="/real-estate/list" element={<PropertyListing />} />
                 <Route path="/real-estate/valuation" element={<PropertyValuation />} />
                 <Route path="/real-estate/:id" element={<PropertyDetail />} />
@@ -155,18 +101,7 @@ export default function App() {
                 <Route path="/home-services/printouts" element={<Printouts />} />
                 <Route path="/home-services/interiors" element={<Interiors />} />
                 <Route path="/home-services/:serviceId" element={<HomeServiceDetail />} />
-                <Route path="/jobs" element={<JobTracker />} />
                 <Route path="/jobs/:id" element={<JobDetail />} />
-                <Route path="/insurance" element={<Insurance />} />
-                <Route path="/insurance/health" element={<HealthInsurance />} />
-                <Route path="/insurance/motor" element={<MotorInsurance />} />
-                <Route path="/insurance/policies" element={<PolicyVault />} />
-                <Route path="/loans" element={<Loans />} />
-                <Route path="/loans/apply" element={<LoanApply />} />
-                <Route path="/loans/credit-health" element={<CreditHealth />} />
-                <Route path="/loans/applications/:id" element={<LoanDetail />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/notifications" element={<Notifications />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

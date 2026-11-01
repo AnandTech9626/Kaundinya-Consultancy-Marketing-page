@@ -8,7 +8,7 @@ import {
 } from "@kaundinya/config";
 import { fetchPipeline, updatePipelineStatus } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
-import { STAFF } from "../lib/mockData";
+import { useStaff } from "../lib/staff";
 import { formatDate } from "../lib/formats";
 
 const MODULES = Object.keys(MODULE_META) as ServiceCategoryId[];
@@ -23,8 +23,9 @@ export function Pipeline() {
 
   const records = data ?? [];
   const stages = MODULE_STAGES[module];
+  const staff = useStaff();
   const staffName = (id: string | null) =>
-    id ? STAFF.find((member) => member.id === id)?.name ?? "Unknown" : "Unassigned";
+    id ? staff.find((member) => member.id === id)?.name ?? "Unknown" : "Unassigned";
 
   const columns: PipelineColumn[] = stages.map((stage, index) => ({
     id: stage.id,

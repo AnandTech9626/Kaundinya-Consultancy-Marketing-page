@@ -1,31 +1,18 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  ClipboardList,
   Building2,
   Wrench,
-  ShieldCheck,
-  Coins,
-  PlusCircle,
-  User,
-  Bell,
   LogOut,
   X,
 } from "lucide-react";
-import { SITE_INFO } from "@kaundinya/config";
 import { useAuth } from "../lib/auth";
+import { BrandLockup } from "./BrandLockup";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/real-estate", label: "Real Estate", icon: Building2 },
   { to: "/home-services", label: "Home Services", icon: Wrench },
-  { to: "/jobs", label: "My Jobs", icon: ClipboardList },
-  { to: "/insurance", label: "Insurance", icon: ShieldCheck },
-  { to: "/loans", label: "Loans", icon: Coins },
-  { to: "/requests", label: "My Requests", icon: ClipboardList },
-  { to: "/services", label: "Request a Service", icon: PlusCircle },
-  { to: "/profile", label: "Profile", icon: User },
-  { to: "/notifications", label: "Notifications", icon: Bell },
 ];
 
 interface SidebarProps {
@@ -52,31 +39,19 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 shrink-0 bg-charcoal text-white flex flex-col transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 shrink-0 bg-charcoal text-white flex flex-col transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="p-5 border-b border-charcoal-light">
-          <div className="flex items-center justify-between">
-            <div className="bg-white rounded-md px-2 py-1.5 flex items-center justify-center">
-              <img
-                src="/images/logo.webp"
-                alt={SITE_INFO.name}
-                className="h-7 w-auto max-w-[150px] object-contain"
-              />
-            </div>
-            <button
-              onClick={onClose}
-              aria-label="Close menu"
-              className="lg:hidden p-1.5 rounded-lg text-ivory/70 hover:bg-charcoal-light hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <p className="mt-2.5 text-[11px] font-bold leading-snug text-white">
-            {SITE_INFO.fullName}
-          </p>
-          <p className="text-[10px] text-ivory/60">Client Portal</p>
+        <div className="flex h-24 items-center justify-between border-b border-charcoal-light px-4">
+          <BrandLockup size="md" />
+          <button
+            onClick={onClose}
+            aria-label="Close menu"
+            className="lg:hidden p-1.5 rounded-lg text-ivory/70 hover:bg-charcoal-light hover:text-white transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">

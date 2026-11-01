@@ -7,7 +7,7 @@ import {
   fetchAdminJobs,
   updateJobStatus,
 } from "../lib/mockApi";
-import { STAFF } from "../lib/mockData";
+import { useStaff } from "../lib/staff";
 import { useAsync } from "../lib/useAsync";
 import { formatDate, formatINR, formatMobile } from "../lib/formats";
 
@@ -37,6 +37,7 @@ const STATUS_LABEL: Record<string, string> = {
 export function Dispatch() {
   const { data, loading, error, refetch } = useAsync(fetchAdminJobs);
   const [busy, setBusy] = useState<string | null>(null);
+  const staff = useStaff();
 
   const jobs = data ?? [];
   const active = jobs.filter((job) => job.status !== "completed").length;
@@ -146,7 +147,7 @@ export function Dispatch() {
                         disabled={busy === `${job.id}-assign`}
                       >
                         <option value="">Unassigned</option>
-                        {STAFF.filter((member) => member.active).map((member) => (
+                        {staff.filter((member) => member.active).map((member) => (
                           <option key={member.id} value={member.id}>
                             {member.name}
                           </option>

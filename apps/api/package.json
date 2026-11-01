@@ -2,5 +2,27 @@
   "name": "@kaundinya/api",
   "private": true,
   "version": "0.1.0",
-  "description": "Future backend API (placeholder)"
+  "type": "module",
+  "description": "Kaundinya Consultancy Backend API with Hono & MongoDB",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.8",
+    "@kaundinya/config": "*",
+    "dotenv": "^16.4.7",
+    "hono": "^4.7.2",
+    "jose": "^5.9.6",
+    "mongoose": "^8.10.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
 }
