@@ -53,7 +53,7 @@ export function JobDetail() {
   const backLink = (
     <Link
       to="/dashboard"
-      className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover"
+      className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:text-brand-hover"
     >
       <ArrowLeft className="w-4 h-4" />
       Back to dashboard
@@ -78,13 +78,13 @@ export function JobDetail() {
       <div className="space-y-4">
         {backLink}
         <Card className="p-10 text-center space-y-3">
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted-foreground">
             {error ? "We couldn't load this job." : "Job not found."}
           </p>
           {error && (
             <button
               onClick={refetch}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold cursor-pointer"
             >
               Try again
             </button>
@@ -138,17 +138,17 @@ export function JobDetail() {
       <Card className="p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div className="w-11 h-11 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
               <Wrench className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 {job.id.toUpperCase()}
               </p>
-              <h1 className="text-xl font-extrabold text-charcoal tracking-tight">
+              <h1 className="text-xl font-extrabold text-foreground tracking-tight">
                 {job.serviceName}
               </h1>
-              <p className="text-xs text-muted mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {job.issueTypes?.join(", ") || "General service"}
               </p>
             </div>
@@ -156,53 +156,53 @@ export function JobDetail() {
           <Badge variant={JOB_BADGE[job.status] ?? "neutral"}>{stageLabel}</Badge>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-border-subtle pt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-border pt-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">
               Scheduled
             </p>
-            <p className="text-sm font-bold text-charcoal mt-0.5">
+            <p className="text-sm font-bold text-foreground mt-0.5">
               {job.scheduledAt ?? "Not confirmed"}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">
               Amount
             </p>
-            <p className="text-sm font-bold text-charcoal mt-0.5">
+            <p className="text-sm font-bold text-foreground mt-0.5">
               {job.amount ? formatINR(job.amount) : "Quote after visit"}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">
               Raised on
             </p>
-            <p className="text-sm font-bold text-charcoal mt-0.5">
+            <p className="text-sm font-bold text-foreground mt-0.5">
               {job.createdAt ? formatDate(job.createdAt) : "—"}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">
               Rating
             </p>
-            <p className="text-sm font-bold text-charcoal mt-0.5">
+            <p className="text-sm font-bold text-foreground mt-0.5">
               {job.rating ? `${job.rating} / 5` : "Not rated"}
             </p>
           </div>
         </div>
 
         {job.address && (
-          <div className="border-t border-border-subtle pt-4">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
+          <div className="border-t border-border pt-4">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">
               Service address
             </p>
-            <p className="text-sm text-charcoal-light mt-0.5">{job.address}</p>
+            <p className="text-sm text-foreground-soft mt-0.5">{job.address}</p>
           </div>
         )}
       </Card>
 
       <Card className="p-6">
-        <h2 className="text-base font-extrabold text-charcoal tracking-tight mb-5">
+        <h2 className="text-base font-extrabold text-foreground tracking-tight mb-5">
           Job progress
         </h2>
         <StatusTimeline
@@ -217,10 +217,10 @@ export function JobDetail() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <Card className="p-5 space-y-3">
-          <h2 className="text-sm font-extrabold text-charcoal">Your technician</h2>
+          <h2 className="text-sm font-extrabold text-foreground">Your technician</h2>
           {job.technician ? (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-charcoal text-gold flex items-center justify-center font-extrabold">
+              <div className="w-10 h-10 rounded-full bg-inverse text-brand flex items-center justify-center font-extrabold">
                 {job.technician
                   .split(" ")
                   .map((part) => part[0])
@@ -228,9 +228,9 @@ export function JobDetail() {
                   .join("")}
               </div>
               <div>
-                <p className="text-sm font-bold text-charcoal">{job.technician}</p>
+                <p className="text-sm font-bold text-foreground">{job.technician}</p>
                 {job.technicianPhone && (
-                  <p className="text-xs text-muted flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Phone className="w-3 h-3" />
                     {job.technicianPhone}
                   </p>
@@ -238,7 +238,7 @@ export function JobDetail() {
               </div>
             </div>
           ) : (
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               We're assigning a vetted technician. You'll get a notification once
               confirmed.
             </p>
@@ -247,33 +247,33 @@ export function JobDetail() {
 
         <Card className="p-5 space-y-3">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-gold" />
-            <h2 className="text-sm font-extrabold text-charcoal">Start-Job OTP</h2>
+            <ShieldCheck className="w-4 h-4 text-brand" />
+            <h2 className="text-sm font-extrabold text-foreground">Start-Job OTP</h2>
           </div>
           {job.status === "completed" ? (
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               This job is complete. The Start-Job OTP is no longer active.
             </p>
           ) : job.status === "cancelled" ? (
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               This request was cancelled. The Start-Job OTP is no longer active.
             </p>
           ) : displayOtp ? (
             <>
               <div className="flex items-center gap-2">
-                <p className="text-2xl font-extrabold tracking-[0.3em] text-charcoal">
+                <p className="text-2xl font-extrabold tracking-[0.3em] text-foreground">
                   {displayOtp}
                 </p>
                 <button
                   type="button"
                   onClick={copyOtp}
-                  className="p-1.5 rounded-md border border-border-subtle text-muted hover:text-charcoal hover:border-gold/60 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-brand/60 transition-colors cursor-pointer"
                   aria-label="Copy OTP"
                 >
                   <Copy className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <p className="text-[11px] text-muted">
+              <p className="text-[11px] text-muted-foreground">
                 {copied
                   ? "Copied to clipboard."
                   : "Share this only when the technician arrives to start the job."}
@@ -281,7 +281,7 @@ export function JobDetail() {
             </>
           ) : (
             <>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-muted-foreground">
                 Generate the OTP when the technician is ready to begin.
               </p>
               <Button variant="secondary" onClick={generateOtp} disabled={otpBusy}>
@@ -302,8 +302,8 @@ export function JobDetail() {
       {job.status === "completed" && (
         <Card className="p-6 space-y-4">
           <div className="flex items-center gap-2">
-            <Star className="w-4 h-4 text-gold" />
-            <h2 className="text-base font-extrabold text-charcoal">Rate this job</h2>
+            <Star className="w-4 h-4 text-brand" />
+            <h2 className="text-base font-extrabold text-foreground">Rate this job</h2>
           </div>
 
           {job.rating && !rated ? (
@@ -314,18 +314,18 @@ export function JobDetail() {
                     key={index}
                     className={`w-5 h-5 ${
                       index < (job.rating ?? 0)
-                        ? "fill-gold text-gold"
-                        : "text-border-subtle"
+                        ? "fill-brand text-brand"
+                        : "text-border"
                     }`}
                   />
                 ))}
               </div>
               {job.ratingComment && (
-                <p className="text-xs text-muted">{job.ratingComment}</p>
+                <p className="text-xs text-muted-foreground">{job.ratingComment}</p>
               )}
             </div>
           ) : rated || job.rating ? (
-            <div className="flex items-center gap-2 text-sm text-emerald-700">
+            <div className="flex items-center gap-2 text-sm text-success-fg">
               <CheckCircle2 className="w-4 h-4" />
               Thanks for rating this job.
             </div>
@@ -344,7 +344,7 @@ export function JobDetail() {
                     >
                       <Star
                         className={`w-6 h-6 ${
-                          value <= stars ? "fill-gold text-gold" : "text-border-subtle"
+                          value <= stars ? "fill-brand text-brand" : "text-border"
                         }`}
                       />
                     </button>

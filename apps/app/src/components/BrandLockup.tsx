@@ -20,25 +20,30 @@ const SUBTITLE_SIZE: Record<BrandSize, string> = {
 export function BrandLockup({
   size = "md",
   className = "",
+  collapsed = false,
 }: {
   size?: BrandSize;
   className?: string;
+  collapsed?: boolean;
 }) {
   return (
-    <div className={`flex items-center gap-1 ${className}`} style={{ fontFamily: "Manrope, sans-serif" }}>
+    <div
+      className={`flex items-center gap-1 ${collapsed ? "lg:justify-center" : ""} ${className}`}
+      style={{ fontFamily: "Manrope, sans-serif" }}
+    >
       <img
         src={BRAND_MARK_URL}
         alt="Kaundinya"
         className={`${ICON_HEIGHT[size]} w-auto shrink-0 object-contain`}
       />
-      <div className="flex min-w-0 flex-col">
+      <div className={`flex min-w-0 flex-col ${collapsed ? "lg:hidden" : ""}`}>
         <span
-          className={`font-extrabold leading-none tracking-[0.12em] text-gold ${TITLE_SIZE[size]}`}
+          className={`font-extrabold leading-none tracking-[0.12em] text-brand ${TITLE_SIZE[size]}`}
         >
           KAUNDINYA
         </span>
         <span
-          className={`mt-1 flex w-full justify-between font-bold leading-none text-gold ${SUBTITLE_SIZE[size]}`}
+          className={`mt-1 flex w-full justify-between font-bold leading-none text-brand ${SUBTITLE_SIZE[size]}`}
           aria-label="Integrated Services"
         >
           {"INTEGRATED SERVICES".split("").map((character, index) =>

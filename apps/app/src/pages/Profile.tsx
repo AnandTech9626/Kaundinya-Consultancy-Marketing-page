@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import {
   CheckCircle2,
+  Coins,
   Eye,
   EyeOff,
   KeyRound,
@@ -16,6 +18,8 @@ import {
   updateProfile,
 } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
+import { useMockRequests } from "../lib/mockRequests";
+import { POLICIES } from "../lib/moduleData";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -36,6 +40,30 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
   const { user, updateUser } = useAuth();
   const { data } = useAsync(() => fetchMyRequests({ limit: 1 }));
   const requestCount = data?.total ?? 0;
+  const { requests } = useMockRequests();
+
+  const insuranceRequests = requests.filter(
+    (request) => request.serviceCategory === "Insurance"
+  );
+  const activePolicies = POLICIES.filter(
+    (policy) => policy.status === "active"
+  ).length;
+  const renewalsDue = POLICIES.filter(
+    (policy) => policy.status === "expiring"
+  ).length;
+  const openInsuranceRequests = insuranceRequests.filter(
+    (request) => request.status === "new" || request.status === "in_progress"
+  ).length;
+
+  const loanRequests = requests.filter(
+    (request) => request.serviceCategory === "Loans"
+  );
+  const openLoanRequests = loanRequests.filter(
+    (request) => request.status === "new" || request.status === "in_progress"
+  ).length;
+  const resolvedLoanRequests = loanRequests.filter(
+    (request) => request.status === "completed"
+  ).length;
 
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
@@ -124,10 +152,10 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
     <div className={compact ? "space-y-4" : "space-y-6"}>
       {!compact && (
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
             Profile
           </h1>
-          <p className="text-muted mt-1">Manage your personal details.</p>
+          <p className="text-muted-foreground mt-1">Manage your personal details.</p>
         </div>
       )}
 
@@ -142,13 +170,13 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
         <div className={compact ? "" : "lg:col-span-4"}>
           <Card className="p-6">
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-full bg-charcoal text-gold ring-4 ring-gold/20 flex items-center justify-center text-2xl font-extrabold">
+              <div className="w-20 h-20 rounded-full bg-inverse text-brand ring-4 ring-brand/20 flex items-center justify-center text-2xl font-extrabold">
                 {initials(displayName)}
               </div>
-              <h2 className="mt-3 text-lg font-extrabold text-charcoal tracking-tight break-words">
+              <h2 className="mt-3 text-lg font-extrabold text-foreground tracking-tight break-words">
                 {displayName}
               </h2>
-              <p className="text-xs text-muted">Client</p>
+              <p className="text-xs text-muted-foreground">Client</p>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -159,33 +187,111 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
               <Badge variant="gold">Profile complete</Badge>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-3 border-t border-border-subtle pt-4 text-center">
+            <div className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4 text-center">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Requests</p>
-                <p className="text-lg font-extrabold text-charcoal">{requestCount}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Requests</p>
+                <p className="text-lg font-extrabold text-foreground">{requestCount}</p>
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Member since</p>
-                <p className="text-lg font-extrabold text-charcoal">{memberSince}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Member since</p>
+                <p className="text-lg font-extrabold text-foreground">{memberSince}</p>
               </div>
             </div>
 
-            <div className="mt-4 border-t border-border-subtle pt-4">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Client ID</p>
-              <p className="text-xs font-semibold text-charcoal-light">{clientCode}</p>
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Client ID</p>
+              <p className="text-xs font-semibold text-foreground-soft">{clientCode}</p>
             </div>
           </Card>
         </div>
 
         {/* Right — form */}
         <div className={compact ? "space-y-6" : "lg:col-span-8 space-y-6"}>
+          <Card className="p-5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-brand" />
+                <h3 className="text-xs font-extrabold text-foreground uppercase tracking-wider">
+                  Insurance
+                </h3>
+              </div>
+              <Link
+                to="/insurance"
+                className="text-[11px] font-bold text-brand hover:text-brand-hover"
+              >
+                Open
+              </Link>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Active
+                </p>
+                <p className="text-lg font-extrabold text-foreground">
+                  {activePolicies}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Renewals
+                </p>
+                <p className="text-lg font-extrabold text-foreground">
+                  {renewalsDue}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Open requests
+                </p>
+                <p className="text-lg font-extrabold text-foreground">
+                  {openInsuranceRequests}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Coins className="w-4 h-4 text-brand" />
+                <h3 className="text-xs font-extrabold text-foreground uppercase tracking-wider">
+                  Loans
+                </h3>
+              </div>
+              <Link
+                to="/loans"
+                className="text-[11px] font-bold text-brand hover:text-brand-hover"
+              >
+                Open
+              </Link>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 text-center">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Open requests
+                </p>
+                <p className="text-lg font-extrabold text-foreground">
+                  {openLoanRequests}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Resolved
+                </p>
+                <p className="text-lg font-extrabold text-foreground">
+                  {resolvedLoanRequests}
+                </p>
+              </div>
+            </div>
+          </Card>
+
           <Card className="p-6 lg:p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal details */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-gold" />
-                  <h3 className="text-xs font-extrabold text-charcoal uppercase tracking-wider">
+                  <User className="w-4 h-4 text-brand" />
+                  <h3 className="text-xs font-extrabold text-foreground uppercase tracking-wider">
                     Personal details
                   </h3>
                 </div>
@@ -210,13 +316,13 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
                 </div>
               </section>
 
-              <div className="border-t border-border-subtle" />
+              <div className="border-t border-border" />
 
               {/* Contact & location */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gold" />
-                  <h3 className="text-xs font-extrabold text-charcoal uppercase tracking-wider">
+                  <MapPin className="w-4 h-4 text-brand" />
+                  <h3 className="text-xs font-extrabold text-foreground uppercase tracking-wider">
                     Contact &amp; location
                   </h3>
                 </div>
@@ -227,7 +333,7 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
                         id="mobile"
                         value={mobile}
                         disabled
-                        className="bg-ivory cursor-not-allowed pr-24"
+                        className="bg-surface-muted cursor-not-allowed pr-24"
                       />
                       <span className="absolute inset-y-0 right-2 flex items-center">
                         <Badge variant="success">
@@ -249,23 +355,23 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
                     />
                   </FormField>
                 </div>
-                <p className="text-[11px] text-muted-light">
+                <p className="text-[11px] text-subtle-foreground">
                   Your mobile number is verified and can't be edited here.
                 </p>
               </section>
 
               {/* Save bar */}
-              <div className="flex flex-wrap items-center gap-3 border-t border-border-subtle pt-4">
+              <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
                 <Button type="submit" disabled={saving}>
                   {saving ? "Saving..." : "Save Changes"}
                 </Button>
                 {saved && (
-                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-success-fg">
                     <CheckCircle2 className="w-4 h-4" />
                     Saved
                   </span>
                 )}
-                {error && <span className="text-sm text-rose-600">{error}</span>}
+                {error && <span className="text-sm text-danger-fg">{error}</span>}
               </div>
             </form>
           </Card>
@@ -273,12 +379,12 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
           <Card className="p-6 lg:p-8">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-gold" />
-                <h3 className="text-xs font-extrabold text-charcoal uppercase tracking-wider">
+                <KeyRound className="w-4 h-4 text-brand" />
+                <h3 className="text-xs font-extrabold text-foreground uppercase tracking-wider">
                   Security PIN
                 </h3>
               </div>
-              <p className="text-[11px] text-muted leading-relaxed">
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
                 Your 6-digit PIN is used every time you open the app. Click Show
                 to reveal it, or Update PIN to set a new one.
               </p>
@@ -288,7 +394,7 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
                   <div className="flex flex-wrap items-end gap-3">
                     <div className="min-w-[12rem] flex-1">
                       <label
-                        className="mb-1 block text-[11px] font-bold text-charcoal"
+                        className="mb-1 block text-[11px] font-bold text-foreground"
                         htmlFor="pin-display"
                       >
                         PIN
@@ -300,13 +406,13 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
                           readOnly
                           disabled
                           value={showPin ? "PIN is set" : "••••••"}
-                          className="bg-ivory pr-10 cursor-not-allowed"
+                          className="bg-surface-muted pr-10 cursor-not-allowed"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPin((value) => !value)}
                           aria-label={showPin ? "Hide PIN" : "Show PIN"}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted hover:text-charcoal cursor-pointer"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground cursor-pointer"
                         >
                           {showPin ? (
                             <EyeOff className="h-4 w-4" />
@@ -330,7 +436,7 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
                     </Button>
                   </div>
                   {pinMessage && (
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600">
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-success-fg">
                       <CheckCircle2 className="w-4 h-4" />
                       {pinMessage}
                     </span>
@@ -342,7 +448,7 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
                     <button
                       type="button"
                       onClick={() => setShowPin((value) => !value)}
-                      className="inline-flex items-center gap-1 text-[11px] font-bold text-gold hover:text-gold-hover cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:text-brand-hover cursor-pointer"
                     >
                       {showPin ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       {showPin ? "Hide PINs" : "Show PINs"}
@@ -403,10 +509,10 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
                   </div>
 
                   {pinError && (
-                    <p className="text-[11px] text-rose-600">{pinError}</p>
+                    <p className="text-[11px] text-danger-fg">{pinError}</p>
                   )}
 
-                  <div className="flex flex-wrap items-center gap-3 border-t border-border-subtle pt-4">
+                  <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
                     <Button type="submit" variant="secondary" disabled={pinSaving}>
                       {pinSaving ? "Updating..." : "Update PIN"}
                     </Button>

@@ -8,8 +8,8 @@ export function ProtectedRoute() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-ivory">
-        <Spinner className="w-6 h-6 text-gold" />
+      <div className="min-h-screen flex items-center justify-center bg-surface-muted">
+        <Spinner className="w-6 h-6 text-brand" />
       </div>
     );
   }

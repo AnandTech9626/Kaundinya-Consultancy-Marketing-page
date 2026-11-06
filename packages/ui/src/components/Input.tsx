@@ -6,12 +6,12 @@ import {
 } from "react";
 
 const controlBase =
-  "w-full px-3.5 py-2.5 rounded-lg border text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-gold/60 focus:border-gold";
+  "w-full px-3.5 py-2.5 rounded-lg border text-sm text-foreground placeholder:text-subtle-foreground bg-surface transition-all focus:outline-none focus:ring-2 focus:ring-brand/60 focus:border-brand";
 
 function controlClass(invalid: boolean, className: string) {
   const state = invalid
-    ? "border-rose-400 bg-rose-50/20"
-    : "border-border-subtle hover:border-muted";
+    ? "border-danger-fg bg-danger-soft/20"
+    : "border-border hover:border-subtle-foreground";
   return `${controlBase} ${state} ${className}`;
 }
 

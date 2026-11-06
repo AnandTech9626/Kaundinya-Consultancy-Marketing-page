@@ -60,20 +60,20 @@ export function Wizard({
       />
 
       <div className="space-y-1">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           Step {current + 1} of {steps.length}
         </p>
-        <h2 className="text-xl sm:text-2xl font-extrabold text-charcoal tracking-tight">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
           {step.title}
         </h2>
         {step.description && (
-          <p className="text-sm text-muted leading-relaxed">{step.description}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
         )}
       </div>
 
       <div>{step.content}</div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-border-subtle pt-5">
+      <div className="flex items-center justify-between gap-3 border-t border-border pt-5">
         <Button
           variant="secondary"
           onClick={() => goTo(current - 1)}

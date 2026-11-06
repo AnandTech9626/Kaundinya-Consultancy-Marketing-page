@@ -665,7 +665,12 @@ export interface MyRequestItem {
   id: string;
   reference: string;
   title: string;
-  module: "Real Estate" | "Home Services" | "Digital Services";
+  module:
+    | "Real Estate"
+    | "Home Services"
+    | "Digital Services"
+    | "Insurance"
+    | "Loans";
   status: string;
   statusLabel: string;
   createdAt: string;

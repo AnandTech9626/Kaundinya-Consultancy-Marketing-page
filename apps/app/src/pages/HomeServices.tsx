@@ -37,6 +37,7 @@ import {
 } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
+import { InfoTip } from "../components/InfoTip";
 
 const HOME_SERVICES = SERVICE_CATALOG.filter(
   (item) => item.categoryId === "property-home-services"
@@ -293,6 +294,24 @@ export function HomeServices() {
 
   return (
     <div className="space-y-5">
+      <div>
+        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-brand">
+          Home Services
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+            Vetted help for your home
+          </h1>
+          <InfoTip
+            label="About Home Services"
+            text="Book measurements and home-service jobs, track the assigned technician, and request an interior consultation. All coordination stays in one place."
+          />
+        </div>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Measurements, installations and repairs coordinated by our team.
+        </p>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           {HOME_SERVICES.map((item) => {
@@ -305,12 +324,12 @@ export function HomeServices() {
                 onClick={() => chooseService(item.id)}
                 className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-bold transition-colors cursor-pointer ${
                   selected
-                    ? "border-gold bg-gold-light/60 text-charcoal"
-                    : "border-border-subtle bg-white text-charcoal hover:border-gold/60"
+                    ? "border-brand bg-brand-soft/60 text-foreground"
+                    : "border-border bg-surface text-foreground hover:border-brand/60"
                 }`}
               >
                 <ServiceIcon
-                  className={`w-3.5 h-3.5 ${selected ? "text-[#8a6b1a]" : "text-muted"}`}
+                  className={`w-3.5 h-3.5 ${selected ? "text-brand-strong" : "text-muted-foreground"}`}
                 />
                 {SHORT_NAMES[item.id] ?? item.name}
               </button>
@@ -321,7 +340,7 @@ export function HomeServices() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/home-services/interiors"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-border-subtle hover:border-gold/60 text-charcoal text-sm font-bold transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface border border-border hover:border-brand/60 text-foreground text-sm font-bold transition-colors"
           >
             <Sofa className="w-4 h-4" />
             Interiors
@@ -331,20 +350,20 @@ export function HomeServices() {
 
       {activeJob && (
         <Link to={`/jobs/${activeJob.id}`} className="block">
-          <Card hoverable className="p-4 sm:p-5 border-gold/40 bg-gold-light/40">
+          <Card hoverable className="p-4 sm:p-5 border-brand/40 bg-brand-soft/40">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-white text-[#B8860B] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-full bg-surface text-brand-strong flex items-center justify-center shrink-0">
                   <Wrench className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#8a6b1a]">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-brand-strong">
                     Active job
                   </p>
-                  <p className="text-sm font-extrabold text-charcoal">
+                  <p className="text-sm font-extrabold text-foreground">
                     {activeJob.serviceName}
                   </p>
-                  <p className="text-xs text-muted">
+                  <p className="text-xs text-muted-foreground">
                     {activeJob.technician ?? "Technician being assigned"}
                     {activeJob.scheduledAt ? ` · ${activeJob.scheduledAt}` : ""}
                   </p>
@@ -352,7 +371,7 @@ export function HomeServices() {
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="info">{activeJob.status.replace("_", " ")}</Badge>
-                <ArrowRight className="w-4 h-4 text-gold" />
+                <ArrowRight className="w-4 h-4 text-brand" />
               </div>
             </div>
 
@@ -368,15 +387,15 @@ export function HomeServices() {
                       <span
                         className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-extrabold ${
                           done
-                            ? "bg-gold text-charcoal"
-                            : "border border-border-subtle bg-white text-muted-light"
+                            ? "bg-brand text-on-brand"
+                            : "border border-border bg-surface text-subtle-foreground"
                         }`}
                       >
                         {index + 1}
                       </span>
                       <span
                         className={`text-[9px] font-bold leading-tight ${
-                          done ? "text-charcoal" : "text-muted-light"
+                          done ? "text-foreground" : "text-subtle-foreground"
                         }`}
                       >
                         {stage.label}
@@ -385,9 +404,9 @@ export function HomeServices() {
                   );
                 })}
               </div>
-              <div className="mt-2 h-1 overflow-hidden rounded-full bg-ivory-dark">
+              <div className="mt-2 h-1 overflow-hidden rounded-full bg-surface-strong">
                 <div
-                  className="h-full rounded-full bg-gold transition-all"
+                  className="h-full rounded-full bg-brand transition-all"
                   style={{ width: `${activeProgress}%` }}
                 />
               </div>
@@ -403,36 +422,36 @@ export function HomeServices() {
           style={{ borderRadius: 2 }}
         >
           <div>
-            <h2 className="text-lg font-extrabold text-charcoal tracking-tight">
+            <h2 className="text-lg font-extrabold text-foreground tracking-tight">
               Request a home service
             </h2>
-            <p className="text-xs sm:text-sm text-muted mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Pick a service, tell us the location and slot. Our team confirms and
               assigns a vetted technician.
             </p>
           </div>
 
           {result ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6 text-center space-y-3">
-              <div className="w-14 h-14 rounded-full bg-white text-emerald-600 flex items-center justify-center mx-auto">
+            <div className="rounded-2xl border border-success-fg/20 bg-success-soft/50 p-6 text-center space-y-3">
+              <div className="w-14 h-14 rounded-full bg-surface text-success-fg flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-lg font-extrabold text-charcoal tracking-tight">
+                <h3 className="text-lg font-extrabold text-foreground tracking-tight">
                   {result.kind === "interior"
                     ? "Consultation requested"
                     : result.kind === "measurement"
                       ? "Measurement booked"
                       : "Booking requested"}
                 </h3>
-                <p className="text-xs sm:text-sm text-muted mt-1 max-w-md mx-auto">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-md mx-auto">
                   {result.kind === "interior"
                     ? "Our designer will call you to understand the space and schedule a visit."
                     : result.kind === "measurement"
                       ? "Our surveyor will call you to confirm the visit. Measurement is free."
                       : "We'll assign a vetted technician and confirm the slot by phone."}
                 </p>
-                <p className="text-[10px] text-muted-light mt-2">
+                <p className="text-[10px] text-subtle-foreground mt-2">
                   Reference #{result.id.toUpperCase()}
                 </p>
               </div>
@@ -440,7 +459,7 @@ export function HomeServices() {
                 {result.kind === "job" && (
                   <Link
                     to={`/jobs/${result.id}`}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold"
                   >
                     Track this job
                     <ArrowRight className="w-4 h-4" />
@@ -449,7 +468,7 @@ export function HomeServices() {
                 {result.kind === "measurement" && (
                   <Link
                     to="/dashboard"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold"
                   >
                     View on dashboard
                   </Link>
@@ -457,7 +476,7 @@ export function HomeServices() {
                 {result.kind === "interior" && (
                   <Link
                     to="/home-services/interiors"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold"
                   >
                     See interiors
                   </Link>
@@ -465,7 +484,7 @@ export function HomeServices() {
                 <button
                   type="button"
                   onClick={() => setResult(null)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border-subtle bg-white text-charcoal text-sm font-bold hover:border-gold/60 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-surface text-foreground text-sm font-bold hover:border-brand/60 transition-colors cursor-pointer"
                 >
                   Request another
                 </button>
@@ -585,12 +604,12 @@ export function HomeServices() {
                 />
               </FormField>
 
-              {error && <p className="text-[11px] text-rose-600">{error}</p>}
+              {error && <p className="text-[11px] text-danger-fg">{error}</p>}
 
               <button
                 type="submit"
                 disabled={!canSubmit}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gold hover:bg-gold-hover px-4 py-3 text-sm font-bold text-charcoal transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-brand hover:bg-brand-hover px-4 py-3 text-sm font-bold text-on-brand transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
               >
                 {submitting ? (
                   <>
@@ -606,7 +625,7 @@ export function HomeServices() {
                 )}
               </button>
 
-              <p className="text-[10px] text-muted-light text-center leading-relaxed">
+              <p className="text-[10px] text-subtle-foreground text-center leading-relaxed">
                 No payment now. We confirm the slot and price before work starts.
               </p>
             </form>
@@ -618,11 +637,11 @@ export function HomeServices() {
           {service ? (
             <>
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-md bg-gold-light text-[#B8860B] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-md bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-base font-extrabold tracking-tight text-charcoal">
+                  <h2 className="text-base font-extrabold tracking-tight text-foreground">
                     {service.name}
                   </h2>
                   {isMeasurement && (
@@ -633,17 +652,17 @@ export function HomeServices() {
                 </div>
               </div>
 
-              <p className="text-xs leading-relaxed text-muted">
+              <p className="text-xs leading-relaxed text-muted-foreground">
                 {service.summary}
               </p>
 
-              <p className="rounded-md bg-ivory p-2 text-[10px] leading-relaxed text-muted">
+              <p className="rounded-md bg-surface-muted p-2 text-[10px] leading-relaxed text-muted-foreground">
                 Price is confirmed by our team after the{" "}
                 {isMeasurement ? "measurement" : "consultation"}.
               </p>
 
               {isMeasurement && (
-                <p className="flex items-start gap-1.5 rounded-md bg-ivory p-2 text-[11px] text-[#6b5413]">
+                <p className="flex items-start gap-1.5 rounded-md bg-surface-muted p-2 text-[11px] text-[#6b5413]">
                   <Ruler className="mt-0.5 w-3.5 h-3.5 shrink-0" />
                   We measure on site first, then confirm the final quote.
                 </p>
@@ -651,21 +670,21 @@ export function HomeServices() {
 
               {service.tiers && service.tiers.length > 0 && (
                 <section className="space-y-2">
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     Service tiers
                   </h3>
                   <div className="space-y-1.5">
                     {service.tiers.map((tier) => (
                       <div
                         key={tier.id}
-                        className="flex items-start justify-between gap-2 rounded-md border border-border-subtle p-2"
+                        className="flex items-start justify-between gap-2 rounded-md border border-border p-2"
                       >
                         <div>
-                          <p className="text-xs font-bold text-charcoal">
+                          <p className="text-xs font-bold text-foreground">
                             {tier.label}
                           </p>
                           {tier.description && (
-                            <p className="text-[10px] text-muted">
+                            <p className="text-[10px] text-muted-foreground">
                               {tier.description}
                             </p>
                           )}
@@ -678,14 +697,14 @@ export function HomeServices() {
 
               {service.issueTypes && service.issueTypes.length > 0 && (
                 <section className="space-y-2">
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     Common issues we fix
                   </h3>
                   <div className="flex flex-wrap gap-1.5">
                     {service.issueTypes.map((issue) => (
                       <span
                         key={issue}
-                        className="rounded-md bg-ivory px-2 py-1 text-[10px] font-semibold text-charcoal"
+                        className="rounded-md bg-surface-muted px-2 py-1 text-[10px] font-semibold text-foreground"
                       >
                         {issue}
                       </span>
@@ -696,16 +715,16 @@ export function HomeServices() {
 
               {service.highlights && service.highlights.length > 0 && (
                 <section className="space-y-2">
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     What's included
                   </h3>
                   <ul className="space-y-1.5">
                     {service.highlights.map((highlight) => (
                       <li
                         key={highlight}
-                        className="flex items-start gap-1.5 text-[11px] text-charcoal-light"
+                        className="flex items-start gap-1.5 text-[11px] text-foreground-soft"
                       >
-                        <CheckCircle2 className="mt-0.5 w-3.5 h-3.5 shrink-0 text-gold" />
+                        <CheckCircle2 className="mt-0.5 w-3.5 h-3.5 shrink-0 text-brand" />
                         {highlight}
                       </li>
                     ))}
@@ -715,16 +734,16 @@ export function HomeServices() {
 
               {service.documents && service.documents.length > 0 && (
                 <section className="space-y-2">
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     Documents to keep ready
                   </h3>
                   <div className="flex flex-wrap gap-1.5">
                     {service.documents.map((document) => (
                       <span
                         key={document}
-                        className="inline-flex items-center gap-1 rounded-md border border-border-subtle px-2 py-1 text-[10px] text-charcoal-light"
+                        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] text-foreground-soft"
                       >
-                        <FileText className="w-3 h-3 text-muted" />
+                        <FileText className="w-3 h-3 text-muted-foreground" />
                         {document}
                       </span>
                     ))}
@@ -733,17 +752,17 @@ export function HomeServices() {
               )}
 
               {service.id === "hs-interiors" && (
-                <div className="space-y-2 rounded-md bg-ivory p-3">
-                  <p className="text-[11px] font-bold text-charcoal">
+                <div className="space-y-2 rounded-md bg-surface-muted p-3">
+                  <p className="text-[11px] font-bold text-foreground">
                     Interiors & modular fitout
                   </p>
-                  <p className="text-[10px] leading-relaxed text-muted">
+                  <p className="text-[10px] leading-relaxed text-muted-foreground">
                     Modular kitchen, wardrobes, storage, false ceiling, lighting and
                     material selection.
                   </p>
                   <Link
                     to="/home-services/interiors"
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-gold hover:text-gold-hover"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:text-brand-hover"
                   >
                     View portfolio
                     <ArrowRight className="w-3 h-3" />
@@ -757,7 +776,7 @@ export function HomeServices() {
                     ? "/home-services/interiors"
                     : `/home-services/${service.id}`
                 }
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-gold hover:text-gold-hover"
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:text-brand-hover"
               >
                 View full details
                 <ArrowRight className="w-3 h-3" />
@@ -765,7 +784,7 @@ export function HomeServices() {
 
             </>
           ) : (
-            <p className="py-8 text-center text-sm text-muted">
+            <p className="py-8 text-center text-sm text-muted-foreground">
               Select a service to see details.
             </p>
           )}
@@ -774,7 +793,7 @@ export function HomeServices() {
           {service && (
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   Request status
                 </h3>
                 {currentRequest ? (
@@ -782,7 +801,7 @@ export function HomeServices() {
                     {currentRequest.status.replace(/_/g, " ")}
                   </Badge>
                 ) : (
-                  <span className="text-[10px] font-semibold text-muted-light">
+                  <span className="text-[10px] font-semibold text-subtle-foreground">
                     No request yet
                   </span>
                 )}
@@ -790,14 +809,14 @@ export function HomeServices() {
 
               {currentRequest && (
                 <>
-                  <p className="text-[11px] font-bold text-charcoal">
+                  <p className="text-[11px] font-bold text-foreground">
                     {currentRequest.label}
                   </p>
-                  <p className="text-[10px] text-muted">
+                  <p className="text-[10px] text-muted-foreground">
                     {currentRequest.detail}
                   </p>
                   {currentRequest.status === "cancelled" && (
-                    <p className="text-[10px] font-semibold text-rose-600">
+                    <p className="text-[10px] font-semibold text-danger-fg">
                       This request was cancelled by our team.
                     </p>
                   )}
@@ -815,15 +834,15 @@ export function HomeServices() {
                       <span
                         className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-extrabold ${
                           done
-                            ? "bg-gold text-charcoal"
-                            : "border border-border-subtle bg-white text-muted-light"
+                            ? "bg-brand text-on-brand"
+                            : "border border-border bg-surface text-subtle-foreground"
                         }`}
                       >
                         {index + 1}
                       </span>
                       <span
                         className={`text-[9px] font-bold leading-tight ${
-                          done ? "text-charcoal" : "text-muted-light"
+                          done ? "text-foreground" : "text-subtle-foreground"
                         }`}
                       >
                         {stage.label}
@@ -835,15 +854,15 @@ export function HomeServices() {
 
               {currentRequest && (
                 <div className="space-y-2 pt-1">
-                  <div className="h-1 overflow-hidden rounded-full bg-ivory-dark">
+                  <div className="h-1 overflow-hidden rounded-full bg-surface-strong">
                     <div
-                      className="h-full rounded-full bg-gold transition-all"
+                      className="h-full rounded-full bg-brand transition-all"
                       style={{ width: `${trackProgress}%` }}
                     />
                   </div>
                   <Link
                     to={currentRequest.href}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-gold hover:text-gold-hover"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:text-brand-hover"
                   >
                     View request
                     <ArrowRight className="w-3 h-3" />

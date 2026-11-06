@@ -9,17 +9,17 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const base =
-  "inline-flex items-center justify-center font-semibold rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none gap-2 cursor-pointer";
+  "inline-flex items-center justify-center font-semibold rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-50 disabled:pointer-events-none gap-2 cursor-pointer";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "bg-gold hover:bg-gold-hover active:bg-gold-muted text-charcoal shadow-sm focus:ring-gold border border-gold",
+    "bg-brand hover:bg-brand-hover active:bg-brand-muted text-on-brand shadow-sm focus:ring-brand border border-brand",
   secondary:
-    "bg-ivory hover:bg-ivory-dark text-charcoal border border-border-subtle focus:ring-charcoal",
-  dark: "bg-charcoal hover:bg-charcoal-light active:bg-charcoal-dark text-white shadow-sm focus:ring-charcoal border border-charcoal",
+    "bg-surface-muted hover:bg-surface-strong text-foreground border border-border focus:ring-brand",
+  dark: "bg-inverse hover:bg-inverse-hover active:bg-inverse-strong text-white shadow-sm focus:ring-brand border border-inverse",
   outline:
-    "bg-transparent border-2 border-charcoal text-charcoal hover:bg-charcoal hover:text-white focus:ring-charcoal",
-  ghost: "bg-transparent text-charcoal hover:bg-ivory focus:ring-charcoal",
+    "bg-transparent border-2 border-border text-foreground hover:bg-surface-muted focus:ring-brand",
+  ghost: "bg-transparent text-foreground hover:bg-surface-muted focus:ring-brand",
 };
 
 const sizes: Record<ButtonSize, string> = {

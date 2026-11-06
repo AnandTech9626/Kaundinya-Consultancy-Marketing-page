@@ -87,26 +87,26 @@ export function OtpVerification({
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-center">
-        <div className="w-12 h-12 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center">
+        <div className="w-12 h-12 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center">
           <ShieldCheck className="w-6 h-6" />
         </div>
       </div>
 
       <div className="text-center space-y-1.5">
-        <h3 className="text-2xl font-extrabold text-charcoal tracking-tight">
+        <h3 className="text-2xl font-extrabold text-foreground tracking-tight">
           Verify Your Mobile Number
         </h3>
-        <p className="text-xs sm:text-sm text-muted leading-relaxed">
+        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
           We've sent a 6-digit OTP to your registered mobile number.
         </p>
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <span className="text-sm font-semibold text-charcoal">{displayMobile}</span>
+        <span className="text-sm font-semibold text-foreground">{displayMobile}</span>
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-hover transition-colors cursor-pointer"
         >
           <Pencil className="w-3 h-3" />
           Edit
@@ -128,15 +128,15 @@ export function OtpVerification({
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             onFocus={() => setActiveIndex(i)}
-            className={`w-11 h-12 sm:w-12 text-center text-lg font-bold text-charcoal rounded-lg border bg-white transition-all focus:outline-none focus:ring-2 focus:ring-gold/60 ${
-              i === activeIndex ? "border-gold" : "border-border-subtle hover:border-muted"
+            className={`w-11 h-12 sm:w-12 text-center text-lg font-bold text-foreground rounded-lg border bg-surface transition-all focus:outline-none focus:ring-2 focus:ring-brand/60 ${
+              i === activeIndex ? "border-brand" : "border-border hover:border-subtle-foreground"
             }`}
           />
         ))}
       </div>
 
       {errorMessage && (
-        <div className="flex items-center justify-center gap-1.5 text-xs text-rose-600">
+        <div className="flex items-center justify-center gap-1.5 text-xs text-danger-fg">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           {errorMessage}
         </div>
@@ -146,7 +146,7 @@ export function OtpVerification({
         type="button"
         onClick={() => complete && onVerify(otp.join(""))}
         disabled={!complete || isVerifying}
-        className="w-full py-3 px-6 rounded-lg text-xs sm:text-sm font-bold text-charcoal bg-gold hover:bg-gold-hover active:bg-gold-muted transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+        className="w-full py-3 px-6 rounded-lg text-xs sm:text-sm font-bold text-on-brand bg-brand hover:bg-brand-hover active:bg-brand-muted transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
       >
         {isVerifying ? (
           <>
@@ -158,7 +158,7 @@ export function OtpVerification({
         )}
       </button>
 
-      <div className="text-center text-xs text-muted">
+      <div className="text-center text-xs text-muted-foreground">
         Didn't receive the code?{" "}
         {secondsLeft > 0 ? (
           <span>Resend in 0:{String(secondsLeft).padStart(2, "0")}</span>
@@ -166,7 +166,7 @@ export function OtpVerification({
           <button
             type="button"
             onClick={handleResend}
-            className="inline-flex items-center gap-1 font-bold text-gold hover:text-gold-hover cursor-pointer"
+            className="inline-flex items-center gap-1 font-bold text-brand hover:text-brand-hover cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />
             Resend OTP
@@ -174,7 +174,7 @@ export function OtpVerification({
         )}
       </div>
 
-      <p className="text-center text-[11px] text-muted leading-relaxed">
+      <p className="text-center text-[11px] text-muted-foreground leading-relaxed">
         By verifying, you agree to Kaundinya Consultancy's terms and privacy policy.
       </p>
     </div>

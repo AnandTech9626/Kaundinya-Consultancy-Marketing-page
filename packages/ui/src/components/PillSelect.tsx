@@ -40,7 +40,7 @@ export function PillSelect({
   return (
     <div className={className}>
       {label && (
-        <p className="text-xs font-bold text-charcoal mb-1.5">{label}</p>
+        <p className="text-xs font-bold text-foreground mb-1.5">{label}</p>
       )}
       <div className="flex flex-wrap gap-2">
         {normalized.map((option) => {
@@ -54,8 +54,8 @@ export function PillSelect({
               title={option.hint}
               className={`px-3.5 py-2 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${
                 selected
-                  ? "bg-gold border-gold text-charcoal"
-                  : "bg-white border-border-subtle text-charcoal-light hover:border-gold/60"
+                  ? "bg-brand border-brand text-on-brand"
+                  : "bg-surface border-border text-foreground-soft hover:border-brand/60"
               }`}
             >
               {option.label}

@@ -1,6 +1,7 @@
-import { Bell, Menu } from "lucide-react";
+import { Bell, Menu, Moon, Sun } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { useNotifications } from "../lib/notifications";
+import { useTheme } from "../lib/theme";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -10,27 +11,32 @@ interface TopbarProps {
 export function Topbar({ onMenuClick, onProfileClick }: TopbarProps) {
   const { user } = useAuth();
   const { unreadCount, openPanel } = useNotifications();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
   const initial = user?.name?.trim().charAt(0).toUpperCase() || "K";
 
   return (
-    <header className="h-16 bg-white/95 backdrop-blur border-b border-border-subtle flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 sticky top-0 z-10">
+    <header className="h-16 bg-surface/95 backdrop-blur border-b border-border flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 sticky top-0 z-10">
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onMenuClick}
           aria-label="Open menu"
-          className="lg:hidden shrink-0 p-2 -ml-1 rounded-lg text-charcoal hover:bg-ivory transition-colors cursor-pointer"
+          className="lg:hidden shrink-0 p-2 -ml-1 rounded-lg text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
         >
           <Menu className="w-5 h-5" />
         </button>
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-charcoal truncate">Welcome back</p>
-          <p className="text-[11px] text-muted truncate hidden sm:block">
-            Here's what's happening with your requests.
-          </p>
-        </div>
       </div>
 
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          className="rounded-lg p-2 text-foreground transition-colors hover:bg-surface-muted cursor-pointer"
+        >
+          {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </button>
         <button
           type="button"
           onClick={openPanel}
@@ -39,7 +45,7 @@ export function Topbar({ onMenuClick, onProfileClick }: TopbarProps) {
               ? `${unreadCount} unread notifications`
               : "Notifications"
           }
-          className="relative rounded-lg p-2 text-charcoal transition-colors hover:bg-ivory cursor-pointer"
+          className="relative rounded-lg p-2 text-foreground transition-colors hover:bg-surface-muted cursor-pointer"
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
@@ -48,15 +54,11 @@ export function Topbar({ onMenuClick, onProfileClick }: TopbarProps) {
             </span>
           )}
         </button>
-        <div className="text-right hidden sm:block">
-          <p className="text-sm font-semibold text-charcoal">{user?.name}</p>
-          <p className="text-[11px] text-muted">+91 {user?.mobile}</p>
-        </div>
         <button
           type="button"
           onClick={onProfileClick}
           aria-label="Open profile"
-          className="w-9 h-9 rounded-full bg-gold text-charcoal font-bold flex items-center justify-center transition-shadow hover:ring-2 hover:ring-gold/50 cursor-pointer"
+          className="w-9 h-9 rounded-full bg-brand text-on-brand font-bold flex items-center justify-center transition-shadow hover:ring-2 hover:ring-brand/50 cursor-pointer"
         >
           {initial}
         </button>

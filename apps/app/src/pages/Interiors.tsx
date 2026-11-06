@@ -72,20 +72,20 @@ export function Interiors() {
     <div className="space-y-6">
       <Link
         to="/home-services"
-        className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover"
+        className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:text-brand-hover"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to home services
       </Link>
 
       <div>
-        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-gold">
+        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-brand">
           Home Services
         </span>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
           Interiors & modular fitout
         </h1>
-        <p className="text-muted mt-1 max-w-2xl">
+        <p className="text-muted-foreground mt-1 max-w-2xl">
           Browse recent work, then book a free initial consultation to scope your home.
         </p>
       </div>
@@ -98,7 +98,7 @@ export function Interiors() {
             >
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_25%_20%,#f5b900_0,transparent_45%)]" />
               <div className="relative">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gold">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-brand">
                   {project.meta}
                 </p>
                 <p className="text-sm font-extrabold text-white leading-snug">
@@ -114,13 +114,13 @@ export function Interiors() {
         <Card className="lg:col-span-2 p-5 sm:p-6">
           {created ? (
             <div className="text-center space-y-3 py-6">
-              <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+              <div className="w-14 h-14 rounded-full bg-success-soft text-success-fg flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-7 h-7" />
               </div>
-              <h2 className="text-xl font-extrabold text-charcoal tracking-tight">
+              <h2 className="text-xl font-extrabold text-foreground tracking-tight">
                 Consultation requested
               </h2>
-              <p className="text-sm text-muted max-w-sm mx-auto">
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                 We'll call you on {created.mobile} to understand the space and schedule a
                 designer visit.
               </p>
@@ -131,10 +131,10 @@ export function Interiors() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <h2 className="text-base font-extrabold text-charcoal">
+                <h2 className="text-base font-extrabold text-foreground">
                   Book a free consultation
                 </h2>
-                <p className="text-xs text-muted mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   No design fee. We'll walk through options and timelines.
                 </p>
               </div>
@@ -199,7 +199,7 @@ export function Interiors() {
                 />
               </FormField>
 
-              {error && <p className="text-[11px] text-rose-600">{error}</p>}
+              {error && <p className="text-[11px] text-danger-fg">{error}</p>}
 
               <Button type="submit" className="w-full" disabled={!canSubmit || submitting}>
                 {submitting ? (
@@ -218,10 +218,10 @@ export function Interiors() {
         <div className="space-y-4">
           <Card className="p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-gold" />
-              <h2 className="text-sm font-extrabold text-charcoal">What's included</h2>
+              <Sparkles className="w-4 h-4 text-brand" />
+              <h2 className="text-sm font-extrabold text-foreground">What's included</h2>
             </div>
-            <ul className="space-y-2 text-xs text-muted leading-relaxed">
+            <ul className="space-y-2 text-xs text-muted-foreground leading-relaxed">
               <li>Space walkthrough and measurement</li>
               <li>Material and finish options</li>
               <li>Modular kitchen, wardrobes and storage plan</li>
@@ -231,18 +231,18 @@ export function Interiors() {
 
           {consultations.length > 0 && (
             <Card className="p-5 space-y-2">
-              <h2 className="text-sm font-extrabold text-charcoal">
+              <h2 className="text-sm font-extrabold text-foreground">
                 Previous consultations
               </h2>
               {consultations.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-lg border border-border-subtle bg-white px-3 py-2"
+                  className="rounded-lg border border-border bg-surface px-3 py-2"
                 >
-                  <p className="text-xs font-bold text-charcoal">
+                  <p className="text-xs font-bold text-foreground">
                     {item.style} · {item.budget}
                   </p>
-                  <p className="text-[10px] text-muted">
+                  <p className="text-[10px] text-muted-foreground">
                     {item.status} · {formatDate(item.createdAt)}
                   </p>
                 </div>

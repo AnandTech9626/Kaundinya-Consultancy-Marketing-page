@@ -17,11 +17,11 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="block text-xs font-bold text-charcoal mb-1">
-        {label} {required && <span className="text-rose-500">*</span>}
+      <label htmlFor={htmlFor} className="block text-xs font-bold text-foreground mb-1">
+        {label} {required && <span className="text-danger-fg">*</span>}
       </label>
       {children}
-      {error && <p className="mt-1 text-[11px] text-rose-600">{error}</p>}
+      {error && <p className="mt-1 text-[11px] text-danger-fg">{error}</p>}
     </div>
   );
 }

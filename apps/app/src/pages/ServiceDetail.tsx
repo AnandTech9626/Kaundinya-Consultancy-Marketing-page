@@ -17,11 +17,11 @@ export function ServiceDetail() {
   if (!category) {
     return (
       <div className="space-y-4">
-        <Link to="/services" className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover">
+        <Link to="/services" className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:text-brand-hover">
           <ArrowLeft className="w-4 h-4" />
           Back to services
         </Link>
-        <Card className="p-10 text-center text-sm text-muted">Service not found.</Card>
+        <Card className="p-10 text-center text-sm text-muted-foreground">Service not found.</Card>
       </div>
     );
   }
@@ -46,7 +46,7 @@ export function ServiceDetail() {
     <div className="space-y-6 max-w-3xl">
       <Link
         to="/services"
-        className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover"
+        className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:text-brand-hover"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to services
@@ -54,25 +54,25 @@ export function ServiceDetail() {
 
       <Card className="p-6 space-y-4">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
             <Icon className="w-6 h-6" />
           </div>
           <div className="space-y-1.5">
-            <h1 className="text-2xl font-extrabold text-charcoal tracking-tight">
+            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
               {category.name}
             </h1>
-            <p className="text-sm text-muted leading-relaxed">{category.description}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{category.description}</p>
           </div>
         </div>
 
-        <div className="border-t border-border-subtle pt-4">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted mb-3">
+        <div className="border-t border-border pt-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
             What we offer
           </p>
           <ul className="space-y-2">
             {category.services.map((s) => (
-              <li key={s} className="flex items-start gap-2 text-sm text-charcoal-light">
-                <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0 mt-1.5" />
+              <li key={s} className="flex items-start gap-2 text-sm text-foreground-soft">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 mt-1.5" />
                 {s}
               </li>
             ))}
@@ -82,21 +82,21 @@ export function ServiceDetail() {
 
       {submitted ? (
         <Card className="p-8 text-center space-y-3">
-          <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+          <div className="w-14 h-14 rounded-full bg-success-soft text-success-fg flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-7 h-7" />
           </div>
-          <h2 className="text-xl font-extrabold text-charcoal tracking-tight">
+          <h2 className="text-xl font-extrabold text-foreground tracking-tight">
             Request Submitted
           </h2>
-          <p className="text-sm text-muted max-w-sm mx-auto">
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
             Thank you! Our team will review your request and contact you shortly.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
-              to="/requests"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold"
+              to="/dashboard"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold"
             >
-              View my requests
+              View on dashboard
             </Link>
             <Button variant="secondary" onClick={() => setSubmitted(false)}>
               Submit another request
@@ -105,7 +105,7 @@ export function ServiceDetail() {
         </Card>
       ) : (
         <Card className="p-6">
-          <h2 className="text-base font-extrabold text-charcoal tracking-tight mb-4">
+          <h2 className="text-base font-extrabold text-foreground tracking-tight mb-4">
             Request this service
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
