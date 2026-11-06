@@ -49,6 +49,46 @@ export const MOCK_REQUESTS: ServiceRequest[] = [
     createdAt: "2026-10-09",
     comments: "Renewal for existing car policy.",
   },
+  {
+    id: "req-1007",
+    serviceCategory: "Insurance",
+    specificService: "Health claim assistance · Star Health",
+    status: "completed",
+    createdAt: "2026-10-12",
+    comments: "Cashless authorization and discharge documents coordinated.",
+  },
+  {
+    id: "req-1008",
+    serviceCategory: "Insurance",
+    specificService: "Motor renewal help · ICICI Lombard",
+    status: "in_progress",
+    createdAt: "2026-10-26",
+    comments: "Checking IDV and no-claim bonus before renewal.",
+  },
+  {
+    id: "req-1009",
+    serviceCategory: "Loans",
+    specificService: "Home loan eligibility review",
+    status: "new",
+    createdAt: "2026-10-27",
+    comments: "Planning a 3BHK purchase in Hitec City next quarter.",
+  },
+  {
+    id: "req-1010",
+    serviceCategory: "Loans",
+    specificService: "Business loan document help",
+    status: "completed",
+    createdAt: "2026-10-14",
+    comments: "GST returns and bank statements checked before submission.",
+  },
+  {
+    id: "req-1011",
+    serviceCategory: "Loans",
+    specificService: "Loan against property · lender coordination",
+    status: "in_progress",
+    createdAt: "2026-10-23",
+    comments: "Comparing two lenders for a 15-year mortgage.",
+  },
 ];
 
 export const MOCK_NOTIFICATIONS: AppNotification[] = [

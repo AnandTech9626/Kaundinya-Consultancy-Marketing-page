@@ -67,10 +67,51 @@ const Printouts = lazy(() =>
 const Interiors = lazy(() =>
   import("./pages/Interiors").then((module) => ({ default: module.Interiors }))
 );
+const Insurance = lazy(() =>
+  import("./pages/Insurance").then((module) => ({ default: module.Insurance }))
+);
+const HealthInsurance = lazy(() =>
+  import("./pages/HealthInsurance").then((module) => ({
+    default: module.HealthInsurance,
+  }))
+);
+const MotorInsurance = lazy(() =>
+  import("./pages/MotorInsurance").then((module) => ({
+    default: module.MotorInsurance,
+  }))
+);
+const PolicyVault = lazy(() =>
+  import("./pages/PolicyVault").then((module) => ({
+    default: module.PolicyVault,
+  }))
+);
+const InsuranceSupport = lazy(() =>
+  import("./pages/InsuranceSupport").then((module) => ({
+    default: module.InsuranceSupport,
+  }))
+);
+const RequestDetail = lazy(() =>
+  import("./pages/RequestDetail").then((module) => ({
+    default: module.RequestDetail,
+  }))
+);
+const Loans = lazy(() =>
+  import("./pages/Loans").then((module) => ({ default: module.Loans }))
+);
+const LoanProduct = lazy(() =>
+  import("./pages/LoanProduct").then((module) => ({
+    default: module.LoanProduct,
+  }))
+);
+const LoanSupport = lazy(() =>
+  import("./pages/LoanSupport").then((module) => ({
+    default: module.LoanSupport,
+  }))
+);
 function RouteFallback() {
   return (
     <div className="min-h-[50vh] flex items-center justify-center">
-      <Spinner className="w-6 h-6 text-gold" />
+      <Spinner className="w-6 h-6 text-brand" />
     </div>
   );
 }
@@ -118,6 +159,31 @@ export default function App() {
                   element={<Printouts />}
                 />
                 <Route path="/jobs/:id" element={<JobDetail />} />
+                <Route path="/insurance" element={<Insurance />} />
+                <Route path="/insurance/health" element={<HealthInsurance />} />
+                <Route path="/insurance/motor" element={<MotorInsurance />} />
+                <Route path="/insurance/policies" element={<PolicyVault />} />
+                <Route path="/insurance/support" element={<InsuranceSupport />} />
+                <Route path="/loans" element={<Loans />} />
+                <Route path="/loans/support" element={<LoanSupport />} />
+                <Route path="/loans/:product" element={<LoanProduct />} />
+                <Route
+                  path="/loans/apply"
+                  element={<Navigate to="/loans" replace />}
+                />
+                <Route
+                  path="/loans/credit-health"
+                  element={<Navigate to="/loans/support" replace />}
+                />
+                <Route
+                  path="/loans/applications"
+                  element={<Navigate to="/loans" replace />}
+                />
+                <Route
+                  path="/loans/applications/:id"
+                  element={<Navigate to="/loans" replace />}
+                />
+                <Route path="/requests/:id" element={<RequestDetail />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

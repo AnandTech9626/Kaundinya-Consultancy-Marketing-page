@@ -13,7 +13,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
   return (
     <Link to={`/real-estate/${property.id}`} className="block">
       <Card hoverable className="overflow-hidden p-0 h-full flex flex-col">
-        <div className="relative h-40 bg-gradient-to-br from-charcoal via-charcoal-light to-[#3b3420] flex items-center justify-center overflow-hidden">
+        <div className="relative h-40 bg-gradient-to-br from-inverse via-inverse-hover to-[#3b3420] flex items-center justify-center overflow-hidden">
           {image ? (
             <img
               src={image}
@@ -23,7 +23,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
           ) : (
             <>
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_20%_20%,#f5b900_0,transparent_45%),radial-gradient(circle_at_80%_70%,#f5b900_0,transparent_40%)]" />
-              <Building2 className="w-14 h-14 text-gold/40" />
+              <Building2 className="w-14 h-14 text-brand/40" />
             </>
           )}
           <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
@@ -32,27 +32,27 @@ export function PropertyCard({ property }: PropertyCardProps) {
             </Badge>
             {property.featured && <Badge variant="warning">Featured</Badge>}
           </div>
-          <div className="absolute bottom-3 right-3 rounded-lg bg-white/95 backdrop-blur px-2.5 py-1 text-sm font-extrabold text-charcoal shadow-sm">
+          <div className="absolute bottom-3 right-3 rounded-lg bg-surface/95 backdrop-blur px-2.5 py-1 text-sm font-extrabold text-foreground shadow-sm">
             {formatPropertyPrice(property.price, property.priceUnit)}
           </div>
         </div>
 
         <div className="p-4 space-y-3 flex-1 flex flex-col">
           <div className="space-y-1">
-            <h3 className="text-sm font-extrabold text-charcoal leading-snug line-clamp-2">
+            <h3 className="text-sm font-extrabold text-foreground leading-snug line-clamp-2">
               {property.title}
             </h3>
-            <p className="flex items-center gap-1 text-xs text-muted">
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
               <MapPin className="w-3 h-3 shrink-0" />
               {property.location}, {property.city} · {property.pincode}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-charcoal-light">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-foreground-soft">
             <span>{property.bhk}</span>
-            <span className="w-1 h-1 rounded-full bg-border-subtle" />
+            <span className="w-1 h-1 rounded-full bg-border" />
             <span>{formatArea(property.areaSqft)}</span>
-            <span className="w-1 h-1 rounded-full bg-border-subtle" />
+            <span className="w-1 h-1 rounded-full bg-border" />
             <span>{property.propertyType}</span>
           </div>
 
@@ -60,19 +60,19 @@ export function PropertyCard({ property }: PropertyCardProps) {
             {property.amenities.slice(0, 3).map((amenity) => (
               <span
                 key={amenity}
-                className="rounded-full bg-ivory px-2 py-0.5 text-[10px] font-medium text-muted"
+                className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
               >
                 {amenity}
               </span>
             ))}
             {property.amenities.length > 3 && (
-              <span className="rounded-full bg-ivory px-2 py-0.5 text-[10px] font-medium text-muted">
+              <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                 +{property.amenities.length - 3}
               </span>
             )}
           </div>
 
-          <div className="mt-auto pt-2 flex items-center justify-between text-xs font-bold text-gold">
+          <div className="mt-auto pt-2 flex items-center justify-between text-xs font-bold text-brand">
             View details
             <ArrowRight className="w-4 h-4" />
           </div>

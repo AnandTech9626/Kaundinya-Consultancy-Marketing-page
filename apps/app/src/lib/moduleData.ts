@@ -403,6 +403,18 @@ export const POLICIES: PolicyRecord[] = [
     holder: "Kaundinya Client",
     validFrom: "2026-03-19",
   },
+  {
+    id: "pol-4004",
+    type: "Property",
+    provider: "Bajaj Allianz",
+    policyNumber: "BA-HOME-773410",
+    coverAmount: 2500000,
+    premium: 6400,
+    renewalDate: "2027-01-20",
+    status: "active",
+    holder: "Kaundinya Client",
+    validFrom: "2026-01-21",
+  },
 ];
 
 export const JOBS: JobRecord[] = [

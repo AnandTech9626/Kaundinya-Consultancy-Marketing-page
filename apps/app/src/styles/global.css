@@ -1,15 +1,22 @@
 @import "tailwindcss";
 @import "@kaundinya/tokens/tokens.css";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @source "../../../../packages/ui/src";
 
 @layer base {
   html {
     font-family: var(--font-sans);
-    color: var(--color-charcoal);
-    background-color: #ffffff;
+    color: var(--foreground);
+    background-color: var(--background);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
   }
 
   h1,
@@ -23,9 +30,16 @@
   }
 
   ::selection {
-    background-color: #f5b900;
-    color: #171717;
+    background-color: var(--brand);
+    color: var(--on-brand);
   }
+}
+
+/* Instant theme switching: disable transitions only while the theme changes. */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
 }
 
 /* Global XS corner radius for cards, panels and sidebar buttons */

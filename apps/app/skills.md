@@ -57,10 +57,12 @@ src/
 - `/real-estate/*` — listings, property detail, sell/rent listing, valuation
 - `/home-services/*` — services, detail, measurements, interiors, jobs
 - `/digital-services/*` — hub, ID updates, printouts
-- `/requests/:id` — generic request detail
+- `/insurance` — consultancy hub, health, motor, policy vault and support
+- `/loans` — consultancy hub, product guidance and support
+- `/requests/:id` — request detail (deep links from notifications and dialogue flows)
 - `/jobs/:id` — Home Services job tracking
 
-Legacy insurance/loan pages still exist in `src/pages` but are not part of the current navigation.
+The Insurance and Loans modules are live and use local mock data. The old direct-apply loan pages were removed; `/loans/apply`, `/loans/credit-health` and `/loans/applications*` redirect into the consultancy flow.
 
 ## API conventions
 
@@ -82,6 +84,9 @@ Legacy insurance/loan pages still exist in `src/pages` but are not part of the c
 
 ## UI conventions
 
+- Use the semantic theme tokens: `bg-surface`, `bg-surface-muted`, `text-foreground`, `text-muted-foreground`, `border-border`, `bg-brand`, `text-brand`, `bg-inverse`, `bg-sidebar`.
+- Do not add raw palette classes like `bg-white`, `bg-ivory`, `text-charcoal` or `bg-gold`; light/dark switching depends on semantic tokens.
+- The theme toggle lives in the topbar beside notifications and persists in `localStorage` under `kaundinya.theme`.
 - Use existing components and Tailwind classes.
 - Keep the existing brand colors and typography.
 - Use `lucide-react` for icons.

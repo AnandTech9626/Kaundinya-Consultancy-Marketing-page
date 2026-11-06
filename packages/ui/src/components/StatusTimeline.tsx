@@ -26,9 +26,9 @@ export function StatusTimeline({
   return (
     <div className={className}>
       {cancelled && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5">
-          <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-          <p className="text-xs text-rose-700 font-medium">
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-danger-fg/20 bg-danger-soft px-3 py-2.5">
+          <XCircle className="w-4 h-4 text-danger-fg shrink-0 mt-0.5" />
+          <p className="text-xs text-danger-fg font-medium">
             This request was cancelled. Contact us if you would like to reopen it.
           </p>
         </div>
@@ -43,14 +43,14 @@ export function StatusTimeline({
             <div key={stage.id} className="flex gap-3">
               <div className="flex flex-col items-center">
                 {reached ? (
-                  <CheckCircle2 className="w-5 h-5 text-gold shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-brand shrink-0" />
                 ) : (
-                  <Circle className="w-5 h-5 text-border-subtle shrink-0" />
+                  <Circle className="w-5 h-5 text-border shrink-0" />
                 )}
                 {!isLast && (
                   <span
                     className={`w-0.5 flex-1 my-1 ${
-                      !cancelled && i < activeIndex ? "bg-gold" : "bg-border-subtle"
+                      !cancelled && i < activeIndex ? "bg-brand" : "bg-border"
                     }`}
                   />
                 )}
@@ -59,23 +59,23 @@ export function StatusTimeline({
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                   <p
                     className={`text-sm font-bold ${
-                      isCurrent ? "text-charcoal" : reached ? "text-charcoal-light" : "text-muted"
+                      isCurrent ? "text-foreground" : reached ? "text-foreground-soft" : "text-muted-foreground"
                     }`}
                   >
                     {stage.label}
                   </p>
                   {stage.at && (
-                    <span className="text-[11px] text-muted-light whitespace-nowrap">
+                    <span className="text-[11px] text-subtle-foreground whitespace-nowrap">
                       {stage.at}
                     </span>
                   )}
                 </div>
                 {stage.description && (
-                  <p className="text-xs text-muted mt-0.5">{stage.description}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{stage.description}</p>
                 )}
                 {isCurrent && (
-                  <p className="text-xs text-muted flex items-center gap-1 mt-1">
-                    <CircleDot className="w-3 h-3 text-gold" />
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                    <CircleDot className="w-3 h-3 text-brand" />
                     Current stage
                   </p>
                 )}

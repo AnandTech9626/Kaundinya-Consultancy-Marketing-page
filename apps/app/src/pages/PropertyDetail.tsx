@@ -61,7 +61,7 @@ export function PropertyDetail() {
   const backLink = (
     <Link
       to="/real-estate"
-      className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover"
+      className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:text-brand-hover"
     >
       <ArrowLeft className="w-4 h-4" />
       Back to properties
@@ -97,10 +97,10 @@ export function PropertyDetail() {
       <div className="space-y-4">
         {backLink}
         <Card className="p-10 text-center space-y-3">
-          <p className="text-sm text-muted">We couldn't load this property.</p>
+          <p className="text-sm text-muted-foreground">We couldn't load this property.</p>
           <button
             onClick={refetch}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold cursor-pointer"
           >
             Try again
           </button>
@@ -113,7 +113,7 @@ export function PropertyDetail() {
     return (
       <div className="space-y-4">
         {backLink}
-        <Card className="p-10 text-center text-sm text-muted">
+        <Card className="p-10 text-center text-sm text-muted-foreground">
           This property is no longer available.
         </Card>
       </div>
@@ -153,7 +153,7 @@ export function PropertyDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card className="overflow-hidden p-0">
-            <div className="relative h-56 sm:h-72 bg-gradient-to-br from-charcoal via-charcoal-light to-[#3b3420] flex items-center justify-center">
+            <div className="relative h-56 sm:h-72 bg-gradient-to-br from-inverse via-inverse-hover to-[#3b3420] flex items-center justify-center">
               {image ? (
                 <img
                   src={image}
@@ -163,7 +163,7 @@ export function PropertyDetail() {
               ) : (
                 <>
                   <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_20%_20%,#f5b900_0,transparent_45%),radial-gradient(circle_at_80%_70%,#f5b900_0,transparent_40%)]" />
-                  <Building2 className="w-20 h-20 text-gold/40" />
+                  <Building2 className="w-20 h-20 text-brand/40" />
                 </>
               )}
               <div className="absolute top-4 left-4 flex flex-wrap gap-2">
@@ -173,10 +173,10 @@ export function PropertyDetail() {
                 <Badge variant="neutral">{property.propertyType}</Badge>
                 {property.featured && <Badge variant="warning">Featured</Badge>}
               </div>
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-charcoal/90 to-transparent p-4 sm:p-5">
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-inverse/90 to-transparent p-4 sm:p-5">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-gold">
+                    <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-brand">
                       <MapPin className="w-3 h-3" />
                       {property.location}, {property.city}
                     </p>
@@ -184,7 +184,7 @@ export function PropertyDetail() {
                       {property.title}
                     </h1>
                   </div>
-                  <div className="rounded-xl bg-white px-3 py-2 text-base sm:text-lg font-extrabold text-charcoal whitespace-nowrap">
+                  <div className="rounded-xl bg-surface px-3 py-2 text-base sm:text-lg font-extrabold text-foreground whitespace-nowrap">
                     {formatPropertyPrice(property.price, property.priceUnit)}
                   </div>
                 </div>
@@ -201,34 +201,34 @@ export function PropertyDetail() {
                 { label: "Posted on", value: formatDate(property.createdAt) },
               ].map((fact) => (
                 <div key={fact.label}>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-subtle-foreground">
                     {fact.label}
                   </p>
-                  <p className="text-sm font-bold text-charcoal mt-0.5">{fact.value}</p>
+                  <p className="text-sm font-bold text-foreground mt-0.5">{fact.value}</p>
                 </div>
               ))}
             </div>
 
-            <div className="border-t border-border-subtle pt-4">
-              <h2 className="text-base font-extrabold text-charcoal tracking-tight mb-2">
+            <div className="border-t border-border pt-4">
+              <h2 className="text-base font-extrabold text-foreground tracking-tight mb-2">
                 About this property
               </h2>
-              <p className="text-sm text-charcoal-light leading-relaxed">
+              <p className="text-sm text-foreground-soft leading-relaxed">
                 {property.description}
               </p>
             </div>
 
-            <div className="border-t border-border-subtle pt-4">
-              <h2 className="text-base font-extrabold text-charcoal tracking-tight mb-3">
+            <div className="border-t border-border pt-4">
+              <h2 className="text-base font-extrabold text-foreground tracking-tight mb-3">
                 Amenities
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {property.amenities.map((amenity) => (
                   <div
                     key={amenity}
-                    className="flex items-center gap-2 text-sm text-charcoal-light"
+                    className="flex items-center gap-2 text-sm text-foreground-soft"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-gold shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-brand shrink-0" />
                     {amenity}
                   </div>
                 ))}
@@ -236,27 +236,27 @@ export function PropertyDetail() {
             </div>
           </Card>
 
-          <Card className="p-5 bg-ivory/60">
+          <Card className="p-5 bg-surface-muted/60">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-4 h-4" />
               </div>
-              <div className="text-xs text-muted leading-relaxed space-y-1">
-                <p className="font-bold text-charcoal">
+              <div className="text-xs text-muted-foreground leading-relaxed space-y-1">
+                <p className="font-bold text-foreground">
                   Project RERA: {property.reraAgentNumber ?? "Registration pending"}
                 </p>
                 <p>
                   {COMPLIANCE.tsRera.label}: {COMPLIANCE.tsRera.value}.{" "}
                   {COMPLIANCE.tsRera.note}
                 </p>
-                <p className="font-bold text-charcoal pt-1">{COMPLIANCE.dpdp.label}</p>
+                <p className="font-bold text-foreground pt-1">{COMPLIANCE.dpdp.label}</p>
                 <p>{COMPLIANCE.dpdp.note}</p>
               </div>
             </div>
           </Card>
 
           <Card className="p-5 space-y-2">
-            <h2 className="text-base font-extrabold text-charcoal tracking-tight mb-1">
+            <h2 className="text-base font-extrabold text-foreground tracking-tight mb-1">
               Buying & renting guides
             </h2>
             {[
@@ -275,14 +275,14 @@ export function PropertyDetail() {
             ].map((guide) => (
               <details
                 key={guide.title}
-                className="group rounded-lg border border-border-subtle bg-white [&::-webkit-details-marker]:hidden"
+                className="group rounded-lg border border-border bg-surface [&::-webkit-details-marker]:hidden"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-xs font-bold text-charcoal">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-xs font-bold text-foreground">
                   {guide.title}
-                  <span className="text-gold group-open:hidden">+</span>
-                  <span className="hidden text-gold group-open:inline">−</span>
+                  <span className="text-brand group-open:hidden">+</span>
+                  <span className="hidden text-brand group-open:inline">−</span>
                 </summary>
-                <p className="px-3 pb-3 text-[11px] text-muted leading-relaxed">
+                <p className="px-3 pb-3 text-[11px] text-muted-foreground leading-relaxed">
                   {guide.body}
                 </p>
               </details>
@@ -294,21 +294,21 @@ export function PropertyDetail() {
           <Card className="p-5 lg:sticky lg:top-20">
             {booked ? (
               <div className="text-center space-y-3">
-                <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                <div className="w-14 h-14 rounded-full bg-success-soft text-success-fg flex items-center justify-center mx-auto">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-extrabold text-charcoal tracking-tight">
+                  <h2 className="text-lg font-extrabold text-foreground tracking-tight">
                     Site visit requested
                   </h2>
-                  <p className="text-xs text-muted mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {booked.propertyTitle}
                   </p>
                 </div>
-                <p className="text-sm font-bold text-charcoal">
+                <p className="text-sm font-bold text-foreground">
                   {formatDate(booked.date)} · {booked.slot}
                 </p>
-                <p className="text-[11px] text-muted-light">
+                <p className="text-[11px] text-subtle-foreground">
                   Our team will confirm with the owner and call you on{" "}
                   {booked.mobile}. Reference #{booked.id.toUpperCase()}.
                 </p>
@@ -318,7 +318,7 @@ export function PropertyDetail() {
                   </Button>
                   <Link
                     to="/real-estate"
-                    className="text-xs font-bold text-gold hover:text-gold-hover"
+                    className="text-xs font-bold text-brand hover:text-brand-hover"
                   >
                     Back to properties
                   </Link>
@@ -327,10 +327,10 @@ export function PropertyDetail() {
             ) : (
               <form onSubmit={handleBook} className="space-y-4">
                 <div>
-                  <h2 className="text-base font-extrabold text-charcoal tracking-tight">
+                  <h2 className="text-base font-extrabold text-foreground tracking-tight">
                     Book a site visit
                   </h2>
-                  <p className="text-xs text-muted mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Free · No obligation · Confirmed within 2 working hours.
                   </p>
                 </div>
@@ -370,7 +370,7 @@ export function PropertyDetail() {
                 </FormField>
 
                 {bookingError && (
-                  <p className="text-[11px] text-rose-600">{bookingError}</p>
+                  <p className="text-[11px] text-danger-fg">{bookingError}</p>
                 )}
 
                 <Button
@@ -392,7 +392,7 @@ export function PropertyDetail() {
                     "Request this slot"
                   )}
                 </Button>
-                <p className="text-[10px] text-muted-light text-center leading-relaxed">
+                <p className="text-[10px] text-subtle-foreground text-center leading-relaxed">
                   By requesting a visit you agree to be contacted about this property.
                 </p>
               </form>
@@ -400,8 +400,8 @@ export function PropertyDetail() {
           </Card>
 
           <Card className="p-5 space-y-3">
-            <h3 className="text-sm font-extrabold text-charcoal">Documents & KYC</h3>
-            <p className="text-xs text-muted leading-relaxed">
+            <h3 className="text-sm font-extrabold text-foreground">Documents & KYC</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Optional: upload ID, address proof or a pre-approval letter to speed up
               verification for this property.
             </p>
@@ -413,7 +413,7 @@ export function PropertyDetail() {
               hint="PAN, Aadhaar or address proof · up to 10 MB."
             />
             {kycFiles.length > 0 && (
-              <p className="text-[10px] text-emerald-700">
+              <p className="text-[10px] text-success-fg">
                 Stored locally for this demo session only. Real uploads are encrypted and
                 watermarked.
               </p>
@@ -423,24 +423,24 @@ export function PropertyDetail() {
           {emi && (
             <Card className="p-5 space-y-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center">
                   <Building2 className="w-4 h-4" />
                 </div>
-                <h3 className="text-sm font-extrabold text-charcoal">
+                <h3 className="text-sm font-extrabold text-foreground">
                   Home loan estimate
                 </h3>
               </div>
-              <p className="text-xs text-muted leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 At 80% funding, 8.5% interest and a 20-year tenure, this home works out
                 to about{" "}
-                <span className="font-bold text-charcoal">
+                <span className="font-bold text-foreground">
                   ₹{emi.toLocaleString("en-IN")}/month
                 </span>
                 .
               </p>
               <Link
                 to={`/loans/apply?type=home&propertyId=${property.id}&propertyTitle=${encodeURIComponent(property.title)}&amount=${Math.round(property.price * 0.8)}&purpose=${encodeURIComponent(`Home purchase — ${property.title}`)}`}
-                className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover"
+                className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-hover"
               >
                 Check loan eligibility
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -450,18 +450,18 @@ export function PropertyDetail() {
 
           <Card className="p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center">
                 <Wrench className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-extrabold text-charcoal">Moving in soon?</h3>
+              <h3 className="text-sm font-extrabold text-foreground">Moving in soon?</h3>
             </div>
-            <p className="text-xs text-muted leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Book AC service, deep cleaning, safety nets or invisible grills before you
               move in.
             </p>
             <Link
               to="/services/property-home-services"
-              className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover"
+              className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-hover"
             >
               Explore home services
               <ArrowRight className="w-3.5 h-3.5" />

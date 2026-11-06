@@ -41,12 +41,12 @@ export function JobTracker() {
         <Card hoverable className="p-4 sm:p-5 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
                 <Wrench className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-bold text-charcoal truncate">{job.serviceName}</p>
-                <p className="text-xs text-muted">
+                <p className="text-sm font-bold text-foreground truncate">{job.serviceName}</p>
+                <p className="text-xs text-muted-foreground">
                   {job.technician ?? "Technician being assigned"}
                   {job.scheduledAt ? ` · ${job.scheduledAt}` : ""}
                 </p>
@@ -56,18 +56,18 @@ export function JobTracker() {
               <Badge variant={JOB_BADGE[job.status] ?? "neutral"}>
                 {stageLabel(job.status)}
               </Badge>
-              <ChevronRight className="w-4 h-4 text-muted-light" />
+              <ChevronRight className="w-4 h-4 text-subtle-foreground" />
             </div>
           </div>
 
-          <div className="h-1.5 rounded-full bg-ivory-dark overflow-hidden">
+          <div className="h-1.5 rounded-full bg-surface-strong overflow-hidden">
             <div
-              className="h-1.5 rounded-full bg-gold transition-all"
+              className="h-1.5 rounded-full bg-brand transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-muted-light">
+          <div className="flex items-center justify-between text-[11px] text-subtle-foreground">
             <span>{job.issueTypes?.join(", ") || "General service"}</span>
             <span>{job.amount ? formatINR(job.amount) : "Quote after visit"}</span>
           </div>
@@ -79,23 +79,23 @@ export function JobTracker() {
   return (
     <div className="space-y-8">
       <div>
-        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-gold">
+        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-brand">
           Home Services
         </span>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
           My jobs
         </h1>
-        <p className="text-muted mt-1">
+        <p className="text-muted-foreground mt-1">
           Follow every visit from assignment to completion, and rate the work.
         </p>
       </div>
 
       {error ? (
         <Card className="p-10 text-center space-y-3">
-          <p className="text-sm text-muted">We couldn't load your jobs.</p>
+          <p className="text-sm text-muted-foreground">We couldn't load your jobs.</p>
           <button
             onClick={refetch}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold cursor-pointer"
           >
             Try again
           </button>
@@ -112,16 +112,16 @@ export function JobTracker() {
         </div>
       ) : allJobs.length === 0 ? (
         <Card className="p-10 text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center mx-auto">
+          <div className="w-12 h-12 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center mx-auto">
             <ClipboardList className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-charcoal">No jobs yet</p>
-          <p className="text-sm text-muted">
+          <p className="text-sm font-bold text-foreground">No jobs yet</p>
+          <p className="text-sm text-muted-foreground">
             Book a service and it will appear here with live status.
           </p>
           <Link
             to="/home-services"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold"
           >
             Explore home services
           </Link>
@@ -129,11 +129,11 @@ export function JobTracker() {
       ) : (
         <>
           <div className="space-y-3">
-            <h2 className="text-lg font-extrabold text-charcoal tracking-tight">
+            <h2 className="text-lg font-extrabold text-foreground tracking-tight">
               Active jobs
             </h2>
             {active.length === 0 ? (
-              <Card className="p-6 text-center text-sm text-muted">
+              <Card className="p-6 text-center text-sm text-muted-foreground">
                 No active jobs right now.
               </Card>
             ) : (
@@ -143,7 +143,7 @@ export function JobTracker() {
 
           {completed.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-lg font-extrabold text-charcoal tracking-tight">
+              <h2 className="text-lg font-extrabold text-foreground tracking-tight">
                 Completed
               </h2>
               {completed.map(renderJob)}
@@ -152,7 +152,7 @@ export function JobTracker() {
 
           {cancelled.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-lg font-extrabold text-charcoal tracking-tight">
+              <h2 className="text-lg font-extrabold text-foreground tracking-tight">
                 Cancelled
               </h2>
               {cancelled.map(renderJob)}
@@ -164,8 +164,8 @@ export function JobTracker() {
       {(measurements ?? []).length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Ruler className="w-4 h-4 text-gold" />
-            <h2 className="text-lg font-extrabold text-charcoal tracking-tight">
+            <Ruler className="w-4 h-4 text-brand" />
+            <h2 className="text-lg font-extrabold text-foreground tracking-tight">
               Measurement visits
             </h2>
           </div>
@@ -174,13 +174,13 @@ export function JobTracker() {
               <Card key={measurement.id} className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-sm font-bold text-charcoal">
+                    <p className="text-sm font-bold text-foreground">
                       {measurement.serviceName}
                     </p>
-                    <p className="text-xs text-muted mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {formatDate(measurement.date)} · {measurement.slot}
                     </p>
-                    <p className="text-[11px] text-muted-light mt-0.5">
+                    <p className="text-[11px] text-subtle-foreground mt-0.5">
                       {measurement.address} · {measurement.pincode}
                     </p>
                   </div>

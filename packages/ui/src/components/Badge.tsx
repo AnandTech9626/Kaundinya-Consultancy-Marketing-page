@@ -13,12 +13,12 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const styles: Record<BadgeVariant, string> = {
-  neutral: "bg-charcoal/5 text-charcoal border border-border-subtle",
-  gold: "bg-gold/15 text-[#8a6b1a] border border-gold/30",
-  success: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  info: "bg-blue-50 text-blue-700 border border-blue-200",
-  warning: "bg-amber-50 text-amber-700 border border-amber-200",
-  danger: "bg-rose-50 text-rose-700 border border-rose-200",
+  neutral: "bg-surface-muted text-muted-foreground border border-border",
+  gold: "bg-brand/15 text-brand-strong border border-brand/30",
+  success: "bg-success-soft text-success-fg border border-success-fg/20",
+  info: "bg-info-soft text-info-fg border border-info-fg/20",
+  warning: "bg-warning-soft text-warning-fg border border-warning-fg/20",
+  danger: "bg-danger-soft text-danger-fg border border-danger-fg/20",
 };
 
 export function Badge({

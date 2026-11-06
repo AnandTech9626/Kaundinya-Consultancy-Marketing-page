@@ -30,7 +30,7 @@ export function ProfilePanel({ open, onClose }: ProfilePanelProps) {
       aria-hidden={!open}
     >
       <div
-        className={`absolute inset-0 bg-charcoal/50 transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-inverse/50 transition-opacity duration-300 ${
           open ? "opacity-100" : "opacity-0"
         }`}
         onClick={onClose}
@@ -40,20 +40,20 @@ export function ProfilePanel({ open, onClose }: ProfilePanelProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Profile"
-        className={`absolute inset-y-0 right-0 flex w-full flex-col bg-ivory shadow-2xl transition-transform duration-300 ease-out sm:w-1/2 ${
+        className={`absolute inset-y-0 right-0 flex w-full flex-col bg-surface-muted shadow-2xl transition-transform duration-300 ease-out sm:w-1/2 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between gap-3 border-b border-border-subtle bg-white p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3 border-b border-border bg-surface p-4 sm:p-5">
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-light text-[#B8860B]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft text-brand-strong">
               <User className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-base font-extrabold tracking-tight text-charcoal">
+              <h2 className="text-base font-extrabold tracking-tight text-foreground">
                 Your profile
               </h2>
-              <p className="text-[11px] text-muted">
+              <p className="text-[11px] text-muted-foreground">
                 Personal details, client ID and security PIN.
               </p>
             </div>
@@ -62,7 +62,7 @@ export function ProfilePanel({ open, onClose }: ProfilePanelProps) {
             type="button"
             onClick={onClose}
             aria-label="Close profile"
-            className="shrink-0 rounded-lg border border-border-subtle p-2 text-charcoal hover:border-gold/60 cursor-pointer"
+            className="shrink-0 rounded-lg border border-border p-2 text-foreground hover:border-brand/60 cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>

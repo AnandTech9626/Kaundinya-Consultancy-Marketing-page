@@ -12,6 +12,7 @@ import { Badge, Card, Input, Select, Skeleton } from "@kaundinya/ui";
 import type { PropertyListing, SiteVisit } from "@kaundinya/config";
 import { COMPLIANCE } from "@kaundinya/config";
 import { PropertyCard } from "../components/PropertyCard";
+import { InfoTip } from "../components/InfoTip";
 import {
   fetchBuyProperties,
   fetchMyProperties,
@@ -97,22 +98,22 @@ function EmptyMyProperties() {
       aria-labelledby="my-properties-empty"
       className="p-8 text-center space-y-3"
     >
-      <div className="w-14 h-14 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center mx-auto">
+      <div className="w-14 h-14 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center mx-auto">
         <Building2 className="w-7 h-7" />
       </div>
       <h3
         id="my-properties-empty"
-        className="text-lg font-extrabold text-charcoal tracking-tight"
+        className="text-lg font-extrabold text-foreground tracking-tight"
       >
         No properties yet
       </h3>
-      <p className="text-sm text-muted max-w-md mx-auto leading-relaxed">
+      <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
         You don't have any pending properties for sale or rent. List your property
         and our team will review it before it goes live.
       </p>
       <Link
         to="/real-estate/list"
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold transition-colors"
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold transition-colors"
       >
         <Plus className="w-4 h-4" />
         List your first property
@@ -136,16 +137,16 @@ function MyPropertiesSection({
     <Card className="p-5 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-extrabold text-charcoal tracking-tight">
+          <h3 className="text-sm font-extrabold text-foreground tracking-tight">
             My properties {title.toLowerCase()}
           </h3>
-          <p className="text-[11px] text-muted mt-0.5">{description}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
         </div>
         <Badge variant="neutral">{items.length}</Badge>
       </div>
 
       {items.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border-subtle p-4 text-center text-xs text-muted">
+        <p className="rounded-lg border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
           {emptyText}
         </p>
       ) : (
@@ -156,16 +157,16 @@ function MyPropertiesSection({
               <Link
                 key={listing.id}
                 to={`/real-estate/${listing.id}`}
-                className="flex items-start justify-between gap-3 rounded-xl border border-border-subtle p-3 hover:border-gold/60 transition-colors"
+                className="flex items-start justify-between gap-3 rounded-xl border border-border p-3 hover:border-brand/60 transition-colors"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-charcoal line-clamp-1">
+                  <p className="text-sm font-bold text-foreground line-clamp-1">
                     {listing.title}
                   </p>
-                  <p className="text-xs text-muted mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {listing.bhk} · {listing.location}, {listing.pincode}
                   </p>
-                  <p className="text-xs font-extrabold text-charcoal mt-1">
+                  <p className="text-xs font-extrabold text-foreground mt-1">
                     {formatPropertyPrice(listing.price, listing.priceUnit)}
                   </p>
                 </div>
@@ -258,24 +259,30 @@ export function RealEstate({ mode }: RealEstateProps) {
   return (
     <div className="space-y-6">
       <div>
-        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-gold">
+        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-brand">
           {copy.eyebrow}
         </span>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
-          {copy.title}
-        </h1>
-        <p className="text-muted mt-1 max-w-2xl">{copy.description}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+            {copy.title}
+          </h1>
+          <InfoTip
+            label="About Real Estate"
+            text="Search verified sale and rental properties, list your own property, book a valuation or a site visit, and track enquiries from this page."
+          />
+        </div>
+        <p className="text-muted-foreground mt-1 max-w-2xl">{copy.description}</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-1 rounded-xl border border-border-subtle bg-white p-1">
+      <div className="grid grid-cols-3 gap-1 rounded-xl border border-border bg-surface p-1">
         {TABS.map((tab) => (
           <Link
             key={tab.mode}
             to={tab.to}
             className={`text-center py-2.5 rounded-lg text-sm font-bold transition-colors ${
               mode === tab.mode
-                ? "bg-charcoal text-white"
-                : "text-charcoal hover:bg-ivory"
+                ? "bg-inverse text-white"
+                : "text-foreground hover:bg-surface-muted"
             }`}
           >
             {tab.label}
@@ -287,12 +294,12 @@ export function RealEstate({ mode }: RealEstateProps) {
         <div className="min-w-0 xl:flex-[3]">
           <label
             htmlFor="filter-location"
-            className="block text-[11px] font-bold text-charcoal mb-1"
+            className="block text-[11px] font-bold text-foreground mb-1"
           >
             Location
           </label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-light" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle-foreground" />
             <Input
               id="filter-location"
               className="pl-9"
@@ -306,7 +313,7 @@ export function RealEstate({ mode }: RealEstateProps) {
         <div className="min-w-0 xl:flex-[1]">
           <label
             htmlFor="filter-bhk"
-            className="block text-[11px] font-bold text-charcoal mb-1"
+            className="block text-[11px] font-bold text-foreground mb-1"
           >
             BHK
           </label>
@@ -326,7 +333,7 @@ export function RealEstate({ mode }: RealEstateProps) {
         <div className="min-w-0 xl:flex-[2]">
           <label
             htmlFor="filter-min-price"
-            className="block text-[11px] font-bold text-charcoal mb-1"
+            className="block text-[11px] font-bold text-foreground mb-1"
           >
             Min {priceLabel}
           </label>
@@ -342,7 +349,7 @@ export function RealEstate({ mode }: RealEstateProps) {
         <div className="min-w-0 xl:flex-[1]">
           <label
             htmlFor="filter-max-price"
-            className="block text-[11px] font-bold text-charcoal mb-1"
+            className="block text-[11px] font-bold text-foreground mb-1"
           >
             Max {priceLabel}
           </label>
@@ -360,7 +367,7 @@ export function RealEstate({ mode }: RealEstateProps) {
           onClick={reset}
           aria-label="Reset filters"
           title="Reset filters"
-          className="w-full xl:w-auto inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-border-subtle bg-white text-sm font-bold text-charcoal hover:border-gold/60 transition-colors cursor-pointer"
+          className="w-full xl:w-auto inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-border bg-surface text-sm font-bold text-foreground hover:border-brand/60 transition-colors cursor-pointer"
         >
           <SlidersHorizontal className="w-4 h-4" />
           <span className="xl:hidden">Reset</span>
@@ -368,7 +375,7 @@ export function RealEstate({ mode }: RealEstateProps) {
 
         <Link
           to={PLUS_ACTION[mode].to}
-          className="w-full xl:w-auto xl:ml-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold transition-colors"
+          className="w-full xl:w-auto xl:ml-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold transition-colors"
         >
           <Plus className="w-4 h-4 shrink-0" />
           <span className="truncate">{PLUS_ACTION[mode].label}</span>
@@ -377,12 +384,12 @@ export function RealEstate({ mode }: RealEstateProps) {
 
       {isSell && (
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-extrabold text-charcoal tracking-tight">
+          <h2 className="text-lg font-extrabold text-foreground tracking-tight">
             Available properties for sale
           </h2>
           <Link
             to="/real-estate/list?intent=sale"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-gold hover:text-gold-hover"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:text-brand-hover"
           >
             <Plus className="w-3.5 h-3.5" />
             Sell a property
@@ -392,10 +399,10 @@ export function RealEstate({ mode }: RealEstateProps) {
 
       {error ? (
         <Card className="p-10 text-center space-y-3">
-          <p className="text-sm text-muted">We couldn't load properties.</p>
+          <p className="text-sm text-muted-foreground">We couldn't load properties.</p>
           <button
             onClick={refetch}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold cursor-pointer"
           >
             Try again
           </button>
@@ -415,19 +422,19 @@ export function RealEstate({ mode }: RealEstateProps) {
         </div>
       ) : properties.length === 0 ? (
         <Card className="p-10 text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center mx-auto">
+          <div className="w-12 h-12 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center mx-auto">
             <Search className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-charcoal">
+          <p className="text-sm font-bold text-foreground">
             No {mode === "rent" ? "rental" : "sale"} properties match those filters
           </p>
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted-foreground">
             Try a wider budget, another BHK, or a nearby locality.
           </p>
           <button
             type="button"
             onClick={reset}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold cursor-pointer"
           >
             Clear filters
           </button>
@@ -435,11 +442,11 @@ export function RealEstate({ mode }: RealEstateProps) {
       ) : (
         <>
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-muted">
-              <span className="font-bold text-charcoal">{properties.length}</span>{" "}
+            <p className="text-sm text-muted-foreground">
+              <span className="font-bold text-foreground">{properties.length}</span>{" "}
               {properties.length === 1 ? "property" : "properties"} found
             </p>
-            <p className="text-[11px] text-muted-light">
+            <p className="text-[11px] text-subtle-foreground">
               Prices are set by owners and verified before listing.
             </p>
           </div>
@@ -455,8 +462,8 @@ export function RealEstate({ mode }: RealEstateProps) {
       {!isSell && upcomingVisits.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <CalendarDays className="w-4 h-4 text-gold" />
-            <h2 className="text-lg font-extrabold text-charcoal tracking-tight">
+            <CalendarDays className="w-4 h-4 text-brand" />
+            <h2 className="text-lg font-extrabold text-foreground tracking-tight">
               Your site visits
             </h2>
           </div>
@@ -467,11 +474,11 @@ export function RealEstate({ mode }: RealEstateProps) {
                   <div className="min-w-0">
                     <Link
                       to={`/real-estate/${visit.propertyId}`}
-                      className="text-sm font-bold text-charcoal hover:text-gold transition-colors line-clamp-1"
+                      className="text-sm font-bold text-foreground hover:text-brand transition-colors line-clamp-1"
                     >
                       {visit.propertyTitle}
                     </Link>
-                    <p className="text-xs text-muted mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {formatDate(visit.date)} · {visit.slot}
                     </p>
                   </div>
@@ -486,12 +493,12 @@ export function RealEstate({ mode }: RealEstateProps) {
       {isSell && (
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-extrabold text-charcoal tracking-tight">
+            <h2 className="text-lg font-extrabold text-foreground tracking-tight">
               My properties
             </h2>
             <Link
               to="/real-estate/list"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-gold hover:text-gold-hover"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:text-brand-hover"
             >
               <Plus className="w-3.5 h-3.5" />
               List a property
@@ -500,11 +507,11 @@ export function RealEstate({ mode }: RealEstateProps) {
 
           {myError ? (
             <Card className="p-6 text-center space-y-2">
-              <p className="text-sm text-muted">We couldn't load your listings.</p>
+              <p className="text-sm text-muted-foreground">We couldn't load your listings.</p>
               <button
                 type="button"
                 onClick={refetchMine}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold cursor-pointer"
               >
                 Try again
               </button>
@@ -539,17 +546,17 @@ export function RealEstate({ mode }: RealEstateProps) {
         </div>
       )}
 
-      <Card className="p-4 sm:p-5 bg-ivory/60">
+      <Card className="p-4 sm:p-5 bg-surface-muted/60">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
             <ShieldCheck className="w-4 h-4" />
           </div>
-          <div className="text-xs text-muted leading-relaxed">
-            <p className="font-bold text-charcoal">
+          <div className="text-xs text-muted-foreground leading-relaxed">
+            <p className="font-bold text-foreground">
               {COMPLIANCE.tsRera.label}: {COMPLIANCE.tsRera.value}
             </p>
             <p>{COMPLIANCE.tsRera.note}</p>
-            <p className="mt-1.5 font-bold text-charcoal">{COMPLIANCE.dpdp.label}</p>
+            <p className="mt-1.5 font-bold text-foreground">{COMPLIANCE.dpdp.label}</p>
             <p>{COMPLIANCE.dpdp.note}</p>
           </div>
         </div>

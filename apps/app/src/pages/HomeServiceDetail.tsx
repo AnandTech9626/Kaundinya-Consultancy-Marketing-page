@@ -53,7 +53,7 @@ export function HomeServiceDetail() {
   const backLink = (
     <Link
       to="/home-services"
-      className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover"
+      className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:text-brand-hover"
     >
       <ArrowLeft className="w-4 h-4" />
       Back to home services
@@ -64,7 +64,7 @@ export function HomeServiceDetail() {
     return (
       <div className="space-y-4">
         {backLink}
-        <Card className="p-10 text-center text-sm text-muted">
+        <Card className="p-10 text-center text-sm text-muted-foreground">
           This service is not available.
         </Card>
       </div>
@@ -125,28 +125,28 @@ export function HomeServiceDetail() {
       <div className="space-y-6 max-w-2xl">
         {backLink}
         <Card className="p-8 text-center space-y-4">
-          <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+          <div className="w-14 h-14 rounded-full bg-success-soft text-success-fg flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-charcoal tracking-tight">
+            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
               {createdMeasurement ? "Measurement booked" : "Booking requested"}
             </h1>
-            <p className="text-sm text-muted mt-1 max-w-md mx-auto">
+            <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
               {createdMeasurement
                 ? "Our surveyor will call you to confirm the visit. Measurement is free, and the quote follows within 24 hours."
                 : "We'll assign a vetted technician and confirm the slot by phone."}
             </p>
           </div>
-          <div className="rounded-xl bg-ivory p-4 text-left space-y-1">
-            <p className="text-sm font-bold text-charcoal">{service.name}</p>
-            <p className="text-xs text-muted">
+          <div className="rounded-xl bg-surface-muted p-4 text-left space-y-1">
+            <p className="text-sm font-bold text-foreground">{service.name}</p>
+            <p className="text-xs text-muted-foreground">
               {slot?.date} · {slot?.slot}
             </p>
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               {address}, {pincode}
             </p>
-            <p className="text-[11px] text-muted-light">
+            <p className="text-[11px] text-subtle-foreground">
               Reference #{(createdJob?.id ?? createdMeasurement?.id ?? "").toUpperCase()}
             </p>
           </div>
@@ -154,14 +154,14 @@ export function HomeServiceDetail() {
             {createdJob && (
               <Link
                 to={`/jobs/${createdJob.id}`}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold"
               >
                 Track this job
               </Link>
             )}
             <Link
               to="/home-services"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border-subtle bg-white text-charcoal text-sm font-bold hover:border-gold/60 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-surface text-foreground text-sm font-bold hover:border-brand/60 transition-colors"
             >
               Book another service
             </Link>
@@ -179,27 +179,27 @@ export function HomeServiceDetail() {
         <div className="lg:col-span-2 space-y-6">
           <Card className="p-6 space-y-4">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
                 <Icon className="w-6 h-6" />
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-extrabold text-charcoal tracking-tight">
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
                     {service.name}
                   </h1>
                 </div>
-                <p className="text-sm text-muted leading-relaxed mt-1">
+                <p className="text-sm text-muted-foreground leading-relaxed mt-1">
                   {service.summary}
                 </p>
-                <p className="mt-1 text-[11px] text-muted">
+                <p className="mt-1 text-[11px] text-muted-foreground">
                   Price is confirmed by our team after inspection.
                 </p>
               </div>
             </div>
 
             {isMeasurement && (
-              <div className="flex items-start gap-2 rounded-xl border border-gold/30 bg-gold-light/60 p-3">
-                <Ruler className="w-4 h-4 text-[#8a6b1a] shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 rounded-xl border border-brand/30 bg-brand-soft/60 p-3">
+                <Ruler className="w-4 h-4 text-brand-strong shrink-0 mt-0.5" />
                 <p className="text-xs text-[#6b5413] leading-relaxed">
                   Priced per sq.ft. Book a free laser measurement — we confirm the final
                   quote before any work starts.
@@ -208,8 +208,8 @@ export function HomeServiceDetail() {
             )}
 
             {service.tiers && service.tiers.length > 0 && (
-              <div className="border-t border-border-subtle pt-4">
-                <h2 className="text-sm font-extrabold text-charcoal mb-3">
+              <div className="border-t border-border pt-4">
+                <h2 className="text-sm font-extrabold text-foreground mb-3">
                   Choose a service tier
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -220,13 +220,13 @@ export function HomeServiceDetail() {
                       onClick={() => setTierId(tier.id)}
                       className={`text-left rounded-xl border p-3 transition-colors cursor-pointer ${
                         tierId === tier.id
-                          ? "border-gold bg-gold-light/60"
-                          : "border-border-subtle bg-white hover:border-gold/60"
+                          ? "border-brand bg-brand-soft/60"
+                          : "border-border bg-surface hover:border-brand/60"
                       }`}
                     >
-                      <p className="text-xs font-extrabold text-charcoal">{tier.label}</p>
+                      <p className="text-xs font-extrabold text-foreground">{tier.label}</p>
                       {tier.description && (
-                        <p className="text-[11px] text-muted mt-0.5">{tier.description}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{tier.description}</p>
                       )}
                     </button>
                   ))}
@@ -235,15 +235,15 @@ export function HomeServiceDetail() {
             )}
 
             {service.issueTypes && service.issueTypes.length > 0 && (
-              <div className="border-t border-border-subtle pt-4">
-                <h2 className="text-sm font-extrabold text-charcoal mb-2">
+              <div className="border-t border-border pt-4">
+                <h2 className="text-sm font-extrabold text-foreground mb-2">
                   Common issues we fix
                 </h2>
                 <div className="flex flex-wrap gap-1.5">
                   {service.issueTypes.map((issue) => (
                     <span
                       key={issue}
-                      className="rounded-full bg-ivory px-2.5 py-1 text-[11px] font-medium text-muted"
+                      className="rounded-full bg-surface-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
                     >
                       {issue}
                     </span>
@@ -253,17 +253,17 @@ export function HomeServiceDetail() {
             )}
 
             {service.highlights && (
-              <div className="border-t border-border-subtle pt-4">
-                <h2 className="text-sm font-extrabold text-charcoal mb-2">
+              <div className="border-t border-border pt-4">
+                <h2 className="text-sm font-extrabold text-foreground mb-2">
                   What's included
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {service.highlights.map((highlight) => (
                     <p
                       key={highlight}
-                      className="flex items-start gap-2 text-xs text-charcoal-light"
+                      className="flex items-start gap-2 text-xs text-foreground-soft"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-gold shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-4 h-4 text-brand shrink-0 mt-0.5" />
                       {highlight}
                     </p>
                   ))}
@@ -272,17 +272,17 @@ export function HomeServiceDetail() {
             )}
 
             {service.documents && (
-              <div className="border-t border-border-subtle pt-4">
-                <h2 className="text-sm font-extrabold text-charcoal mb-2">
+              <div className="border-t border-border pt-4">
+                <h2 className="text-sm font-extrabold text-foreground mb-2">
                   Documents to keep ready
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {service.documents.map((document) => (
                     <span
                       key={document}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-white px-2.5 py-1.5 text-[11px] text-charcoal-light"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[11px] text-foreground-soft"
                     >
-                      <FileText className="w-3.5 h-3.5 text-muted" />
+                      <FileText className="w-3.5 h-3.5 text-muted-foreground" />
                       {document}
                     </span>
                   ))}
@@ -294,16 +294,16 @@ export function HomeServiceDetail() {
           {service.id === "hs-documents" && (
             <Card className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h2 className="text-sm font-extrabold text-charcoal">
+                <h2 className="text-sm font-extrabold text-foreground">
                   Prefer the secure portal?
                 </h2>
-                <p className="text-xs text-muted mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Upload documents with an automatic watermark.
                 </p>
               </div>
               <Link
                 to="/digital-services/id-updates"
-                className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover"
+                className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-hover"
               >
                 Open document portal
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -314,14 +314,14 @@ export function HomeServiceDetail() {
           {service.id === "hs-printouts" && (
             <Card className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h2 className="text-sm font-extrabold text-charcoal">Upload a PDF instead</h2>
-                <p className="text-xs text-muted mt-0.5">
+                <h2 className="text-sm font-extrabold text-foreground">Upload a PDF instead</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Live pricing, pickup only, files auto-delete after printing.
                 </p>
               </div>
               <Link
                 to="/digital-services/printouts"
-                className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover"
+                className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-hover"
               >
                 Go to printouts
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -332,14 +332,14 @@ export function HomeServiceDetail() {
           {service.id === "hs-interiors" && (
             <Card className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h2 className="text-sm font-extrabold text-charcoal">See our work first</h2>
-                <p className="text-xs text-muted mt-0.5">
+                <h2 className="text-sm font-extrabold text-foreground">See our work first</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Browse portfolio spaces and book a free design consultation.
                 </p>
               </div>
               <Link
                 to="/home-services/interiors"
-                className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover"
+                className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-hover"
               >
                 View interiors
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -347,10 +347,10 @@ export function HomeServiceDetail() {
             </Card>
           )}
 
-          <Card className="p-4 bg-ivory/60">
+          <Card className="p-4 bg-surface-muted/60">
             <div className="flex items-start gap-3">
-              <ShieldCheck className="w-4 h-4 text-[#B8860B] shrink-0 mt-0.5" />
-              <p className="text-[11px] text-muted leading-relaxed">
+              <ShieldCheck className="w-4 h-4 text-brand-strong shrink-0 mt-0.5" />
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
                 All technicians are background-verified. High-risk work requires a digital
                 liability waiver before the team starts.
               </p>
@@ -361,10 +361,10 @@ export function HomeServiceDetail() {
         <Card className="p-5 lg:sticky lg:top-20 h-fit">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <h2 className="text-base font-extrabold text-charcoal tracking-tight">
+              <h2 className="text-base font-extrabold text-foreground tracking-tight">
                 {isMeasurement ? "Book free measurement" : "Request this service"}
               </h2>
-              <p className="text-xs text-muted mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {isMeasurement
                   ? "A surveyor visits, measures and quotes. You only pay after approval."
                   : "Pick a slot and tell us the issue. No payment now."}
@@ -444,7 +444,7 @@ export function HomeServiceDetail() {
               </FormField>
             </div>
 
-            {error && <p className="text-[11px] text-rose-600">{error}</p>}
+            {error && <p className="text-[11px] text-danger-fg">{error}</p>}
 
             <Button type="submit" className="w-full" disabled={!canSubmit}>
               {submitting ? (
