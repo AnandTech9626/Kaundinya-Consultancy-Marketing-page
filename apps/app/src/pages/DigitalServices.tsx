@@ -15,6 +15,7 @@ import type { PrintJob } from "@kaundinya/config";
 import { fetchDocuments, fetchPrintJobs } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { formatDate, formatINR } from "../lib/formats";
+import { InfoTip } from "../components/InfoTip";
 
 const DOC_STATUS: Record<string, { label: string; variant: BadgeVariant }> = {
   submitted: { label: "Submitted", variant: "warning" },
@@ -106,13 +107,19 @@ export function DigitalServices() {
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
-        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-gold">
+        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-brand">
           Digital Services
         </span>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
-          Documents and printouts, handled securely
-        </h1>
-        <p className="text-muted mt-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+            Documents and printouts, handled securely
+          </h1>
+          <InfoTip
+            label="About Digital Services"
+            text="Upload ID documents for secure updates, queue print jobs with transparent pricing, and track pickup status. Files are stored and handled through the consultancy."
+          />
+        </div>
+        <p className="text-muted-foreground mt-1">
           Upload once, track every step, and collect your printouts without the
           queue.
         </p>
@@ -122,35 +129,35 @@ export function DigitalServices() {
         <Link to="/digital-services/id-updates" className="block">
           <Card hoverable className="p-5 sm:p-6 h-full space-y-4">
             <div className="flex items-start justify-between gap-3">
-              <div className="w-10 h-10 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center">
                 <FileText className="w-5 h-5" />
               </div>
               <Badge variant="gold">Secure</Badge>
             </div>
             <div>
-              <h2 className="text-lg font-extrabold text-charcoal">
+              <h2 className="text-lg font-extrabold text-foreground">
                 ID &amp; Document Updates
               </h2>
-              <p className="text-xs text-muted mt-1 leading-relaxed">
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 Aadhaar and voter ID updates with watermarked uploads and a clear
                 status timeline.
               </p>
             </div>
-            <ul className="space-y-1.5 text-[11px] text-muted">
+            <ul className="space-y-1.5 text-[11px] text-muted-foreground">
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-brand shrink-0" />
                 Four update types supported
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-brand shrink-0" />
                 Upload checklist and consent
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-brand shrink-0" />
                 File history in one place
               </li>
             </ul>
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-gold">
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-brand">
               Start an update
               <ArrowRight className="w-3.5 h-3.5" />
             </span>
@@ -160,33 +167,33 @@ export function DigitalServices() {
         <Link to="/digital-services/printouts" className="block">
           <Card hoverable className="p-5 sm:p-6 h-full space-y-4">
             <div className="flex items-start justify-between gap-3">
-              <div className="w-10 h-10 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center">
                 <Printer className="w-5 h-5" />
               </div>
               <Badge variant="gold">₹5 / page</Badge>
             </div>
             <div>
-              <h2 className="text-lg font-extrabold text-charcoal">Printouts</h2>
-              <p className="text-xs text-muted mt-1 leading-relaxed">
+              <h2 className="text-lg font-extrabold text-foreground">Printouts</h2>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 Upload a PDF, choose paper and binding, and pick it up when it is
                 ready.
               </p>
             </div>
-            <ul className="space-y-1.5 text-[11px] text-muted">
+            <ul className="space-y-1.5 text-[11px] text-muted-foreground">
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-brand shrink-0" />
                 Live per-page price
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-brand shrink-0" />
                 Pickup only, no delivery
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-brand shrink-0" />
                 Files auto-delete after printing
               </li>
             </ul>
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-gold">
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-brand">
               Send a print job
               <ArrowRight className="w-3.5 h-3.5" />
             </span>
@@ -196,20 +203,20 @@ export function DigitalServices() {
 
       <Card className="p-5 sm:p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <UploadCloud className="w-4 h-4 text-gold" />
-          <h2 className="text-sm font-extrabold text-charcoal">How it works</h2>
+          <UploadCloud className="w-4 h-4 text-brand" />
+          <h2 className="text-sm font-extrabold text-foreground">How it works</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {STEPS.map((step, index) => (
             <div
               key={step.title}
-              className="rounded-xl border border-border-subtle bg-ivory-light p-3.5 space-y-1.5"
+              className="rounded-xl border border-border bg-surface-raised p-3.5 space-y-1.5"
             >
-              <span className="inline-flex w-6 h-6 items-center justify-center rounded-full bg-charcoal text-white text-[11px] font-extrabold">
+              <span className="inline-flex w-6 h-6 items-center justify-center rounded-full bg-inverse text-white text-[11px] font-extrabold">
                 {index + 1}
               </span>
-              <p className="text-xs font-bold text-charcoal">{step.title}</p>
-              <p className="text-[11px] text-muted leading-relaxed">
+              <p className="text-xs font-bold text-foreground">{step.title}</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
                 {step.description}
               </p>
             </div>
@@ -220,10 +227,10 @@ export function DigitalServices() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="p-5 space-y-3 lg:col-span-2">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-extrabold text-charcoal">
+            <h2 className="text-sm font-extrabold text-foreground">
               Recent digital activity
             </h2>
-            <span className="text-[11px] text-muted">
+            <span className="text-[11px] text-muted-foreground">
               {documents.length + prints.length} total
             </span>
           </div>
@@ -232,7 +239,7 @@ export function DigitalServices() {
             <button
               type="button"
               onClick={refetch}
-              className="text-xs font-bold text-gold hover:text-gold-hover cursor-pointer"
+              className="text-xs font-bold text-brand hover:text-brand-hover cursor-pointer"
             >
               Couldn't load activity. Try again
             </button>
@@ -242,11 +249,11 @@ export function DigitalServices() {
               <Skeleton className="h-11 w-full" />
             </div>
           ) : activity.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border-subtle bg-ivory-light px-4 py-6 text-center">
-              <p className="text-xs font-bold text-charcoal">
+            <div className="rounded-xl border border-dashed border-border bg-surface-raised px-4 py-6 text-center">
+              <p className="text-xs font-bold text-foreground">
                 No digital activity yet
               </p>
-              <p className="text-[11px] text-muted mt-1">
+              <p className="text-[11px] text-muted-foreground mt-1">
                 Start with an ID update or a printout.
               </p>
             </div>
@@ -256,9 +263,9 @@ export function DigitalServices() {
                 <li key={`${item.href}-${item.id}`}>
                   <Link
                     to={item.href}
-                    className="flex items-center gap-3 rounded-xl border border-border-subtle bg-white px-3 py-2.5 hover:border-gold/60 transition-colors"
+                    className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 hover:border-brand/60 transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
                       {item.href.includes("printouts") ? (
                         <Printer className="w-4 h-4" />
                       ) : (
@@ -266,10 +273,10 @@ export function DigitalServices() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-charcoal truncate">
+                      <p className="text-xs font-bold text-foreground truncate">
                         {item.title}
                       </p>
-                      <p className="text-[10px] text-muted truncate">
+                      <p className="text-[10px] text-muted-foreground truncate">
                         {item.detail} · {formatDate(item.date)}
                       </p>
                     </div>
@@ -283,26 +290,26 @@ export function DigitalServices() {
 
         <Card className="p-5 space-y-3">
           <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-gold" />
-            <h2 className="text-sm font-extrabold text-charcoal">
+            <Lock className="w-4 h-4 text-brand" />
+            <h2 className="text-sm font-extrabold text-foreground">
               Privacy by default
             </h2>
           </div>
-          <ul className="space-y-2 text-[11px] text-muted leading-relaxed">
+          <ul className="space-y-2 text-[11px] text-muted-foreground leading-relaxed">
             <li className="flex gap-2">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+              <ShieldCheck className="w-3.5 h-3.5 text-success-fg shrink-0 mt-0.5" />
               ID uploads are watermarked for Kaundinya use only.
             </li>
             <li className="flex gap-2">
-              <Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+              <Lock className="w-3.5 h-3.5 text-success-fg shrink-0 mt-0.5" />
               Files are visible only to the assigned coordinator.
             </li>
             <li className="flex gap-2">
-              <Trash2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+              <Trash2 className="w-3.5 h-3.5 text-success-fg shrink-0 mt-0.5" />
               Print files auto-delete after printing.
             </li>
             <li className="flex gap-2">
-              <Printer className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+              <Printer className="w-3.5 h-3.5 text-success-fg shrink-0 mt-0.5" />
               Pickup details are shared once your order is confirmed.
             </li>
           </ul>

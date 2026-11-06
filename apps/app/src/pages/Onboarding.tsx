@@ -94,13 +94,13 @@ export function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-ivory flex flex-col">
-      <header className="bg-white/95 border-b border-border-subtle flex items-center justify-between px-4 py-2 sm:px-8">
+    <div className="min-h-screen bg-surface-muted flex flex-col">
+      <header className="bg-surface/95 border-b border-border flex items-center justify-between px-4 py-2 sm:px-8">
         <BrandLockup size="md" />
         <button
           type="button"
           onClick={logout}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-muted hover:text-charcoal cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
         >
           <LogOut className="w-3.5 h-3.5" />
           Sign out
@@ -110,13 +110,13 @@ export function Onboarding() {
       <main className="flex-1 flex items-start justify-center p-4 sm:p-8">
         <div className="w-full max-w-3xl space-y-4">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gold">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-brand">
               One last step
             </p>
-            <h1 className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-charcoal">
+            <h1 className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
               Complete your profile
             </h1>
-            <p className="mt-1 text-sm text-muted">
+            <p className="mt-1 text-sm text-muted-foreground">
               We've prefilled what you shared with us. Confirm it and set a
               6-digit PIN for faster sign-in.
             </p>
@@ -125,32 +125,32 @@ export function Onboarding() {
           <div className="grid gap-4 lg:grid-cols-12">
             <Card className="p-5 lg:col-span-4 h-fit">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-charcoal text-lg font-extrabold text-gold">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-inverse text-lg font-extrabold text-brand">
                   {(name.trim() || "K").charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-extrabold text-charcoal">
+                  <p className="truncate text-sm font-extrabold text-foreground">
                     {name.trim() || "Your name"}
                   </p>
-                  <p className="text-[11px] text-muted">+91 {user?.mobile}</p>
+                  <p className="text-[11px] text-muted-foreground">+91 {user?.mobile}</p>
                 </div>
               </div>
 
-              <div className="mt-4 space-y-3 border-t border-border-subtle pt-4 text-xs">
+              <div className="mt-4 space-y-3 border-t border-border pt-4 text-xs">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     Client ID
                   </p>
-                  <p className="mt-0.5 font-extrabold text-charcoal">
+                  <p className="mt-0.5 font-extrabold text-foreground">
                     {user?.clientCode ?? "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     Mobile
                   </p>
                   <div className="mt-1 flex items-center gap-2">
-                    <span className="font-semibold text-charcoal">
+                    <span className="font-semibold text-foreground">
                       +91 {user?.mobile}
                     </span>
                     <Badge variant="success">
@@ -161,7 +161,7 @@ export function Onboarding() {
                 </div>
               </div>
 
-              <p className="mt-4 rounded-lg bg-ivory p-2.5 text-[10px] leading-relaxed text-muted">
+              <p className="mt-4 rounded-lg bg-surface-muted p-2.5 text-[10px] leading-relaxed text-muted-foreground">
                 Your mobile number stays verified and can't be changed here.
                 Contact our team if it needs updating.
               </p>
@@ -225,18 +225,18 @@ export function Onboarding() {
                       autoComplete="tel"
                       value={`+91 ${user?.mobile ?? ""}`}
                       readOnly
-                      className="bg-ivory cursor-not-allowed"
+                      className="bg-surface-muted cursor-not-allowed"
                     />
                   </FormField>
                 </div>
 
                 {needsPin ? (
-                  <div className="space-y-3 rounded-xl border border-border-subtle bg-ivory/60 p-4">
+                  <div className="space-y-3 rounded-xl border border-border bg-surface-muted/60 p-4">
                     <div>
-                      <p className="text-xs font-extrabold text-charcoal">
+                      <p className="text-xs font-extrabold text-foreground">
                         Set your 6-digit PIN
                       </p>
-                      <p className="mt-0.5 text-[11px] text-muted">
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
                         You'll use this PIN every time you open the app. Your
                         browser can save it for faster sign-in.
                       </p>
@@ -283,9 +283,9 @@ export function Onboarding() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-                    <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                    <p className="text-[11px] text-emerald-800">
+                  <div className="flex items-start gap-2 rounded-xl border border-success-fg/20 bg-success-soft p-3">
+                    <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-success-fg" />
+                    <p className="text-[11px] text-success-fg">
                       Your PIN is already set. Confirm the details above to
                       continue.
                     </p>
@@ -293,7 +293,7 @@ export function Onboarding() {
                 )}
 
                 {error && (
-                  <p className="rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-[11px] text-rose-700">
+                  <p className="rounded-lg border border-danger-fg/20 bg-danger-soft p-2.5 text-[11px] text-danger-fg">
                     {error}
                   </p>
                 )}
@@ -309,7 +309,7 @@ export function Onboarding() {
                   )}
                 </Button>
 
-                <p className="text-center text-[10px] leading-relaxed text-muted-light">
+                <p className="text-center text-[10px] leading-relaxed text-subtle-foreground">
                   By continuing you agree that Kaundinya may contact you about
                   your requests. Your PIN is stored securely and is never
                   shared.

@@ -96,8 +96,8 @@ export function FileDropzone({
         onDrop={onDrop}
         className={`rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors cursor-pointer ${
           dragging
-            ? "border-gold bg-gold-light/60"
-            : "border-border-subtle bg-ivory-light hover:border-gold/60"
+            ? "border-brand bg-brand-soft/60"
+            : "border-border bg-surface-raised hover:border-brand/60"
         }`}
       >
         <input
@@ -111,18 +111,18 @@ export function FileDropzone({
             event.target.value = "";
           }}
         />
-        <div className="w-10 h-10 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center mx-auto">
+        <div className="w-10 h-10 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center mx-auto">
           <UploadCloud className="w-5 h-5" />
         </div>
-        <p className="mt-2 text-sm font-bold text-charcoal">{label}</p>
-        <p className="text-xs text-muted mt-0.5">
-          Drag and drop or <span className="font-bold text-gold">browse</span>
+        <p className="mt-2 text-sm font-bold text-foreground">{label}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Drag and drop or <span className="font-bold text-brand">browse</span>
         </p>
-        <p className="text-[11px] text-muted-light mt-1">{hint}</p>
+        <p className="text-[11px] text-subtle-foreground mt-1">{hint}</p>
       </div>
 
       {error && (
-        <p className="flex items-center gap-1.5 text-[11px] text-rose-600">
+        <p className="flex items-center gap-1.5 text-[11px] text-danger-fg">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           {error}
         </p>
@@ -136,13 +136,13 @@ export function FileDropzone({
             return (
               <li
                 key={`${file.name}-${index}`}
-                className="flex items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2"
+                className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2"
               >
-                <Icon className="w-4 h-4 text-muted shrink-0" />
-                <span className="flex-1 min-w-0 text-xs font-medium text-charcoal truncate">
+                <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="flex-1 min-w-0 text-xs font-medium text-foreground truncate">
                   {file.name}
                 </span>
-                <span className="text-[11px] text-muted-light whitespace-nowrap">
+                <span className="text-[11px] text-subtle-foreground whitespace-nowrap">
                   {formatSize(file.size)}
                 </span>
                 <button
@@ -152,7 +152,7 @@ export function FileDropzone({
                     remove(index);
                   }}
                   aria-label={`Remove ${file.name}`}
-                  className="p-1 rounded-md text-muted hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer"
+                  className="p-1 rounded-md text-muted-foreground hover:bg-danger-soft hover:text-danger-fg transition-colors cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>

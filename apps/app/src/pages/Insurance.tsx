@@ -1,501 +1,372 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  ClipboardList,
   HeartPulse,
+  Home,
   ShieldCheck,
-  Wallet,
+  Car,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Badge,
   Button,
-  CalculatorPanel,
   Card,
-  RangeField,
-  Skeleton,
+  StatCard,
 } from "@kaundinya/ui";
-import type { BadgeVariant } from "@kaundinya/ui";
-import type {
-  InsuranceEstimate,
-  InsurancePlan,
-  InsuranceType,
-} from "@kaundinya/config";
-import { COMPLIANCE } from "@kaundinya/config";
 import {
-  createRequest,
-  estimateInsuranceNeeds,
-  fetchInsurancePlans,
-} from "../lib/mockApi";
-import { useAsync } from "../lib/useAsync";
-import { formatINR } from "../lib/formats";
+  COMPLIANCE,
+  INSURANCE_COVERAGE_TYPES,
+  INSURANCE_HELP,
+} from "@kaundinya/config";
+import { useInsuranceRequests } from "../lib/mockRequests";
+import { POLICIES } from "../lib/moduleData";
+import { formatDate, formatINR } from "../lib/formats";
+import { STATUS_META } from "../lib/status";
+import { InsuranceRequestDialog } from "../components/InsuranceRequestDialog";
+import { LifeCoverCalculatorDialog } from "../components/LifeCoverCalculatorDialog";
 
-const TYPES: { id: InsuranceType | "all"; label: string }[] = [
-  { id: "all", label: "All plans" },
-  { id: "life", label: "Life & Term" },
-  { id: "health", label: "Health" },
-  { id: "motor", label: "Motor" },
-  { id: "property", label: "Property" },
-];
-
-const TYPE_BADGE: Record<InsuranceType, BadgeVariant> = {
-  life: "info",
-  health: "success",
-  motor: "warning",
-  property: "neutral",
-};
-
-const TYPE_LABEL: Record<InsuranceType, string> = {
-  life: "Life & Term",
-  health: "Health",
-  motor: "Motor",
-  property: "Property",
+const COVERAGE_ICONS: Record<string, LucideIcon> = {
+  life: ShieldCheck,
+  health: HeartPulse,
+  motor: Car,
+  property: Home,
 };
 
 export function Insurance() {
-  const [type, setType] = useState<InsuranceType | "all">("all");
-  const [selected, setSelected] = useState<string[]>([]);
-  const [age, setAge] = useState(32);
-  const [income, setIncome] = useState(1200000);
-  const [dependents, setDependents] = useState(2);
-  const [liabilities, setLiabilities] = useState(1500000);
-  const [smoker, setSmoker] = useState(false);
-  const [estimate, setEstimate] = useState<InsuranceEstimate | null>(null);
-  const [estimateBusy, setEstimateBusy] = useState(false);
-  const [requested, setRequested] = useState<string | null>(null);
-  const [requesting, setRequesting] = useState<string | null>(null);
+  const requests = useInsuranceRequests();
+  const [dialog, setDialog] = useState<{
+    service: string;
+    kind: string;
+    notes?: string;
+  } | null>(null);
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
 
-  const { data, loading, error, refetch } = useAsync(fetchInsurancePlans);
-  const plans = data ?? [];
-
-  const filtered = useMemo(
-    () => (type === "all" ? plans : plans.filter((plan) => plan.type === type)),
-    [plans, type]
+  const activePolicies = POLICIES.filter(
+    (policy) => policy.status === "active"
+  ).length;
+  const renewalsDue = POLICIES.filter(
+    (policy) => policy.status === "expiring"
+  ).length;
+  const totalCover = POLICIES.filter(
+    (policy) => policy.status !== "lapsed"
+  ).reduce((sum, policy) => sum + policy.coverAmount, 0);
+  const openRequests = requests.filter(
+    (request) => request.status === "new" || request.status === "in_progress"
+  ).length;
+  const resolvedRequests = requests.filter(
+    (request) => request.status === "completed"
+  ).length;
+  const expiringPolicy = POLICIES.find(
+    (policy) => policy.status === "expiring"
   );
+  const recentRequests = requests.slice(0, 3);
 
-  const selectedPlans = plans.filter((plan) => selected.includes(plan.id));
+  const openConsultation = (
+    service = "",
+    kind = "Insurance consultation",
+    notes = ""
+  ) => setDialog({ service, kind, notes });
 
-  const toggleCompare = (plan: InsurancePlan) => {
-    if (selected.includes(plan.id)) {
-      setSelected(selected.filter((id) => id !== plan.id));
-      return;
-    }
-    if (selected.length >= 3) return;
-    setSelected([...selected, plan.id]);
-  };
-
-  const runEstimate = async () => {
-    setEstimateBusy(true);
-    try {
-      const result = await estimateInsuranceNeeds({
-        type: "life",
-        age,
-        annualIncome: income,
-        dependents,
-        smoker,
-        liabilities,
-      });
-      setEstimate(result);
-    } finally {
-      setEstimateBusy(false);
-    }
-  };
-
-  const scheduleConsultation = async (plan: InsurancePlan) => {
-    setRequesting(plan.id);
-    try {
-      await createRequest({
-        serviceCategory: "Insurance",
-        specificService: `${plan.insurer} · ${plan.name}`,
-        comments: "Consultation requested from the insurance hub.",
-      });
-      setRequested(`${plan.insurer} ${plan.name}`);
-    } finally {
-      setRequesting(null);
-    }
+  const handleCalculatorReview = (summary: string) => {
+    setCalculatorOpen(false);
+    setDialog({
+      service: "Life & Term review",
+      kind: "Insurance consultation",
+      notes: summary,
+    });
   };
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-          <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-gold">
-            Insurance
-          </span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
-            Protect what matters
+            Insurance
           </h1>
-          <p className="text-muted mt-1 max-w-2xl">
-            Independent guidance for life, health, motor and property cover. We compare
-            and explain — we never push a "buy now".
-          </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link
-            to="/insurance/health"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold transition-colors"
-          >
-            <HeartPulse className="w-4 h-4" />
-            Health plans
-          </Link>
-          <Link
-            to="/insurance/motor"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-border-subtle hover:border-gold/60 text-charcoal text-sm font-bold transition-colors"
-          >
-            Motor insurance
-          </Link>
+          <Button onClick={() => openConsultation()}>
+            <ShieldCheck className="w-4 h-4" />
+            Talk to a consultant
+          </Button>
           <Link
             to="/insurance/policies"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-border-subtle hover:border-gold/60 text-charcoal text-sm font-bold transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface border border-border hover:border-brand/60 text-foreground text-sm font-bold transition-colors"
           >
-            Policy vault
+            Policy Vault
           </Link>
         </div>
       </div>
 
-      {requested && (
-        <Card className="p-4 border-emerald-200 bg-emerald-50 flex items-start gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-          <p className="text-xs text-emerald-700">
-            Consultation requested for <span className="font-bold">{requested}</span>. An
-            advisor will call you to walk through the options.
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard
+          label="Active policies"
+          value={activePolicies}
+          hint={`${formatINR(totalCover)} total cover`}
+          icon={<ShieldCheck className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Renewals due"
+          value={renewalsDue}
+          hint="Next 30 days"
+          icon={<AlertTriangle className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Open requests"
+          value={openRequests}
+          hint="With our team"
+          icon={<ClipboardList className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Resolved"
+          value={resolvedRequests}
+          hint="Differences cleared"
+          icon={<CheckCircle2 className="w-5 h-5" />}
+        />
+      </div>
+
+      {expiringPolicy && (
+        <Card className="p-4 border-warning-fg/20 bg-warning-soft flex flex-col sm:flex-row sm:items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-warning-fg shrink-0" />
+          <p className="text-xs text-warning-fg flex-1">
+            <span className="font-bold">
+              {expiringPolicy.provider} {expiringPolicy.type} policy
+            </span>{" "}
+            is due for renewal on {formatDate(expiringPolicy.renewalDate)}. We
+            can review the renewal quote with you.
           </p>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() =>
+              openConsultation(
+                `Renewal help · ${expiringPolicy.provider} ${expiringPolicy.policyNumber}`,
+                "Renewal help"
+              )
+            }
+          >
+            Get renewal help
+          </Button>
         </Card>
       )}
 
-      <Card className="p-5 sm:p-6">
-        <CalculatorPanel
-          title="Needs analysis calculator"
-          description="Estimate how much life cover makes sense before you compare premiums."
-          results={
-            estimate
-              ? [
-                  {
-                    label: "Recommended cover",
-                    value: formatINR(estimate.recommendedCoverage),
-                    emphasis: true,
-                  },
-                  {
-                    label: "Indicative annual premium",
-                    value: formatINR(estimate.estimatedPremium),
-                    hint: estimate.basis,
-                  },
-                ]
-              : [
-                  { label: "Recommended cover", value: "—", emphasis: true },
-                  {
-                    label: "Indicative annual premium",
-                    value: "—",
-                    hint: "Fill the inputs and calculate.",
-                  },
-                ]
-          }
-          footer={
-            <Button
-              variant="primary"
-              onClick={runEstimate}
-              disabled={estimateBusy}
-              className="w-full"
-            >
-              {estimateBusy ? "Calculating..." : "Calculate cover"}
-            </Button>
-          }
-        >
-          <RangeField
-            label="Your age"
-            value={age}
-            min={18}
-            max={65}
-            onChange={setAge}
-            format={(value) => `${value} yrs`}
-          />
-          <RangeField
-            label="Annual income"
-            value={income}
-            min={300000}
-            max={5000000}
-            step={100000}
-            onChange={setIncome}
-            format={(value) => formatINR(value)}
-          />
-          <RangeField
-            label="Dependents"
-            value={dependents}
-            min={0}
-            max={6}
-            onChange={setDependents}
-            format={(value) => String(value)}
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
-            <RangeField
-              label="Outstanding liabilities"
-              value={liabilities}
-              min={0}
-              max={10000000}
-              step={100000}
-              onChange={setLiabilities}
-              format={(value) => formatINR(value)}
-            />
-            <label className="flex items-center gap-2 text-xs text-charcoal-light cursor-pointer pb-1">
-              <input
-                type="checkbox"
-                checked={smoker}
-                onChange={(event) => setSmoker(event.target.checked)}
-                className="w-4 h-4 accent-gold"
-              />
-              I smoke / use tobacco
-            </label>
-          </div>
-        </CalculatorPanel>
-      </Card>
-
-      <div className="flex flex-wrap gap-2">
-        {TYPES.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => setType(option.id)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
-              type === option.id
-                ? "bg-charcoal text-white"
-                : "bg-white text-charcoal border border-border-subtle hover:border-muted"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-
-      {error ? (
-        <Card className="p-10 text-center space-y-3">
-          <p className="text-sm text-muted">We couldn't load insurance plans.</p>
-          <button
-            onClick={refetch}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold cursor-pointer"
-          >
-            Try again
-          </button>
-        </Card>
-      ) : loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Card key={index} className="p-5 space-y-3">
-              <Skeleton className="h-8 w-24" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-full" />
-            </Card>
-          ))}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-extrabold text-foreground tracking-tight">
+            Coverage types we help you navigate
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Choose a category to see what we review before you commit.
+          </p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((plan) => {
-            const isSelected = selected.includes(plan.id);
-            const disabled = !isSelected && selected.length >= 3;
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {INSURANCE_COVERAGE_TYPES.map((coverage) => {
+            const Icon = COVERAGE_ICONS[coverage.id] ?? ShieldCheck;
+            const detailRoute =
+              coverage.id === "health"
+                ? "/insurance/health"
+                : coverage.id === "motor"
+                  ? "/insurance/motor"
+                  : null;
+
             return (
-              <Card key={plan.id} className="p-5 flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                      {plan.insurer}
-                    </p>
-                    <h3 className="text-sm font-extrabold text-charcoal mt-0.5">
-                      {plan.name}
-                    </h3>
-                  </div>
-                  <Badge variant={TYPE_BADGE[plan.type]}>
-                    {TYPE_LABEL[plan.type]}
-                  </Badge>
+              <Card key={coverage.id} className="p-5 flex flex-col gap-3">
+                <div className="w-10 h-10 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center">
+                  <Icon className="w-5 h-5" />
                 </div>
-
-                <div className="flex items-end justify-between gap-2">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
-                      Cover
-                    </p>
-                    <p className="text-lg font-extrabold text-charcoal">
-                      {formatINR(plan.sumInsured)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
-                      Premium
-                    </p>
-                    <p className="text-sm font-extrabold text-charcoal">
-                      {formatINR(plan.premium)}
-                      <span className="text-[10px] font-medium text-muted">
-                        /{plan.tenureYears === 1 ? "yr" : `${plan.tenureYears}y`}
-                      </span>
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-foreground">
+                    {coverage.name}
+                  </h3>
+                  <p className="text-[11px] font-semibold text-brand mt-0.5">
+                    {coverage.tagline}
+                  </p>
                 </div>
-
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {coverage.description}
+                </p>
                 <ul className="space-y-1">
-                  {plan.features.slice(0, 3).map((feature) => (
+                  {coverage.review.map((item) => (
                     <li
-                      key={feature}
-                      className="flex items-start gap-1.5 text-[11px] text-charcoal-light"
+                      key={item}
+                      className="flex items-start gap-1.5 text-[11px] text-foreground-soft"
                     >
-                      <CheckCircle2 className="w-3 h-3 text-gold shrink-0 mt-0.5" />
-                      {feature}
+                      <CheckCircle2 className="w-3 h-3 text-brand shrink-0 mt-0.5" />
+                      {item}
                     </li>
                   ))}
                 </ul>
-
                 <div className="mt-auto pt-2 space-y-2">
-                  <label
-                    className={`flex items-center gap-2 text-[11px] font-semibold cursor-pointer ${
-                      disabled ? "text-muted-light" : "text-charcoal-light"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      disabled={disabled}
-                      onChange={() => toggleCompare(plan)}
-                      className="w-3.5 h-3.5 accent-gold"
-                    />
-                    Add to compare
-                  </label>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => scheduleConsultation(plan)}
-                    disabled={requesting === plan.id}
-                  >
-                    {requesting === plan.id ? "Requesting..." : "Schedule consultation"}
-                  </Button>
+                  {coverage.id === "life" ? (
+                    <>
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setCalculatorOpen(true)}
+                      >
+                        Calculate cover
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => openConsultation("Life & Term review")}
+                        className="w-full text-center text-[11px] font-bold text-brand hover:text-brand-hover cursor-pointer"
+                      >
+                        Talk to a consultant
+                      </button>
+                    </>
+                  ) : detailRoute ? (
+                    <Link
+                      to={detailRoute}
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-xs font-bold text-foreground hover:border-brand/60 transition-colors"
+                    >
+                      Explore guidance
+                      <ArrowRight className="w-3.5 h-3.5 text-brand" />
+                    </Link>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full"
+                      onClick={() =>
+                        openConsultation(`${coverage.name} review`)
+                      }
+                    >
+                      Talk to a consultant
+                    </Button>
+                  )}
                 </div>
               </Card>
             );
           })}
         </div>
-      )}
+      </section>
 
-      {selectedPlans.length >= 2 && (
-        <Card className="p-5 overflow-hidden">
-          <div className="flex items-center justify-between gap-2 mb-4">
-            <h2 className="text-base font-extrabold text-charcoal tracking-tight">
-              Compare plans
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-extrabold text-foreground tracking-tight">
+            How we help
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Advice first, paperwork second. No pressure to buy.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {INSURANCE_HELP.map((item, index) => (
+            <Card key={item.title} className="p-5 space-y-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand">
+                0{index + 1}
+              </span>
+              <h3 className="text-sm font-extrabold text-foreground">
+                {item.title}
+              </h3>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                {item.description}
+              </p>
+              {item.title === "Needs analysis" && (
+                <button
+                  type="button"
+                  onClick={() => setCalculatorOpen(true)}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:text-brand-hover cursor-pointer"
+                >
+                  Open calculator
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              )}
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <Card className="overflow-hidden">
+        <div className="flex items-center justify-between gap-2 p-5 border-b border-border">
+          <div>
+            <h2 className="text-base font-extrabold text-foreground tracking-tight">
+              Recent insurance requests
             </h2>
-            <button
-              type="button"
-              onClick={() => setSelected([])}
-              className="text-[11px] font-bold text-muted hover:text-charcoal cursor-pointer"
-            >
-              Clear
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-ivory text-left text-[10px] font-bold uppercase tracking-wider text-muted">
-                  <th className="px-3 py-2">Feature</th>
-                  {selectedPlans.map((plan) => (
-                    <th key={plan.id} className="px-3 py-2 min-w-[10rem]">
-                      {plan.name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  {
-                    label: "Insurer",
-                    value: (plan: InsurancePlan) => plan.insurer,
-                  },
-                  {
-                    label: "Cover",
-                    value: (plan: InsurancePlan) => formatINR(plan.sumInsured),
-                  },
-                  {
-                    label: "Premium",
-                    value: (plan: InsurancePlan) => formatINR(plan.premium),
-                  },
-                  {
-                    label: "Tenure",
-                    value: (plan: InsurancePlan) =>
-                      plan.tenureYears === 1 ? "1 year" : `${plan.tenureYears} years`,
-                  },
-                  {
-                    label: "Cashless network",
-                    value: (plan: InsurancePlan) =>
-                      plan.cashlessNetwork
-                        ? `${plan.cashlessNetwork.toLocaleString("en-IN")} hospitals`
-                        : "—",
-                  },
-                  {
-                    label: "Key features",
-                    value: (plan: InsurancePlan) => plan.features.join(", "),
-                  },
-                ].map((row) => (
-                  <tr key={row.label} className="border-t border-border-subtle">
-                    <td className="px-3 py-2.5 text-[11px] font-bold text-muted whitespace-nowrap">
-                      {row.label}
-                    </td>
-                    {selectedPlans.map((plan) => (
-                      <td
-                        key={plan.id}
-                        className="px-3 py-2.5 text-xs text-charcoal-light align-top"
-                      >
-                        {row.value(plan)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="p-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-sm font-extrabold text-charcoal">Policy Vault</p>
-              <p className="text-[11px] text-muted">Renewals and downloads in one place.</p>
-            </div>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Consultations, claims and renewal help from your account.
+            </p>
           </div>
           <Link
-            to="/insurance/policies"
-            className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover"
+            to="/insurance/support"
+            className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-hover whitespace-nowrap"
           >
-            Open
+            View all
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
-        </Card>
-        <Card className="p-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center">
-              <Wallet className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-sm font-extrabold text-charcoal">Motor fast lane</p>
-              <p className="text-[11px] text-muted">Registration → quote → policy PDF.</p>
-            </div>
-          </div>
-          <Link
-            to="/insurance/motor"
-            className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover"
-          >
-            Start
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </Card>
-      </div>
+        </div>
 
-      <Card className="p-4 bg-ivory/60">
-        <p className="text-[11px] font-bold text-charcoal">
-          {COMPLIANCE.irdai.label}: {COMPLIANCE.irdai.value}
-        </p>
-        <p className="text-[11px] text-muted leading-relaxed mt-1">
-          {COMPLIANCE.irdai.note} {COMPLIANCE.dpdp.note}
-        </p>
+        {recentRequests.length === 0 ? (
+          <div className="p-8 text-center space-y-2">
+            <ClipboardList className="w-8 h-8 text-brand mx-auto" />
+            <p className="text-sm font-bold text-foreground">
+              No insurance requests yet
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Raise a consultation and it will appear here with its status.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {recentRequests.map((request) => (
+              <Link
+                key={request.id}
+                to={`/requests/${request.id}`}
+                className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-surface-muted/60 transition-colors"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">
+                    {request.specificService}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {request.id.toUpperCase()} · {request.createdAt}
+                  </p>
+                </div>
+                <Badge variant={STATUS_META[request.status].badge}>
+                  {STATUS_META[request.status].label}
+                </Badge>
+              </Link>
+            ))}
+          </div>
+        )}
       </Card>
+
+      <Card className="p-4 bg-surface-muted/60">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="w-4 h-4 text-brand-strong shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-[11px] font-bold text-foreground">
+              {COMPLIANCE.irdai.label}: {COMPLIANCE.irdai.value}
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              {COMPLIANCE.irdai.note} {COMPLIANCE.dpdp.note}
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Insurance is the subject matter of solicitation. Final terms,
+              premium and claim decisions rest with the insurer.
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <InsuranceRequestDialog
+        open={dialog !== null}
+        onClose={() => setDialog(null)}
+        defaultService={dialog?.service ?? ""}
+        defaultKind={dialog?.kind ?? "Insurance consultation"}
+        defaultNotes={dialog?.notes ?? ""}
+      />
+
+      <LifeCoverCalculatorDialog
+        open={calculatorOpen}
+        onClose={() => setCalculatorOpen(false)}
+        onRequestReview={handleCalculatorReview}
+      />
     </div>
   );
 }

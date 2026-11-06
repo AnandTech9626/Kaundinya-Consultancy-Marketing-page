@@ -7,9 +7,9 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export function Card({ className = "", hoverable = false, ...props }: CardProps) {
   return (
     <div
-      className={`bg-white rounded-2xl border border-border-subtle shadow-sm ${
+      className={`bg-surface rounded-2xl border border-border shadow-sm ${
         hoverable
-          ? "transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 hover:border-gold/60"
+          ? "transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 hover:border-brand/60"
           : ""
       } ${className}`}
       {...props}

@@ -6,309 +6,239 @@ import {
   Car,
   CheckCircle2,
   Loader2,
+  RefreshCw,
   ShieldCheck,
-  Zap,
 } from "lucide-react";
-import { Badge, Button, Card, FormField, Input, Stepper } from "@kaundinya/ui";
-import type { PolicyRecord, VehicleInfo, VehicleQuote } from "@kaundinya/config";
 import {
-  getMotorQuote,
-  lookupVehicle,
-  purchaseMotorPolicy,
-} from "../lib/mockApi";
-import { formatINR } from "../lib/formats";
-
-const STEPS = [
-  { id: "vehicle", label: "Vehicle" },
-  { id: "quote", label: "Quote" },
-  { id: "policy", label: "Policy" },
-];
+  Badge,
+  Button,
+  Card,
+  FormField,
+  Input,
+} from "@kaundinya/ui";
+import type { VehicleInfo } from "@kaundinya/config";
+import { MOTOR_CLAIM_STEPS, MOTOR_RENEWAL_CHECKS } from "@kaundinya/config";
+import { VEHICLES } from "../lib/moduleData";
+import { InsuranceRequestDialog } from "../components/InsuranceRequestDialog";
 
 export function MotorInsurance() {
   const [registration, setRegistration] = useState("TS09EA1234");
   const [busy, setBusy] = useState(false);
   const [vehicle, setVehicle] = useState<VehicleInfo | null>(null);
-  const [quote, setQuote] = useState<VehicleQuote | null>(null);
-  const [policy, setPolicy] = useState<PolicyRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<{ service: string; kind: string } | null>(
+    null
+  );
 
-  const stepIndex = policy ? 2 : quote ? 1 : 0;
-
-  const handleLookup = async (event: FormEvent) => {
+  const handleLookup = (event: FormEvent) => {
     event.preventDefault();
     if (busy) return;
     setBusy(true);
     setError(null);
     setVehicle(null);
-    setQuote(null);
-    setPolicy(null);
-    try {
-      const found = await lookupVehicle(registration);
+
+    const normalized = registration.replace(/\s+/g, "").toUpperCase();
+    const found = VEHICLES.find(
+      (entry) => entry.registrationNumber === normalized
+    );
+
+    window.setTimeout(() => {
       if (!found) {
-        setError("We couldn't find that registration. Check the number and try again.");
-        return;
+        setError(
+          "We couldn't find that registration in the demo registry. Try TS09EA1234, TS08FJ5678 or TS10GH9012."
+        );
+      } else {
+        setVehicle(found);
       }
-      setVehicle(found);
-      const quotation = await getMotorQuote(found);
-      setQuote(quotation);
-    } catch {
-      setError("Vehicle lookup failed. Please try again.");
-    } finally {
       setBusy(false);
-    }
+    }, 400);
   };
 
-  const handlePay = async () => {
-    if (!quote || busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const created = await purchaseMotorPolicy(
-        quote.plan.id,
-        quote.vehicle,
-        quote.addOns
-      );
-      setPolicy(created);
-    } catch {
-      setError("Payment could not be completed. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const reset = () => {
-    setVehicle(null);
-    setQuote(null);
-    setPolicy(null);
-    setError(null);
-    setRegistration("");
-  };
+  const openRequest = (service: string, kind: string) =>
+    setDialog({ service, kind });
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-8 max-w-4xl">
       <Link
         to="/insurance"
-        className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover"
+        className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:text-brand-hover"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to insurance
       </Link>
 
       <div>
-        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-gold">
-          Insurance
+        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-brand">
+          Insurance · Motor
         </span>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
-          Motor insurance fast lane
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+          Motor renewal and claim guidance
         </h1>
-        <p className="text-muted mt-1">
-          Enter your registration, confirm the vehicle, pay and get the policy PDF.
+        <p className="text-muted-foreground mt-1 max-w-2xl">
+          Check the vehicle, understand the renewal levers and get help with a
+          claim. No quote or payment happens here.
         </p>
       </div>
 
-      <Card className="p-5">
-        <Stepper steps={STEPS} current={stepIndex} />
+      <Card className="p-5 sm:p-6">
+        <form onSubmit={handleLookup} className="space-y-4">
+          <FormField
+            label="Vehicle registration number"
+            htmlFor="motor-reg"
+            required
+          >
+            <Input
+              id="motor-reg"
+              value={registration}
+              onChange={(event) =>
+                setRegistration(event.target.value.toUpperCase().slice(0, 13))
+              }
+              placeholder="TS09EA1234"
+            />
+          </FormField>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Demo registrations:{" "}
+            <span className="font-bold text-foreground">TS09EA1234</span>,{" "}
+            <span className="font-bold text-foreground">TS08FJ5678</span> or{" "}
+            <span className="font-bold text-foreground">TS10GH9012</span>.
+          </p>
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Looking up...
+              </>
+            ) : (
+              "Find my vehicle"
+            )}
+          </Button>
+        </form>
+
+        {error && (
+          <p className="mt-4 rounded-lg border border-danger-fg/20 bg-danger-soft px-3 py-2 text-xs text-danger-fg">
+            {error}
+          </p>
+        )}
       </Card>
 
-      {error && (
-        <Card className="p-4 border-rose-200 bg-rose-50">
-          <p className="text-xs text-rose-700">{error}</p>
-        </Card>
-      )}
-
-      {policy ? (
-        <Card className="p-6 space-y-4">
-          <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-7 h-7" />
+      {vehicle && (
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
+              {vehicle.engineCC > 500 ? (
+                <Car className="w-6 h-6" />
+              ) : (
+                <Bike className="w-6 h-6" />
+              )}
             </div>
-            <h2 className="text-xl font-extrabold text-charcoal tracking-tight">
-              Policy issued
-            </h2>
-            <p className="text-sm text-muted">
-              {policy.provider} · {policy.policyNumber}
-            </p>
+            <div className="flex-1">
+              <p className="text-sm font-extrabold text-foreground">
+                {vehicle.make} {vehicle.model}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {vehicle.registrationNumber} · {vehicle.fuelType} ·{" "}
+                {vehicle.year} · {vehicle.engineCC} cc
+              </p>
+            </div>
+            <Badge variant="success">Found</Badge>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 rounded-xl bg-ivory p-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
-                Vehicle
-              </p>
-              <p className="text-sm font-bold text-charcoal">
-                {vehicle?.make} {vehicle?.model}
-              </p>
-              <p className="text-[11px] text-muted">{vehicle?.registrationNumber}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
-                Cover
-              </p>
-              <p className="text-sm font-bold text-charcoal">
-                {formatINR(policy.coverAmount)}
-              </p>
-              <p className="text-[11px] text-muted">
-                Premium {formatINR(policy.premium)}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
-                Valid from
-              </p>
-              <p className="text-sm font-bold text-charcoal">{policy.validFrom}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
-                Renewal
-              </p>
-              <p className="text-sm font-bold text-charcoal">{policy.renewalDate}</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link
-              to="/insurance/policies"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold"
+          <div className="flex flex-col sm:flex-row gap-2 border-t border-border pt-4">
+            <Button
+              onClick={() =>
+                openRequest(
+                  `Motor renewal · ${vehicle.registrationNumber}`,
+                  "Renewal help"
+                )
+              }
             >
-              Open Policy Vault
-            </Link>
-            <Button variant="secondary" onClick={reset}>
-              Insure another vehicle
+              <RefreshCw className="w-4 h-4" />
+              Start renewal request
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                openRequest(
+                  `Motor claim · ${vehicle.registrationNumber}`,
+                  "Claim assistance"
+                )
+              }
+            >
+              Get claim help
             </Button>
           </div>
-          <p className="text-[10px] text-muted-light text-center">
-            Mock payment — the policy PDF would be emailed instantly in production.
-          </p>
         </Card>
-      ) : (
-        <>
-          <Card className="p-5 sm:p-6">
-            <form onSubmit={handleLookup} className="space-y-4">
-              <FormField
-                label="Vehicle registration number"
-                htmlFor="motor-reg"
-                required
-              >
-                <Input
-                  id="motor-reg"
-                  value={registration}
-                  onChange={(event) =>
-                    setRegistration(event.target.value.toUpperCase().slice(0, 13))
-                  }
-                  placeholder="TS09EA1234"
-                />
-              </FormField>
-              <p className="text-[11px] text-muted leading-relaxed">
-                We look up make, model and fuel type from the Vahan registry. Try{" "}
-                <span className="font-bold text-charcoal">TS09EA1234</span>,{" "}
-                <span className="font-bold text-charcoal">TS08FJ5678</span> or{" "}
-                <span className="font-bold text-charcoal">TS10GH9012</span>.
-              </p>
-              <Button type="submit" className="w-full" disabled={busy}>
-                {busy ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Looking up...
-                  </>
-                ) : (
-                  "Find my vehicle"
-                )}
-              </Button>
-            </form>
-          </Card>
-
-          {vehicle && quote && (
-            <>
-              <Card className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gold-light text-[#B8860B] flex items-center justify-center shrink-0">
-                  {vehicle.engineCC > 500 ? (
-                    <Car className="w-6 h-6" />
-                  ) : (
-                    <Bike className="w-6 h-6" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-extrabold text-charcoal">
-                    {vehicle.make} {vehicle.model}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {vehicle.registrationNumber} · {vehicle.fuelType} · {vehicle.year} ·{" "}
-                    {vehicle.engineCC} cc
-                  </p>
-                </div>
-                <Badge variant="success">Found</Badge>
-              </Card>
-
-              <Card className="p-5 sm:p-6 space-y-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                      {quote.plan.insurer}
-                    </p>
-                    <h2 className="text-lg font-extrabold text-charcoal">
-                      {quote.plan.name}
-                    </h2>
-                  </div>
-                  <Badge variant="gold">
-                    {formatINR(quote.plan.sumInsured)} cover
-                  </Badge>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted">Base premium</span>
-                    <span className="font-bold text-charcoal">
-                      {formatINR(quote.plan.premium)}
-                    </span>
-                  </div>
-                  {quote.addOns.map((addOn) => (
-                    <div
-                      key={addOn}
-                      className="flex items-center justify-between text-xs"
-                    >
-                      <span className="text-muted">{addOn}</span>
-                      <span className="font-bold text-charcoal">
-                        {formatINR(1200)}
-                      </span>
-                    </div>
-                  ))}
-                  <div className="flex items-center justify-between border-t border-border-subtle pt-2">
-                    <span className="text-sm font-bold text-charcoal">Total</span>
-                    <span className="text-lg font-extrabold text-charcoal">
-                      {formatINR(quote.totalPremium)}
-                    </span>
-                  </div>
-                </div>
-
-                <Button className="w-full" onClick={handlePay} disabled={busy}>
-                  {busy ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-4 h-4" />
-                      Pay {formatINR(quote.totalPremium)} via UPI
-                    </>
-                  )}
-                </Button>
-                <p className="text-[10px] text-muted-light text-center">
-                  Payment is mocked. Policy PDF is issued immediately after payment.
-                </p>
-              </Card>
-            </>
-          )}
-        </>
       )}
 
-      <Card className="p-4 bg-ivory/60 flex items-start gap-3">
-        <ShieldCheck className="w-4 h-4 text-[#B8860B] shrink-0 mt-0.5" />
-        <p className="text-[11px] text-muted leading-relaxed">
-          Motor policies are distributed through an IRDAI-licensed POSP. Add-ons depend on
-          vehicle age and insurer underwriting. Vahan lookup is mocked in this UI.
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-extrabold text-foreground tracking-tight">
+            What we check before renewal
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Five levers that change the premium and the claim experience.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {MOTOR_RENEWAL_CHECKS.map((item) => (
+            <Card key={item.title} className="p-5 space-y-2">
+              <ShieldCheck className="w-5 h-5 text-brand-strong" />
+              <h3 className="text-sm font-extrabold text-foreground">
+                {item.title}
+              </h3>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                {item.description}
+              </p>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <Card className="p-5 sm:p-6 space-y-4">
+        <div>
+          <h2 className="text-base font-extrabold text-foreground tracking-tight">
+            If you need to claim
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Keep the sequence right; repairs before survey approval can reduce
+            the settlement.
+          </p>
+        </div>
+        <ol className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {MOTOR_CLAIM_STEPS.map((step, index) => (
+            <li
+              key={step.title}
+              className="flex gap-3 rounded-xl border border-border bg-surface p-3"
+            >
+              <span className="w-6 h-6 rounded-full bg-brand-soft text-brand-strong text-[11px] font-extrabold flex items-center justify-center shrink-0">
+                {index + 1}
+              </span>
+              <div>
+                <p className="text-xs font-bold text-foreground">{step.title}</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {step.description}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </Card>
+
+      <Card className="p-4 bg-surface-muted/60 flex items-start gap-3">
+        <CheckCircle2 className="w-4 h-4 text-brand-strong shrink-0 mt-0.5" />
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Vehicle data shown here is demo data. Renewals and claims are
+          coordinated with the insurer; final terms depend on underwriting and
+          survey.
         </p>
       </Card>
+
+      <InsuranceRequestDialog
+        open={dialog !== null}
+        onClose={() => setDialog(null)}
+        defaultService={dialog?.service ?? ""}
+        defaultKind={dialog?.kind ?? "Insurance consultation"}
+      />
     </div>
   );
 }

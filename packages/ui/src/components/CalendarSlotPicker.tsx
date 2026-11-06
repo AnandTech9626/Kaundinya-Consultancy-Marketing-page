@@ -57,8 +57,8 @@ export function CalendarSlotPicker({
   return (
     <div className={`space-y-4 ${className}`}>
       <div>
-        <p className="flex items-center gap-1.5 text-xs font-bold text-charcoal mb-2">
-          <CalendarDays className="w-3.5 h-3.5 text-gold" />
+        <p className="flex items-center gap-1.5 text-xs font-bold text-foreground mb-2">
+          <CalendarDays className="w-3.5 h-3.5 text-brand" />
           Pick a date
         </p>
         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -76,13 +76,13 @@ export function CalendarSlotPicker({
                 }
                 className={`w-16 shrink-0 rounded-xl border px-2 py-2 text-center transition-colors cursor-pointer ${
                   active
-                    ? "bg-charcoal border-charcoal text-white"
-                    : "bg-white border-border-subtle text-charcoal hover:border-gold/60"
+                    ? "bg-inverse border-inverse text-white"
+                    : "bg-surface border-border text-foreground hover:border-brand/60"
                 }`}
               >
                 <span
                   className={`block text-[10px] font-bold uppercase tracking-wider ${
-                    active ? "text-ivory/60" : "text-muted-light"
+                    active ? "text-inverse-foreground/60" : "text-subtle-foreground"
                   }`}
                 >
                   {date.weekday}
@@ -91,7 +91,7 @@ export function CalendarSlotPicker({
                   {date.day}
                 </span>
                 <span
-                  className={`block text-[10px] ${active ? "text-ivory/60" : "text-muted"}`}
+                  className={`block text-[10px] ${active ? "text-inverse-foreground/60" : "text-muted-foreground"}`}
                 >
                   {date.month}
                 </span>
@@ -102,8 +102,8 @@ export function CalendarSlotPicker({
       </div>
 
       <div>
-        <p className="flex items-center gap-1.5 text-xs font-bold text-charcoal mb-2">
-          <Clock className="w-3.5 h-3.5 text-gold" />
+        <p className="flex items-center gap-1.5 text-xs font-bold text-foreground mb-2">
+          <Clock className="w-3.5 h-3.5 text-brand" />
           Pick a time slot
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -117,10 +117,10 @@ export function CalendarSlotPicker({
                 onClick={() => selectedDate && onChange({ date: selectedDate, slot })}
                 className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${
                   active
-                    ? "bg-gold border-gold text-charcoal"
+                    ? "bg-brand border-brand text-on-brand"
                     : selectedDate
-                      ? "bg-white border-border-subtle text-charcoal-light hover:border-gold/60 cursor-pointer"
-                      : "bg-ivory border-border-subtle text-muted-light cursor-not-allowed"
+                      ? "bg-surface border-border text-foreground-soft hover:border-brand/60 cursor-pointer"
+                      : "bg-surface-muted border-border text-subtle-foreground cursor-not-allowed"
                 }`}
               >
                 {slot}
@@ -129,7 +129,7 @@ export function CalendarSlotPicker({
           })}
         </div>
         {!selectedDate && (
-          <p className="mt-2 text-[11px] text-muted-light">
+          <p className="mt-2 text-[11px] text-subtle-foreground">
             Choose a date to see available slots.
           </p>
         )}

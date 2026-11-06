@@ -55,7 +55,7 @@ export function MeasurementBooking() {
   const backLink = (
     <Link
       to="/home-services"
-      className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover"
+      className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:text-brand-hover"
     >
       <ArrowLeft className="w-4 h-4" />
       Back to home services
@@ -89,33 +89,33 @@ export function MeasurementBooking() {
       <div className="space-y-6 max-w-2xl">
         {backLink}
         <Card className="p-8 text-center space-y-4">
-          <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+          <div className="w-14 h-14 rounded-full bg-success-soft text-success-fg flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-charcoal tracking-tight">
+            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
               Measurement booked
             </h1>
-            <p className="text-sm text-muted mt-1 max-w-md mx-auto">
+            <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
               Our surveyor will call on {mobile} to confirm. The visit is
               free and the quote follows within 24 hours.
             </p>
           </div>
-          <div className="rounded-xl bg-ivory p-4 text-left space-y-1">
-            <p className="text-sm font-bold text-charcoal">{created.serviceName}</p>
-            <p className="text-xs text-muted">
+          <div className="rounded-xl bg-surface-muted p-4 text-left space-y-1">
+            <p className="text-sm font-bold text-foreground">{created.serviceName}</p>
+            <p className="text-xs text-muted-foreground">
               {formatDate(created.date)} · {created.slot}
             </p>
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               {created.address}, {created.pincode}
             </p>
-            <p className="text-[11px] text-muted-light">
+            <p className="text-[11px] text-subtle-foreground">
               Reference #{created.id.toUpperCase()}
             </p>
           </div>
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold hover:bg-gold-hover text-charcoal text-sm font-bold"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold"
           >
             View on dashboard
           </Link>
@@ -129,13 +129,13 @@ export function MeasurementBooking() {
       {backLink}
 
       <div>
-        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-gold">
+        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-brand">
           Home Services
         </span>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
           Book a free measurement
         </h1>
-        <p className="text-muted mt-1">
+        <p className="text-muted-foreground mt-1">
           For nets and grills we measure on site instead of asking you for square footage.
         </p>
       </div>
@@ -196,7 +196,7 @@ export function MeasurementBooking() {
               </FormField>
             </div>
 
-            {error && <p className="text-[11px] text-rose-600">{error}</p>}
+            {error && <p className="text-[11px] text-danger-fg">{error}</p>}
 
             <Button type="submit" className="w-full" disabled={!canSubmit || submitting}>
               {submitting ? (
@@ -214,10 +214,10 @@ export function MeasurementBooking() {
         <div className="space-y-6">
           <Card className="p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <Ruler className="w-4 h-4 text-gold" />
-              <h2 className="text-sm font-extrabold text-charcoal">What happens next</h2>
+              <Ruler className="w-4 h-4 text-brand" />
+              <h2 className="text-sm font-extrabold text-foreground">What happens next</h2>
             </div>
-            <ol className="space-y-2 text-xs text-muted">
+            <ol className="space-y-2 text-xs text-muted-foreground">
               <li>1. We confirm the slot by phone.</li>
               <li>2. A surveyor measures the exact area.</li>
               <li>3. You receive a written quote.</li>
@@ -225,10 +225,10 @@ export function MeasurementBooking() {
             </ol>
           </Card>
 
-          <Card className="p-4 bg-ivory/60">
+          <Card className="p-4 bg-surface-muted/60">
             <div className="flex items-start gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#B8860B] shrink-0 mt-0.5" />
-              <p className="text-[11px] text-muted leading-relaxed">
+              <ShieldCheck className="w-4 h-4 text-brand-strong shrink-0 mt-0.5" />
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
                 Measurement is free and no-obligation. Final pricing is confirmed in
                 writing before work begins.
               </p>

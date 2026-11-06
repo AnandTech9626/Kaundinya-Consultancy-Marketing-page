@@ -20,13 +20,13 @@ export function SectionHeading({
       className={`space-y-3 ${centered ? "text-center mx-auto max-w-3xl" : "max-w-2xl"} ${className}`}
     >
       {badge && (
-        <span className="inline-block text-xs font-bold uppercase tracking-wider text-gold">
+        <span className="inline-block text-xs font-bold uppercase tracking-wider text-brand">
           {badge}
         </span>
       )}
       <h2
         className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${
-          dark ? "text-white" : "text-charcoal"
+          dark ? "text-white" : "text-foreground"
         }`}
       >
         {title}
@@ -34,13 +34,13 @@ export function SectionHeading({
       {subtitle && (
         <p
           className={`text-base sm:text-lg leading-relaxed ${
-            dark ? "text-ivory/80" : "text-muted"
+            dark ? "text-inverse-foreground/80" : "text-muted-foreground"
           }`}
         >
           {subtitle}
         </p>
       )}
-      <div className={`h-1 w-12 bg-gold rounded-full ${centered ? "mx-auto" : ""}`} />
+      <div className={`h-1 w-12 bg-brand rounded-full ${centered ? "mx-auto" : ""}`} />
     </div>
   );
 }

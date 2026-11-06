@@ -114,20 +114,20 @@ export function DocumentServices() {
     <div className="space-y-6 max-w-5xl">
       <Link
         to="/digital-services"
-        className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover"
+        className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:text-brand-hover"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to digital services
       </Link>
 
       <div>
-        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-gold">
+        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-brand">
           Digital Services
         </span>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
           ID &amp; Document Updates
         </h1>
-        <p className="text-muted mt-1">
+        <p className="text-muted-foreground mt-1">
           Choose the correction, upload the required documents, and track the
           update from submission to completion.
         </p>
@@ -154,17 +154,17 @@ export function DocumentServices() {
                 </Select>
               </FormField>
 
-              <div className="rounded-xl border border-border-subtle bg-ivory-light p-3.5 space-y-2">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+              <div className="rounded-xl border border-border bg-surface-raised p-3.5 space-y-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   Keep ready
                 </p>
                 <ul className="space-y-1.5">
                   {requirements.map((requirement) => (
                     <li
                       key={requirement}
-                      className="flex items-start gap-2 text-[11px] text-charcoal-light"
+                      className="flex items-start gap-2 text-[11px] text-foreground-soft"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-brand shrink-0 mt-0.5" />
                       {requirement}
                     </li>
                   ))}
@@ -180,14 +180,14 @@ export function DocumentServices() {
                 hint="JPG, PNG or PDF up to 10 MB. Files are watermarked on upload."
               />
 
-              <label className="flex items-start gap-2 rounded-xl border border-border-subtle bg-white px-3 py-2.5 cursor-pointer">
+              <label className="flex items-start gap-2 rounded-xl border border-border bg-surface px-3 py-2.5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={consent}
                   onChange={(event) => setConsent(event.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#B8860B]"
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-brand"
                 />
-                <span className="text-[11px] text-muted leading-relaxed">
+                <span className="text-[11px] text-muted-foreground leading-relaxed">
                   I confirm these documents belong to me or a person I am
                   authorised to represent, and I consent to Kaundinya using them
                   only to process this update.
@@ -195,20 +195,20 @@ export function DocumentServices() {
               </label>
 
               {success && (
-                <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-emerald-700">{success}</p>
+                <div className="flex items-start gap-2 rounded-xl border border-success-fg/20 bg-success-soft px-3 py-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-success-fg shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-success-fg">{success}</p>
                 </div>
               )}
 
               {submitError && (
-                <p className="text-[11px] text-rose-600">{submitError}</p>
+                <p className="text-[11px] text-danger-fg">{submitError}</p>
               )}
 
               <button
                 type="submit"
                 disabled={!canSubmit}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gold hover:bg-gold-hover px-4 py-2.5 text-sm font-bold text-charcoal transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-brand hover:bg-brand-hover px-4 py-2.5 text-sm font-bold text-on-brand transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
               >
                 {submitting ? (
                   <>
@@ -224,12 +224,12 @@ export function DocumentServices() {
 
           <Card className="p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-gold" />
-              <h2 className="text-sm font-extrabold text-charcoal">
+              <Lock className="w-4 h-4 text-brand" />
+              <h2 className="text-sm font-extrabold text-foreground">
                 How we protect it
               </h2>
             </div>
-            <ul className="space-y-2 text-xs text-muted leading-relaxed">
+            <ul className="space-y-2 text-xs text-muted-foreground leading-relaxed">
               <li>Every upload is watermarked for the requested ID update only.</li>
               <li>Files are visible only to the coordinator handling your case.</li>
               <li>You can request deletion once the update is complete.</li>
@@ -241,8 +241,8 @@ export function DocumentServices() {
           <Card className="p-5 space-y-4">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-gold" />
-                <h2 className="text-sm font-extrabold text-charcoal">
+                <ShieldCheck className="w-4 h-4 text-brand" />
+                <h2 className="text-sm font-extrabold text-foreground">
                   Update status
                 </h2>
               </div>
@@ -255,7 +255,7 @@ export function DocumentServices() {
 
             {latestDocument ? (
               <>
-                <p className="text-[11px] text-muted">
+                <p className="text-[11px] text-muted-foreground">
                   {latestDocument.docType} · started{" "}
                   {formatDate(latestDocument.createdAt)}
                 </p>
@@ -265,11 +265,11 @@ export function DocumentServices() {
                 />
               </>
             ) : (
-              <div className="rounded-xl border border-dashed border-border-subtle bg-ivory-light px-4 py-6 text-center">
-                <p className="text-xs font-bold text-charcoal">
+              <div className="rounded-xl border border-dashed border-border bg-surface-raised px-4 py-6 text-center">
+                <p className="text-xs font-bold text-foreground">
                   No update started yet
                 </p>
-                <p className="text-[11px] text-muted mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   Upload a document to start the timeline.
                 </p>
               </div>
@@ -278,17 +278,17 @@ export function DocumentServices() {
 
           <Card className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-extrabold text-charcoal">
+              <h2 className="text-sm font-extrabold text-foreground">
                 Uploaded files
               </h2>
-              <span className="text-[11px] text-muted">{documents.length}</span>
+              <span className="text-[11px] text-muted-foreground">{documents.length}</span>
             </div>
 
             {error ? (
               <button
                 type="button"
                 onClick={refetch}
-                className="text-xs font-bold text-gold hover:text-gold-hover cursor-pointer"
+                className="text-xs font-bold text-brand hover:text-brand-hover cursor-pointer"
               >
                 Couldn't load files. Try again
               </button>
@@ -298,7 +298,7 @@ export function DocumentServices() {
                 <Skeleton className="h-10 w-full" />
               </div>
             ) : documents.length === 0 ? (
-              <p className="text-xs text-muted">No documents uploaded yet.</p>
+              <p className="text-xs text-muted-foreground">No documents uploaded yet.</p>
             ) : (
               <ul className="space-y-2">
                 {documents.map((document) => {
@@ -306,20 +306,20 @@ export function DocumentServices() {
                   return (
                     <li
                       key={document.id}
-                      className="flex items-start gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2"
+                      className="flex items-start gap-2 rounded-lg border border-border bg-surface px-3 py-2"
                     >
-                      <FileCheck2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <FileCheck2 className="w-4 h-4 text-success-fg shrink-0 mt-0.5" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-xs font-bold text-charcoal truncate">
+                          <p className="text-xs font-bold text-foreground truncate">
                             {document.fileName}
                           </p>
                           <Badge variant={status.variant}>{status.label}</Badge>
                         </div>
-                        <p className="text-[10px] text-muted">
+                        <p className="text-[10px] text-muted-foreground">
                           {document.docType} · {formatDate(document.createdAt)}
                         </p>
-                        <p className="text-[10px] text-muted-light italic">
+                        <p className="text-[10px] text-subtle-foreground italic">
                           {document.watermark}
                         </p>
                       </div>

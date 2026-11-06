@@ -23,8 +23,8 @@ export function AuthCallback() {
   }, [navigate, params, user]);
 
   return (
-    <div className="min-h-screen bg-ivory flex items-center justify-center">
-      <div className="flex items-center gap-2 text-sm text-muted">
+    <div className="min-h-screen bg-surface-muted flex items-center justify-center">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Spinner />
         Redirecting to sign in...
       </div>

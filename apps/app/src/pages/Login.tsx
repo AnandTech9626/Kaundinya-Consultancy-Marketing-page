@@ -229,8 +229,8 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-ivory flex flex-col">
-      <header className="bg-white/95 border-b border-border-subtle flex items-center justify-center px-6 py-3">
+    <div className="min-h-screen bg-surface-muted flex flex-col">
+      <header className="bg-surface/95 border-b border-border flex items-center justify-center px-6 py-3">
         <BrandLockup size="lg" />
       </header>
 
@@ -239,10 +239,10 @@ export function Login() {
           {step === "mobile" ? (
             <form onSubmit={handleContinue} className="space-y-5">
               <div className="text-center space-y-1.5">
-                <h1 className="text-2xl font-extrabold text-charcoal tracking-tight">
+                <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
                   Sign in to your account
                 </h1>
-                <p className="text-sm text-muted">
+                <p className="text-sm text-muted-foreground">
                   Enter your registered mobile number to continue.
                 </p>
               </div>
@@ -265,7 +265,7 @@ export function Login() {
                 />
               </FormField>
               {error && (
-                <p className="text-[11px] text-rose-600 -mt-2">{error}</p>
+                <p className="text-[11px] text-danger-fg -mt-2">{error}</p>
               )}
 
               <Button type="submit" className="w-full" disabled={busy}>
@@ -278,7 +278,7 @@ export function Login() {
                   </>
                 )}
               </Button>
-              <p className="text-[11px] text-muted-light text-center leading-relaxed">
+              <p className="text-[11px] text-subtle-foreground text-center leading-relaxed">
                 New clients verify with a one-time password and set a 6-digit
                 PIN on the next step.
               </p>
@@ -298,22 +298,22 @@ export function Login() {
               />
 
               <div className="text-center space-y-1.5">
-                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-gold-light text-[#B8860B]">
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand-strong">
                   <KeyRound className="h-5 w-5" />
                 </div>
-                <h1 className="text-2xl font-extrabold text-charcoal tracking-tight">
+                <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
                   Welcome back
                 </h1>
-                <p className="text-sm text-muted">
+                <p className="text-sm text-muted-foreground">
                   Enter your 6-digit PIN to continue.
                 </p>
               </div>
 
-              <div className="rounded-xl bg-ivory px-4 py-3 text-center">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+              <div className="rounded-xl bg-surface-muted px-4 py-3 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   Mobile number
                 </p>
-                <p className="mt-0.5 text-sm font-extrabold text-charcoal">
+                <p className="mt-0.5 text-sm font-extrabold text-foreground">
                   +91 {mobile}
                 </p>
                 <button
@@ -324,7 +324,7 @@ export function Login() {
                     setResetMode(false);
                     setStep("mobile");
                   }}
-                  className="mt-1 text-[11px] font-bold text-gold hover:text-gold-hover cursor-pointer"
+                  className="mt-1 text-[11px] font-bold text-brand hover:text-brand-hover cursor-pointer"
                 >
                   Change number
                 </button>
@@ -347,7 +347,7 @@ export function Login() {
                 />
               </FormField>
               {error && (
-                <p className="text-[11px] text-rose-600 -mt-2">{error}</p>
+                <p className="text-[11px] text-danger-fg -mt-2">{error}</p>
               )}
 
               <Button
@@ -369,15 +369,15 @@ export function Login() {
                 <button
                   type="button"
                   onClick={() => void switchToOtp()}
-                  className="text-gold hover:text-gold-hover cursor-pointer"
+                  className="text-brand hover:text-brand-hover cursor-pointer"
                 >
                   Use OTP instead
                 </button>
-                <span className="text-muted-light">·</span>
+                <span className="text-subtle-foreground">·</span>
                 <button
                   type="button"
                   onClick={() => void switchToOtp(true)}
-                  className="text-muted hover:text-charcoal cursor-pointer"
+                  className="text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   Forgot PIN?
                 </button>
@@ -386,13 +386,13 @@ export function Login() {
           ) : step === "reset" ? (
             <form onSubmit={handleResetPin} className="space-y-5">
               <div className="text-center space-y-1.5">
-                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-gold-light text-[#B8860B]">
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand-strong">
                   <KeyRound className="h-5 w-5" />
                 </div>
-                <h1 className="text-2xl font-extrabold text-charcoal tracking-tight">
+                <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
                   Set a new PIN
                 </h1>
-                <p className="text-sm text-muted">
+                <p className="text-sm text-muted-foreground">
                   Choose a new 6-digit PIN for +91 {mobile}.
                 </p>
               </div>
@@ -434,7 +434,7 @@ export function Login() {
                 />
               </FormField>
               {error && (
-                <p className="text-[11px] text-rose-600 -mt-2">{error}</p>
+                <p className="text-[11px] text-danger-fg -mt-2">{error}</p>
               )}
 
               <Button type="submit" className="w-full" disabled={busy}>
@@ -455,7 +455,7 @@ export function Login() {
                   setResetMode(false);
                   setStep("mobile");
                 }}
-                className="w-full text-center text-[11px] font-bold text-muted hover:text-charcoal cursor-pointer"
+                className="w-full text-center text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 Cancel and sign out
               </button>

@@ -143,20 +143,20 @@ export function Printouts() {
     <div className="space-y-6 max-w-5xl">
       <Link
         to="/digital-services"
-        className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-gold-hover"
+        className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:text-brand-hover"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to digital services
       </Link>
 
       <div>
-        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-gold">
+        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-brand">
           Digital Services
         </span>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
           Printouts
         </h1>
-        <p className="text-muted mt-1">
+        <p className="text-muted-foreground mt-1">
           Upload a file, choose your print options, and see the price update live.
           Pickup only.
         </p>
@@ -265,32 +265,32 @@ export function Printouts() {
               </FormField>
             </div>
 
-            <div className="rounded-xl border border-border-subtle bg-ivory px-4 py-3 space-y-1.5">
+            <div className="rounded-xl border border-border bg-surface-muted px-4 py-3 space-y-1.5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     Live price
                   </p>
-                  <p className="text-xs text-muted">
+                  <p className="text-xs text-muted-foreground">
                     ₹{PAGE_RATE} per page × {pageCount}{" "}
                     {pageCount === 1 ? "page" : "pages"} × {copyCount}{" "}
                     {copyCount === 1 ? "copy" : "copies"}
                   </p>
                 </div>
-                <p className="text-xl font-extrabold text-charcoal">
+                <p className="text-xl font-extrabold text-foreground">
                   {formatINR(total)}
                 </p>
               </div>
-              <p className="text-[10px] text-muted-light">
+              <p className="text-[10px] text-subtle-foreground">
                 {paperSize} · {COLOR_LABEL[colorMode]} ·{" "}
                 {SIDES_LABEL[sides]} · {BINDING_LABEL[binding]}
               </p>
             </div>
 
             {created && (
-              <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <p className="text-[11px] text-emerald-700">
+              <div className="flex items-start gap-2 rounded-xl border border-success-fg/20 bg-success-soft px-3 py-2.5">
+                <CheckCircle2 className="w-4 h-4 text-success-fg shrink-0 mt-0.5" />
+                <p className="text-[11px] text-success-fg">
                   {created.fileName} queued · {created.pages ?? pageCount} pages ·{" "}
                   {created.copies} copies · {formatINR(created.price)}. Pickup
                   details are shared after confirmation. The file auto-deletes on{" "}
@@ -299,12 +299,12 @@ export function Printouts() {
               </div>
             )}
 
-            {submitError && <p className="text-[11px] text-rose-600">{submitError}</p>}
+            {submitError && <p className="text-[11px] text-danger-fg">{submitError}</p>}
 
             <button
               type="submit"
               disabled={!canSubmit}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gold hover:bg-gold-hover px-4 py-2.5 text-sm font-bold text-charcoal transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-brand hover:bg-brand-hover px-4 py-2.5 text-sm font-bold text-on-brand transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
             >
               {submitting ? (
                 <>
@@ -321,18 +321,18 @@ export function Printouts() {
         <div className="space-y-4">
           <Card className="p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-gold" />
-              <h2 className="text-sm font-extrabold text-charcoal">
+              <MapPin className="w-4 h-4 text-brand" />
+              <h2 className="text-sm font-extrabold text-foreground">
                 Pickup only
               </h2>
             </div>
-            <p className="text-xs text-muted leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Printouts are collected from the confirmed pickup point. Exact
               address and timing are shared after your order is confirmed.
             </p>
-            <div className="flex items-start gap-2 rounded-lg bg-ivory-light px-3 py-2">
-              <Trash2 className="w-3.5 h-3.5 text-gold shrink-0 mt-0.5" />
-              <p className="text-[11px] text-muted leading-relaxed">
+            <div className="flex items-start gap-2 rounded-lg bg-surface-raised px-3 py-2">
+              <Trash2 className="w-3.5 h-3.5 text-brand shrink-0 mt-0.5" />
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
                 Files are removed 24 hours after printing. We do not keep copies
                 or use them for anything else.
               </p>
@@ -343,8 +343,8 @@ export function Printouts() {
             <Card className="p-5 space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <Printer className="w-4 h-4 text-gold" />
-                  <h2 className="text-sm font-extrabold text-charcoal">
+                  <Printer className="w-4 h-4 text-brand" />
+                  <h2 className="text-sm font-extrabold text-foreground">
                     Current print status
                   </h2>
                 </div>
@@ -352,7 +352,7 @@ export function Printouts() {
                   {PRINT_LABEL[latestJob.status]}
                 </Badge>
               </div>
-              <p className="text-[11px] text-muted truncate">
+              <p className="text-[11px] text-muted-foreground truncate">
                 {latestJob.fileName}
               </p>
               <StatusTimeline
@@ -365,19 +365,19 @@ export function Printouts() {
           <Card className="p-5 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Printer className="w-4 h-4 text-gold" />
-                <h2 className="text-sm font-extrabold text-charcoal">
+                <Printer className="w-4 h-4 text-brand" />
+                <h2 className="text-sm font-extrabold text-foreground">
                   Print history
                 </h2>
               </div>
-              <span className="text-[11px] text-muted">{jobs.length}</span>
+              <span className="text-[11px] text-muted-foreground">{jobs.length}</span>
             </div>
 
             {error ? (
               <button
                 type="button"
                 onClick={refetch}
-                className="text-xs font-bold text-gold hover:text-gold-hover cursor-pointer"
+                className="text-xs font-bold text-brand hover:text-brand-hover cursor-pointer"
               >
                 Couldn't load history. Try again
               </button>
@@ -387,29 +387,29 @@ export function Printouts() {
                 <Skeleton className="h-10 w-full" />
               </div>
             ) : jobs.length === 0 ? (
-              <p className="text-xs text-muted">No print jobs yet.</p>
+              <p className="text-xs text-muted-foreground">No print jobs yet.</p>
             ) : (
               <ul className="space-y-2">
                 {jobs.map((job) => (
                   <li
                     key={job.id}
-                    className="rounded-lg border border-border-subtle bg-white px-3 py-2"
+                    className="rounded-lg border border-border bg-surface px-3 py-2"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-bold text-charcoal truncate">
+                      <p className="text-xs font-bold text-foreground truncate">
                         {job.fileName}
                       </p>
                       <Badge variant={PRINT_BADGE[job.status]}>
                         {PRINT_LABEL[job.status]}
                       </Badge>
                     </div>
-                    <p className="text-[10px] text-muted mt-0.5">
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
                       {job.pages ? `${job.pages} pages · ` : ""}
                       {job.copies} copies · {formatINR(job.price)} ·{" "}
                       {formatDate(job.createdAt)}
                     </p>
                     {job.paperSize && (
-                      <p className="text-[10px] text-muted-light">
+                      <p className="text-[10px] text-subtle-foreground">
                         {job.paperSize} · {COLOR_LABEL[job.colorMode ?? "bw"]} ·{" "}
                         {SIDES_LABEL[job.sides ?? "single"]} ·{" "}
                         {BINDING_LABEL[job.binding ?? "none"]}

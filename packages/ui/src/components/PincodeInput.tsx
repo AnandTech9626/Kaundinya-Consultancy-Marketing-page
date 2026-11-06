@@ -65,7 +65,7 @@ export function PincodeInput({
       {complete && (
         <p
           className={`flex items-center gap-1.5 text-[11px] ${
-            inServiceArea ? "text-emerald-700" : "text-muted"
+            inServiceArea ? "text-success-fg" : "text-muted-foreground"
           }`}
         >
           <MapPin className="w-3.5 h-3.5 shrink-0" />
