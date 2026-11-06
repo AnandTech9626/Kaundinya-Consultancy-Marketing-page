@@ -5,8 +5,8 @@
 > “Business & UX Architecture” brief.
 >
 > **Where it's built:** all UI in **`apps/app`** (client portal) + relevant screens in **`apps/admin`**.
-> **Backend:** UI-first with mock data (like today). `apps/api` is **not ours** — we only define the
-> contract in `docs/api-contract.md`.
+> **Backend:** UI-first with mock data (like today). The real backend lives in the standalone
+> `kaundinya-backend` repo; we only define the contract in `docs/api-contract.md`.
 > **Design:** same tokens/components (`packages/tokens`, `packages/ui`, `packages/config`).
 
 ---

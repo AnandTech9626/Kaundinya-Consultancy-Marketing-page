@@ -1,5 +1,6 @@
 ---
 import { SITE_INFO, CONTACT_PERSONS, SERVICE_CATEGORIES, NAV_LINKS } from '../lib/constants';
+import BrandLockup from './BrandLockup.astro';
 
 const currentYear = new Date().getFullYear();
 ---
@@ -11,13 +12,7 @@ const currentYear = new Date().getFullYear();
       <!-- Column 1: Brand & Identity (Span 2 cols on lg) -->
       <div class="lg:col-span-2 space-y-4">
         <div class="flex items-center gap-3">
-          <img 
-            src="/images/logo.webp" 
-            alt="Kaundinya Consultancy Logo" 
-            class="h-14 w-auto bg-white/95 p-1 rounded-md"
-            width="170" 
-            height="56"
-          />
+          <BrandLockup size="md" />
         </div>
         <p class="text-sm text-ivory/80 leading-relaxed max-w-sm pt-2">
           {SITE_INFO.description}

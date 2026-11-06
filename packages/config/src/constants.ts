@@ -87,9 +87,24 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
     icon: "Wrench",
   },
   {
+    id: "digital-services",
+    name: "Digital Services",
+    slug: "digital-services",
+    tagline: "Secure ID updates and printouts without the queue.",
+    description:
+      "Upload documents for Aadhaar or voter ID updates through a watermarked portal, and send print jobs for pickup with transparent per-page pricing and automatic file deletion.",
+    services: [
+      "Aadhaar & voter ID update coordination",
+      "Address and name correction support",
+      "Document printing with live per-page pricing",
+      "Secure uploads with automatic file cleanup",
+    ],
+    href: "/digital-services",
+    icon: "FileText",
+  },
+  {
     id: "loans",
-    name: "Loans",
-    slug: "loans",
+    name: "Loans",    slug: "loans",
     tagline: "Objective loan evaluation and transparent documentation guidance.",
     description:
       "Compare lending options, evaluate eligibility criteria, and streamline your documentation for home, personal, business, or mortgage loans with clear, factual advice.",
@@ -136,6 +151,12 @@ export const MODULE_STAGES: Record<ServiceCategoryId, ModuleStage[]> = {
     { id: "approved", label: "Approved", description: "Sanction received" },
     { id: "disbursed", label: "Disbursed", description: "Funds credited" },
   ],
+  "digital-services": [
+    { id: "submitted", label: "Submitted", description: "Request received" },
+    { id: "documents_received", label: "Documents Received", description: "Files checked securely" },
+    { id: "processing", label: "Processing", description: "Update underway" },
+    { id: "completed", label: "Completed", description: "Ready for pickup" },
+  ],
 };
 
 export const MODULE_META: Record<
@@ -165,6 +186,12 @@ export const MODULE_META: Record<
     shortName: "Loans",
     icon: "Coins",
     description: "Calculate eligibility and track home, personal or business loans.",
+  },
+  "digital-services": {
+    name: "Digital Services",
+    shortName: "Digital Services",
+    icon: "FileText",
+    description: "Secure ID updates and printouts with live pricing and auto-delete.",
   },
 };
 
@@ -319,20 +346,20 @@ export const SERVICE_CATALOG: ServiceCatalogItem[] = [
   },
   {
     id: "hs-documents",
-    categoryId: "property-home-services",
-    name: "Document Services",
-    summary: "Coordinated Aadhaar and voter ID updates at a secure portal.",
+    categoryId: "digital-services",
+    name: "ID & Document Updates",
+    summary: "Coordinated Aadhaar and voter ID updates through a secure, watermarked portal.",
     pricing: { model: "fixed", amount: 299, unit: "update" },
     issueTypes: ["Aadhaar update", "Voter ID update", "Address change", "Name correction"],
     documents: ["Existing ID", "Address proof"],
   },
   {
     id: "hs-printouts",
-    categoryId: "property-home-services",
+    categoryId: "digital-services",
     name: "Printouts",
-    summary: "Upload a PDF, we print and deliver. Files auto-delete after printing.",
-    pricing: { model: "per-sqft", amount: 10, unit: "page" },
-    highlights: ["Live pricing", "Auto-delete after print", "Home delivery"],
+    summary: "Upload a PDF, we print it for pickup. Files auto-delete after printing.",
+    pricing: { model: "per-sqft", amount: 5, unit: "page", note: "Pickup only" },
+    highlights: ["Live pricing", "Auto-delete after print", "Pickup only"],
   },
   {
     id: "ln-home",

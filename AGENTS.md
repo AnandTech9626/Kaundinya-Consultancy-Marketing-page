@@ -1,77 +1,80 @@
-> **IMPORTANT — BACKEND/API WORK:** Before any backend or API work, you MUST read `BACKEND.md` first and follow it exactly. It defines the fixed monorepo layout, the backend stack, and the "packages are central, never copy" rules.
->
-> **IMPORTANT — MERGING & DEPLOYING:** Before merging branches or deploying, read `deploy.md`. Work flows child branch → `developer` → `main`; never merge a child branch straight into `main`.
+# Agent Guide — Kaundinya Marketing + Client Monorepo
+
+## Backend
+
+The backend is a standalone repository:
+
+```text
+C:\Users\Sagar Babu\kaundinya-backend
+```
+
+Read that repo's `README.md`, `SKILLS.md`, and `docs/` before backend or API work.
+
+The active admin console is also separate: `C:\Users\Sagar Babu\kaundinya-admin`.
 
 ## Structure
 
 Monorepo with npm workspaces:
 
-- `apps/marketing` — Astro marketing site (active)
-- `apps/app` — future React + Tailwind SPA (placeholder)
-- `apps/api` — future backend API (placeholder)
-- `packages/ui` — shared React components (islands) for both apps
-- `packages/config` — shared content/data
+- `apps/marketing` — Astro marketing site
+- `apps/app` — React + Vite client app
+- `apps/admin` — old admin app, unused
+- `packages/ui` — shared React components
+- `packages/config` — shared content/data/status metadata
 - `packages/tokens` — shared design tokens / Tailwind preset
+- `packages/api-client` — shared API client pieces
 
 ## Development
 
-Install from the root: `npm install`
+Install from the root:
 
-Run the marketing dev server from the root:
-
+```bash
+npm install
 ```
+
+Run the marketing site:
+
+```bash
 npm run dev
 ```
 
-Or from the marketing workspace directly:
+Run the client app:
 
-```
-npm run dev --workspace @kaundinya/marketing
-```
-
-When starting the dev server, use background mode:
-
-```
-astro dev --background
+```bash
+npm run dev:app
 ```
 
-Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
+Typecheck and build the client app:
+
+```bash
+npm run typecheck:app
+npm run build:app
+```
 
 ## Deployment
 
-The marketing site is a static Astro build deployed to **Cloudflare Pages** (not Workers).
+- Marketing: Cloudflare Pages, output `apps/marketing/dist`
+- Client app: Cloudflare Workers
+- Admin console: separate deployment
+- Backend: Vercel/Node, database stays on Neon
 
-Cloudflare Pages build settings (Git integration):
+Before merging or deploying, read `deploy.md`.
 
-- Production branch: `main`
-- Build command: `npm install && npm run build`
-- Build output directory: `apps/marketing/dist`
-
-The future React SPA (`apps/app`) will be hosted on Cloudflare Workers.
-
-## CI/CD (GitHub Actions)
-
-`.github/workflows/ci.yml` runs on every **pull request to `main`** (and push to `main`). It installs dependencies, runs `astro check` (typecheck) and `astro build` for the marketing site. A PR must pass this pipeline before it can be merged.
-
-Branch flow: `sagar/dev` → `developer` → `main`.
-
-To enforce it, enable **branch protection on `main`**: require a pull request and require the `CI` status check to pass. This prevents `main` from being updated unless the pipeline is green.
-
-Future work: add jobs/tests for `apps/app` and `apps/api` to the same workflow as those apps are built.
+Branch flow: child branch → `developer` → `main`. Never merge a child branch directly into `main`.
 
 ## Documentation
 
-Full documentation: https://docs.astro.build
+- [Marketing Astro docs](https://docs.astro.build)
+- [Astro routing](https://docs.astro.build/en/guides/routing/)
+- [Astro React integration](https://docs.astro.build/en/guides/framework-components/)
+- [Astro styling and Tailwind](https://docs.astro.build/en/guides/styling/)
+- Client app skills: `apps/app/skills.md`
+- Frontend overview: `skills.md`
 
-Consult these guides before working on related tasks:
+## Rules
 
-- [Adding pages, dynamic routes, or middleware](https://docs.astro.build/en/guides/routing/)
-- [Working with Astro components](https://docs.astro.build/en/basics/astro-components/)
-- [Using React, Vue, Svelte, or other framework components](https://docs.astro.build/en/guides/framework-components/)
-- [Adding or managing content](https://docs.astro.build/en/guides/content-collections/)
-- [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
-- [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)
-
-## Latest session handoff (2026-11-01)
-For current repo state, servers, test accounts, SSE, staff auth, and the deployment/commit plan, read:
-`C:\Users\Sagar Babu\kaundinya-backend\AGENTS.md`
+- Do not add backend code to this monorepo.
+- Keep shared data, types and design tokens in `packages/*`.
+- API calls in the client app go through `apps/app/src/lib/mockApi.ts`.
+- Do not expose secrets in frontend code.
+- Run `npm run typecheck:app` and `npm run build:app` after client changes.
