@@ -39,7 +39,7 @@ Rules:
     - `CLOUDFLARE_API_TOKEN`
     - `CLOUDFLARE_ACCOUNT_ID`
 - **App** (`apps/app`) → **Cloudflare Workers** (future)
-- **API** (`apps/api`) → see `BACKEND.md` (future)
+- **Backend** (standalone repo `kaundinya-backend`) → **Vercel** (Node)
 
 ## 4. Correct order, summarized
 

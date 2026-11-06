@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Building2,
   Wrench,
+  FileText,
   LogOut,
   X,
 } from "lucide-react";
@@ -13,6 +14,7 @@ const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/real-estate", label: "Real Estate", icon: Building2 },
   { to: "/home-services", label: "Home Services", icon: Wrench },
+  { to: "/digital-services", label: "Digital Services", icon: FileText },
 ];
 
 interface SidebarProps {

@@ -302,7 +302,7 @@ export function HomeServiceDetail() {
                 </p>
               </div>
               <Link
-                to="/home-services/documents"
+                to="/digital-services/id-updates"
                 className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover"
               >
                 Open document portal
@@ -316,11 +316,11 @@ export function HomeServiceDetail() {
               <div>
                 <h2 className="text-sm font-extrabold text-charcoal">Upload a PDF instead</h2>
                 <p className="text-xs text-muted mt-0.5">
-                  Live pricing, home delivery, files auto-delete after printing.
+                  Live pricing, pickup only, files auto-delete after printing.
                 </p>
               </div>
               <Link
-                to="/home-services/printouts"
+                to="/digital-services/printouts"
                 className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-gold-hover"
               >
                 Go to printouts

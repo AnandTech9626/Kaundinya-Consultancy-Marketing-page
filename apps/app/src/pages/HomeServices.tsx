@@ -38,12 +38,8 @@ import {
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 
-const DIGITAL_SERVICE_IDS = ["hs-documents", "hs-printouts"];
-
 const HOME_SERVICES = SERVICE_CATALOG.filter(
-  (item) =>
-    item.categoryId === "property-home-services" &&
-    !DIGITAL_SERVICE_IDS.includes(item.id),
+  (item) => item.categoryId === "property-home-services"
 );
 
 const SERVICE_ICONS: Record<string, LucideIcon> = {

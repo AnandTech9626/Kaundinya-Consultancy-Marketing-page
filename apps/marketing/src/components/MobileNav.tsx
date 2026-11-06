@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Menu, X, ChevronDown, ArrowRight } from "lucide-react";
+import { BrandLockup } from "./BrandLockup";
 
 interface NavChild {
   label: string;
@@ -54,13 +55,7 @@ export default function MobileNav({ links, currentPath }: Props) {
         createPortal(
           <div className="fixed inset-0 z-[100] bg-white overflow-y-auto">
             <div className="flex items-center justify-between h-16 px-4 border-b border-border-subtle">
-              <img
-                src="/images/logo.webp"
-                alt="Kaundinya Consultancy"
-                className="h-9 w-auto"
-                width="36"
-                height="36"
-              />
+              <BrandLockup size="sm" />
               <button
                 type="button"
                 onClick={close}

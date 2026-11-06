@@ -11,7 +11,6 @@ Kaundinya Consultancy monorepo (npm workspaces):
 - `apps/marketing` — Astro marketing site → **Cloudflare Pages**
 - `apps/app` — React client portal (user) → **Cloudflare Workers** (worker `app`)
 - `apps/admin` — React admin panel → **Cloudflare Workers** (worker `admin`)
-- `apps/api` — **NOT OURS** (another dev). Do not touch.
 - `packages/tokens` — Tailwind v4 theme (gold `#F5B900`, charcoal `#171717`, ivory `#F7F4EC`, border `#E5DFD1`, Manrope/Inter/Playfair)
 - `packages/ui` — shared React components (Card, Button, Input, Select, Textarea, FormField, Badge, SectionHeading, StatCard, Spinner, Skeleton, OtpVerification)
 - `packages/config` — shared constants (`SITE_INFO`, `SERVICE_CATEGORIES`, `CONTACT_PERSONS`) + all TS types
@@ -167,7 +166,7 @@ npm run typecheck:admin ; npm run build:admin
 - Stalled-loan advisor prompt; listing success move-in cross-sell.
 
 ## 10. Conventions / rules
-- **Never touch `apps/api`.**
+- **Backend lives in the standalone `kaundinya-backend` repo — do not add backend code here.**
 - Types in `packages/config`; shared UI in `packages/ui`; don’t duplicate across apps.
 - Marketing is currently “locked” — only change when explicitly asked (email fix was requested).
 - Keep everything responsive + reuse the same design tokens.
