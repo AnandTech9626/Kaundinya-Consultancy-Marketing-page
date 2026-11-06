@@ -2,7 +2,8 @@ export type ServiceCategoryId =
   | "real-estate"
   | "insurance"
   | "property-home-services"
-  | "loans";
+  | "loans"
+  | "digital-services";
 
 export type RequestStatus = "new" | "in_progress" | "completed" | "cancelled";
 
@@ -359,20 +360,37 @@ export interface JobRecord {
   createdAt?: string;
 }
 
+export type DigitalServiceStatus =
+  | "submitted"
+  | "documents_received"
+  | "processing"
+  | "completed";
+
 export interface DocumentRecord {
   id: string;
   docType: string;
   fileName: string;
   watermark: string;
+  status?: DigitalServiceStatus;
   createdAt: string;
 }
+
+export type PaperSize = "A4" | "A3";
+export type PrintColor = "bw" | "color";
+export type PrintSides = "single" | "double";
+export type PrintBinding = "none" | "staple" | "spiral";
 
 export interface PrintJob {
   id: string;
   fileName: string;
   copies: number;
+  pages?: number;
+  paperSize?: PaperSize;
+  colorMode?: PrintColor;
+  sides?: PrintSides;
+  binding?: PrintBinding;
   price: number;
-  status: "queued" | "printing" | "completed";
+  status: "queued" | "printing" | "ready_for_pickup" | "completed";
   autoDeletedAt: string;
   createdAt: string;
 }

@@ -19,6 +19,7 @@ import { getServiceIcon } from "../lib/icons";
 const QUICK_MODULES: { id: ServiceCategoryId; to: string }[] = [
   { id: "real-estate", to: "/real-estate" },
   { id: "property-home-services", to: "/home-services" },
+  { id: "digital-services", to: "/digital-services" },
 ];
 
 const IN_PROGRESS = new Set([
@@ -66,9 +67,7 @@ export function Dashboard() {
     [],
   );
 
-  const [module, setModule] = useState<"" | "Real Estate" | "Home Services">(
-    "",
-  );
+  const [module, setModule] = useState<"" | MyRequestItem["module"]>("");
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
 
@@ -107,11 +106,12 @@ export function Dashboard() {
           Welcome back, {user?.name?.split(" ")[0] ?? "there"}
         </h1>
         <p className="text-muted mt-1">
-          Track your Real Estate and Home Services requests in one place.
+          Track your Real Estate, Home Services and Digital Services requests in
+          one place.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {QUICK_MODULES.map(({ id, to }) => {
           const meta = MODULE_META[id];
           const Icon = getServiceIcon(meta.icon);
@@ -177,12 +177,14 @@ export function Dashboard() {
                   All requests
                 </h2>
                 <p className="text-[11px] text-muted">
-                  Real Estate and Home Services, newest first.
+                  Real Estate, Home Services and Digital Services, newest first.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <div className="flex rounded-lg border border-border-subtle bg-white p-1">
-                  {(["", "Real Estate", "Home Services"] as const).map(
+                  {(
+                    ["", "Real Estate", "Home Services", "Digital Services"] as const
+                  ).map(
                     (option) => (
                       <button
                         key={option || "all"}
@@ -229,8 +231,8 @@ export function Dashboard() {
                   No requests found
                 </p>
                 <p className="text-sm text-muted max-w-sm mx-auto">
-                  Requests you raise in Real Estate or Home Services will appear
-                  here.
+                  Requests you raise in Real Estate, Home Services or Digital
+                  Services will appear here.
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <Link
@@ -244,6 +246,12 @@ export function Dashboard() {
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border-subtle bg-white text-charcoal text-sm font-bold hover:border-gold/60"
                   >
                     Home Services
+                  </Link>
+                  <Link
+                    to="/digital-services"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border-subtle bg-white text-charcoal text-sm font-bold hover:border-gold/60"
+                  >
+                    Digital Services
                   </Link>
                 </div>
               </Card>

@@ -3,6 +3,7 @@ import {
   ShieldCheck,
   Wrench,
   Coins,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -11,6 +12,7 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   ShieldCheck,
   Wrench,
   Coins,
+  FileText,
 };
 
 export function getServiceIcon(name: string): LucideIcon {

@@ -465,7 +465,7 @@ export async function rateJob(
 }
 
 export function fetchDocuments(): Promise<DocumentRecord[]> {
-  return api.get<DocumentRecord[]>("/documents");
+  return api.get<DocumentRecord[]>("/digital-services/documents");
 }
 
 export interface UploadDocumentInput {
@@ -477,25 +477,35 @@ export function uploadDocument(input: UploadDocumentInput): Promise<DocumentReco
   const form = new FormData();
   form.append("docType", input.docType);
   form.append("file", input.file);
-  return api.postForm<DocumentRecord>("/documents", form);
+  return api.postForm<DocumentRecord>("/digital-services/documents", form);
 }
 
 export async function fetchPrintJobs(): Promise<PrintJob[]> {
-  const jobs = await api.get<PrintJob[]>("/printouts");
+  const jobs = await api.get<PrintJob[]>("/digital-services/printouts");
   return jobs.map(toPrintJob);
 }
 
 export interface CreatePrintJobInput {
   file: File;
   copies: number;
+  pages: number;
+  paperSize: NonNullable<PrintJob["paperSize"]>;
+  colorMode: NonNullable<PrintJob["colorMode"]>;
+  sides: NonNullable<PrintJob["sides"]>;
+  binding: NonNullable<PrintJob["binding"]>;
 }
 
 export async function createPrintJob(input: CreatePrintJobInput): Promise<PrintJob> {
   const form = new FormData();
-  form.append("copies", String(input.copies));
   form.append("file", input.file);
+  form.append("pages", String(input.pages));
+  form.append("copies", String(input.copies));
+  form.append("paperSize", input.paperSize);
+  form.append("colorMode", input.colorMode);
+  form.append("sides", input.sides);
+  form.append("binding", input.binding);
   return toPrintJob(
-    await api.postForm<PrintJob>("/printouts", form),
+    await api.postForm<PrintJob>("/digital-services/printouts", form),
   );
 }
 
@@ -655,7 +665,7 @@ export interface MyRequestItem {
   id: string;
   reference: string;
   title: string;
-  module: "Real Estate" | "Home Services";
+  module: "Real Estate" | "Home Services" | "Digital Services";
   status: string;
   statusLabel: string;
   createdAt: string;

@@ -1,6 +1,6 @@
 # Kaundinya — Complete API Specification
 
-> **Who this is for:** the backend developer implementing `apps/api`.
+> **Who this is for:** the backend developer working on the standalone `kaundinya-backend` repo.
 > **What it covers:** every endpoint the frontend already expects — from **marketing OTP** through the **client app** to the **admin panel** — with **exact request payloads** and **exact response bodies**, field by field.
 >
 > **How to use it:** implement each endpoint to return the documented shapes. The frontend is already coded against these shapes (currently using a mock layer), so matching them means **no frontend changes**.
@@ -477,8 +477,8 @@ All admin endpoints require a **staff** bearer token. For now there is a **singl
 ## 12. Module-specific APIs (UI built for all modules — backend pending)
 
 > These extend the generic request model into the full 4-module experiences.
-> See `docs/roadmap-modules.md` for phasing. Implement in `apps/api`; the frontend will
-> consume them from `apps/app` (and `apps/admin`). **Backend not built.**
+> See `docs/roadmap-modules.md` for phasing. Implemented in the standalone `kaundinya-backend` repo; the frontend
+> consumes them from `apps/app` (and `apps/admin`).
 >
 > **UI status (2026-10-28):** Phase 0 and all four module UIs are built against mocks in
 > `apps/app/src/lib/mockApi.ts` + `moduleData.ts`, and the admin module screens in

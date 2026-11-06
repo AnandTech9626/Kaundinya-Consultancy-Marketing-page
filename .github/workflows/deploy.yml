@@ -1,4 +1,4 @@
-name: Deploy to Cloudflare Pages
+﻿name: Deploy to Cloudflare Pages
 
 on:
   push:
@@ -24,6 +24,7 @@ jobs:
         run: npm run build
         env:
           PUBLIC_APP_URL: https://app.kaundinya.workers.dev
+          PUBLIC_API_BASE_URL: https://kaundinya-backend.vercel.app
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

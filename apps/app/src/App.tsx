@@ -38,6 +38,11 @@ const HomeServices = lazy(() =>
     default: module.HomeServices,
   }))
 );
+const DigitalServices = lazy(() =>
+  import("./pages/DigitalServices").then((module) => ({
+    default: module.DigitalServices,
+  }))
+);
 const HomeServiceDetail = lazy(() =>
   import("./pages/HomeServiceDetail").then((module) => ({
     default: module.HomeServiceDetail,
@@ -97,10 +102,21 @@ export default function App() {
                   path="/home-services/measurement"
                   element={<MeasurementBooking />}
                 />
-                <Route path="/home-services/documents" element={<DocumentServices />} />
-                <Route path="/home-services/printouts" element={<Printouts />} />
+                <Route path="/home-services/documents" element={<Navigate to="/digital-services/id-updates" replace />} />
+                <Route path="/home-services/printouts" element={<Navigate to="/digital-services/printouts" replace />} />
+                <Route path="/home-services/hs-documents" element={<Navigate to="/digital-services/id-updates" replace />} />
+                <Route path="/home-services/hs-printouts" element={<Navigate to="/digital-services/printouts" replace />} />
                 <Route path="/home-services/interiors" element={<Interiors />} />
                 <Route path="/home-services/:serviceId" element={<HomeServiceDetail />} />
+                <Route path="/digital-services" element={<DigitalServices />} />
+                <Route
+                  path="/digital-services/id-updates"
+                  element={<DocumentServices />}
+                />
+                <Route
+                  path="/digital-services/printouts"
+                  element={<Printouts />}
+                />
                 <Route path="/jobs/:id" element={<JobDetail />} />
               </Route>
             </Route>
