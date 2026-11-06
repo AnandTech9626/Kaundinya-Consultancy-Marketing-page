@@ -1,8 +1,12 @@
-﻿name: Deploy to Cloudflare Pages
+name: Deploy to Cloudflare Pages
 
 on:
   push:
     branches: [main]
+
+concurrency:
+  group: cloudflare-deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
