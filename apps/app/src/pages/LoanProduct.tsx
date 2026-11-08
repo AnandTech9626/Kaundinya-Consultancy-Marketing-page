@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -7,7 +7,7 @@ import {
   FileText,
   ShieldCheck,
 } from "lucide-react";
-import { Button, Card } from "@kaundinya/ui";
+import { Button, Card, Skeleton } from "@kaundinya/ui";
 import {
   COMPLIANCE,
   LOAN_FACTORS,
@@ -15,6 +15,20 @@ import {
   LOAN_PRODUCTS,
 } from "@kaundinya/config";
 import { LoanRequestDialog } from "../components/LoanRequestDialog";
+import { formatINR } from "../lib/formats";
+import {
+  fetchActiveLoanPlans,
+  type LoanPlanSummary,
+} from "../lib/mockApi";
+
+const LOAN_TYPE_BY_PRODUCT: Record<string, LoanPlanSummary["loanType"]> = {
+  home: "Home",
+  personal: "Personal",
+  business: "Business",
+  property: "Mortgage",
+};
+
+const UNAVAILABLE = "Shared after your eligibility check";
 
 export function LoanProduct() {
   const { product: productId } = useParams();
@@ -22,12 +36,48 @@ export function LoanProduct() {
   const [dialog, setDialog] = useState<{ service: string; kind: string } | null>(
     null
   );
+  const [plans, setPlans] = useState<LoanPlanSummary[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    fetchActiveLoanPlans()
+      .then((list) => {
+        if (active) setPlans(list);
+      })
+      .catch(() => {
+        if (active) setPlans([]);
+      })
+      .finally(() => {
+        if (active) setPlansLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (!product) {
     return <Navigate to="/loans" replace />;
   }
 
   const related = LOAN_PRODUCTS.filter((item) => item.id !== product.id);
+  const loanType = LOAN_TYPE_BY_PRODUCT[product.id];
+  const matching = plans.filter((plan) => plan.loanType === loanType);
+  const rates = matching.map((plan) => plan.annualRate);
+  const minRate = rates.length > 0 ? Math.min(...rates) : null;
+  const maxRate = rates.length > 0 ? Math.max(...rates) : null;
+  const maxTenure =
+    matching.length > 0
+      ? Math.max(...matching.map((plan) => plan.maxTenureMonths))
+      : null;
+  const minAmount =
+    matching.length > 0
+      ? Math.min(...matching.map((plan) => plan.minAmount))
+      : null;
+  const maxAmount =
+    matching.length > 0
+      ? Math.max(...matching.map((plan) => plan.maxAmount))
+      : null;
 
   return (
     <div className="space-y-8">
@@ -64,27 +114,51 @@ export function LoanProduct() {
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
             Indicative rate
           </p>
-          <p className="text-sm font-extrabold text-foreground mt-1">
-            {product.rateHint}
-          </p>
+          {plansLoading ? (
+            <Skeleton className="mt-2 h-4 w-32" />
+          ) : (
+            <p className="text-sm font-extrabold text-foreground mt-1">
+              {minRate !== null && maxRate !== null
+                ? `${minRate.toFixed(2)}% - ${maxRate.toFixed(2)}% p.a. (indicative)`
+                : UNAVAILABLE}
+            </p>
+          )}
         </Card>
         <Card className="p-4">
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
             Tenure
           </p>
-          <p className="text-sm font-extrabold text-foreground mt-1">
-            {product.tenureHint}
-          </p>
+          {plansLoading ? (
+            <Skeleton className="mt-2 h-4 w-28" />
+          ) : (
+            <p className="text-sm font-extrabold text-foreground mt-1">
+              {maxTenure !== null
+                ? `Up to ${Math.round(maxTenure / 12)} years`
+                : UNAVAILABLE}
+            </p>
+          )}
         </Card>
         <Card className="p-4">
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
             Typical amount
           </p>
-          <p className="text-sm font-extrabold text-foreground mt-1">
-            {product.amountHint}
-          </p>
+          {plansLoading ? (
+            <Skeleton className="mt-2 h-4 w-36" />
+          ) : (
+            <p className="text-sm font-extrabold text-foreground mt-1">
+              {minAmount !== null && maxAmount !== null
+                ? `${formatINR(minAmount)} - ${formatINR(maxAmount)}`
+                : UNAVAILABLE}
+            </p>
+          )}
         </Card>
       </div>
+      {!plansLoading && matching.length > 0 && (
+        <p className="text-[10px] text-muted-foreground">
+          Based on {matching.length} live bank plan
+          {matching.length === 1 ? "" : "s"} maintained by our team.
+        </p>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-5 sm:p-6 space-y-4">

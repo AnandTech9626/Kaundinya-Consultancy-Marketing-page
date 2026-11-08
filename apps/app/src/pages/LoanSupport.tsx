@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -18,7 +18,8 @@ import {
   LOAN_SUPPORT_STEPS,
   LOAN_SUPPORT_TOPICS,
 } from "@kaundinya/config";
-import { useLoanRequests } from "../lib/mockRequests";
+import type { ServiceRequest } from "@kaundinya/config";
+import { fetchRequests } from "../lib/mockApi";
 import { STATUS_META } from "../lib/status";
 import { LoanRequestDialog } from "../components/LoanRequestDialog";
 
@@ -30,10 +31,29 @@ const TOPIC_ICONS: Record<string, LucideIcon> = {
 };
 
 export function LoanSupport() {
-  const requests = useLoanRequests();
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(true);
   const [dialog, setDialog] = useState<{ service: string; kind: string } | null>(
     null
   );
+
+  useEffect(() => {
+    let active = true;
+    fetchRequests()
+      .then((list) => {
+        if (!active) return;
+        setRequests(list.filter((item) => item.serviceCategory === "Loans"));
+      })
+      .catch(() => {
+        if (active) setRequests([]);
+      })
+      .finally(() => {
+        if (active) setLoadingRequests(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const openRequest = (kind: string, service = "") =>
     setDialog({ service, kind });
@@ -175,7 +195,11 @@ export function LoanSupport() {
           </p>
         </div>
 
-        {requests.length === 0 ? (
+        {loadingRequests ? (
+          <div className="p-8 text-center text-xs text-muted-foreground">
+            Loading your loan requests...
+          </div>
+        ) : requests.length === 0 ? (
           <div className="p-8 text-center space-y-2">
             <ClipboardList className="w-8 h-8 text-brand mx-auto" />
             <p className="text-sm font-bold text-foreground">No requests yet</p>

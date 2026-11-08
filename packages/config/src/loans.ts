@@ -10,9 +10,6 @@ export const LOAN_PRODUCTS = [
       "Construction on an owned plot",
       "Balance transfer or top-up",
     ],
-    rateHint: "8.4% - 9.6% p.a. (indicative)",
-    tenureHint: "Up to 30 years",
-    amountHint: "₹5 lakh - ₹1 crore+",
     highlights: [
       "Eligibility and FOIR review",
       "Lender comparison across banks and NBFCs",
@@ -37,9 +34,6 @@ export const LOAN_PRODUCTS = [
       "Wedding or travel",
       "Temporary cash-flow gap",
     ],
-    rateHint: "10.5% - 16% p.a. (indicative)",
-    tenureHint: "1 - 6 years",
-    amountHint: "₹50,000 - ₹20 lakh",
     highlights: [
       "Repayment capacity check",
       "Processing fee and insurance add-on review",
@@ -63,9 +57,6 @@ export const LOAN_PRODUCTS = [
       "Equipment or inventory purchase",
       "Branch or capacity expansion",
     ],
-    rateHint: "11% - 18% p.a. (indicative)",
-    tenureHint: "1 - 7 years",
-    amountHint: "₹2 lakh - ₹50 lakh",
     highlights: [
       "GST and turnover review",
       "Cash-flow based eligibility",
@@ -89,9 +80,6 @@ export const LOAN_PRODUCTS = [
       "Consolidating higher-cost debt",
       "Large planned expenses",
     ],
-    rateHint: "9% - 12% p.a. (indicative)",
-    tenureHint: "Up to 20 years",
-    amountHint: "₹10 lakh - ₹5 crore",
     highlights: [
       "Title and valuation coordination",
       "LTV and FOIR review",

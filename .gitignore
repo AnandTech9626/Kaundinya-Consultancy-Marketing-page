@@ -22,6 +22,7 @@ dev.err.log
 **/.env
 **/.env.*
 !**/.env.example
+!**/.env.production
 
 # local secrets (never commit)
 cloudflare.local.env

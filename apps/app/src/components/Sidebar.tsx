@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { BrandLockup } from "./BrandLockup";
+import { SocialLinks } from "./SocialLinks";
 
 const NAV: { to: string; label: string; icon: LucideIcon; tag?: string }[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -121,6 +122,21 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
             </NavLink>
           ))}
         </nav>
+
+        <div
+          className={`border-t border-sidebar-border p-3 ${
+            collapsed ? "lg:px-2" : ""
+          }`}
+        >
+          <p
+            className={`px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/50 ${
+              collapsed ? "lg:hidden" : ""
+            }`}
+          >
+            Stay connected
+          </p>
+          <SocialLinks collapsed={collapsed} onNavigate={onClose} />
+        </div>
 
         <div
           className={`p-3 border-t border-sidebar-border flex items-center gap-1 ${

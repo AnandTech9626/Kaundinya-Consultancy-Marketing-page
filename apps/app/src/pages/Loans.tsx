@@ -1,67 +1,153 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  Briefcase,
-  Building2,
-  Calculator,
   CheckCircle2,
   ClipboardList,
-  Home,
   ShieldCheck,
-  Wallet,
-  type LucideIcon,
 } from "lucide-react";
-import { Badge, Button, Card, StatCard } from "@kaundinya/ui";
+import { Badge, Button, Card, FormField, Input } from "@kaundinya/ui";
+import { COMPLIANCE } from "@kaundinya/config";
+import type { ServiceRequest } from "@kaundinya/config";
 import {
-  COMPLIANCE,
-  LOAN_FACTORS,
-  LOAN_HELP,
-  LOAN_PROCESS_STEPS,
-  LOAN_PRODUCTS,
-} from "@kaundinya/config";
-import { useLoanRequests } from "../lib/mockRequests";
+  fetchRequests,
+  recommendLoanPlans,
+  type LoanIncomeSource,
+  type LoanRecommendationResult,
+} from "../lib/mockApi";
+import { ApiError } from "../lib/api";
 import { STATUS_META } from "../lib/status";
+import { formatINR } from "../lib/formats";
 import { LoanRequestDialog } from "../components/LoanRequestDialog";
-import { LoanToolsDialog } from "../components/LoanToolsDialog";
+import { BankLogo } from "../components/BankLogo";
 
-const PRODUCT_ICONS: Record<string, LucideIcon> = {
-  home: Home,
-  personal: Wallet,
-  business: Briefcase,
-  property: Building2,
+const LOAN_TYPE_LABEL: Record<string, string> = {
+  Home: "Home loan",
+  Personal: "Personal loan",
+  Business: "Business loan",
+  Mortgage: "Loan against property",
 };
 
 export function Loans() {
-  const requests = useLoanRequests();
   const [dialog, setDialog] = useState<{
     service: string;
     kind: string;
     notes?: string;
+    requirementId?: string;
+    bank?: string;
+    requirement?: {
+      sourceOfIncome: LoanIncomeSource;
+      monthlyIncome: number;
+      monthlyEmis: number;
+    };
   } | null>(null);
-  const [toolsOpen, setToolsOpen] = useState(false);
 
-  const openRequests = requests.filter(
-    (request) => request.status === "new" || request.status === "in_progress"
-  ).length;
-  const resolvedRequests = requests.filter(
-    (request) => request.status === "completed"
-  ).length;
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    fetchRequests()
+      .then((list) => {
+        if (!active) return;
+        setRequests(list.filter((item) => item.serviceCategory === "Loans"));
+      })
+      .catch(() => {
+        if (active) setRequests([]);
+      })
+      .finally(() => {
+        if (active) setRequestsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const recentRequests = requests.slice(0, 3);
+
+  const [sourceOfIncome, setSourceOfIncome] =
+    useState<LoanIncomeSource>("salaried");
+  const [monthlyIncome, setMonthlyIncome] = useState("100000");
+  const [monthlyEmis, setMonthlyEmis] = useState("15000");
+  const [requirementError, setRequirementError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [recommendation, setRecommendation] =
+    useState<LoanRecommendationResult | null>(null);
 
   const openConsultation = (
     service = "",
     kind = "Loan consultation",
-    notes = ""
-  ) => setDialog({ service, kind, notes });
+    notes = "",
+    extra?: {
+      requirementId?: string;
+      bank?: string;
+      requirement?: {
+        sourceOfIncome: LoanIncomeSource;
+        monthlyIncome: number;
+        monthlyEmis: number;
+      };
+    }
+  ) => setDialog({ service, kind, notes, ...extra });
 
-  const handleToolsReview = (summary: string) => {
-    setToolsOpen(false);
-    setDialog({
-      service: "Loan planning review",
-      kind: "Loan consultation",
-      notes: summary,
-    });
+  const currentRequirement = () => {
+    const income = Number(monthlyIncome.replace(/[^0-9]/g, ""));
+    const emis = Number(monthlyEmis.replace(/[^0-9]/g, "") || "0");
+    if (!Number.isFinite(income) || income <= 0) return undefined;
+    return {
+      sourceOfIncome,
+      monthlyIncome: income,
+      monthlyEmis: Number.isFinite(emis) && emis >= 0 ? emis : 0,
+    };
+  };
+
+  const checkEligibility = async () => {
+    const income = Number(monthlyIncome.replace(/[^0-9]/g, ""));
+    const emis = Number(monthlyEmis.replace(/[^0-9]/g, "") || "0");
+    if (!Number.isFinite(income) || income <= 0) {
+      setRequirementError("Enter your monthly income to check eligibility.");
+      setRecommendation(null);
+      return;
+    }
+    if (!Number.isFinite(emis) || emis < 0) {
+      setRequirementError("Existing EMIs must be zero or a positive number.");
+      setRecommendation(null);
+      return;
+    }
+    setRequirementError(null);
+    setChecking(true);
+    try {
+      setRecommendation(
+        await recommendLoanPlans({
+          sourceOfIncome,
+          monthlyIncome: income,
+          monthlyEmis: emis,
+        })
+      );
+    } catch (error) {
+      setRecommendation(null);
+      setRequirementError(
+        error instanceof ApiError
+          ? error.message
+          : "Could not check eligibility. Please try again."
+      );
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const talkAboutPlan = (planId: string) => {
+    const plan = recommendation?.plans.find((entry) => entry.id === planId);
+    if (!plan || !recommendation) return;
+    openConsultation(
+      `${plan.bank} ${plan.product}`,
+      "Loan consultation",
+      "",
+      {
+        requirementId: recommendation.id,
+        bank: plan.bank,
+        requirement: currentRequirement(),
+      }
+    );
   };
 
   return (
@@ -73,7 +159,17 @@ export function Loans() {
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => openConsultation()}>
+          <Button
+            onClick={() =>
+              openConsultation("", "Loan consultation", "", {
+                requirementId: recommendation?.id,
+                bank: recommendation?.plans[0]?.bank,
+                requirement: recommendation
+                  ? currentRequirement()
+                  : undefined,
+              })
+            }
+          >
             <ShieldCheck className="w-4 h-4" />
             Talk to a loan advisor
           </Button>
@@ -86,201 +182,232 @@ export function Loans() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard
-          label="Open requests"
-          value={openRequests}
-          hint="With our team"
-          icon={<ClipboardList className="w-5 h-5" />}
-        />
-        <StatCard
-          label="Resolved"
-          value={resolvedRequests}
-          hint="Queries closed"
-          icon={<CheckCircle2 className="w-5 h-5" />}
-        />
-        <StatCard
-          label="Loan products"
-          value={LOAN_PRODUCTS.length}
-          hint="Guidance available"
-          icon={<Wallet className="w-5 h-5" />}
-        />
-        <StatCard
-          label="Max tenure"
-          value="30 yrs"
-          hint="Home loans"
-          icon={<Home className="w-5 h-5" />}
-        />
-      </div>
-
-      <Card className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
-            <Calculator className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm font-extrabold text-foreground">
-              Plan before you apply
-            </p>
-            <p className="text-[11px] text-muted-foreground">
-              Estimate EMI and eligibility without submitting an application.
-            </p>
-          </div>
+      <Card className="p-5 sm:p-6 scroll-mt-24">
+        <div id="loan-eligibility" className="mb-4 space-y-1">
+          <h2 className="text-lg font-extrabold text-foreground tracking-tight">
+            Check your loan eligibility
+          </h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Answer three questions and we will show the loan amount you may
+            qualify for, plus the bank plans that fit your profile.
+          </p>
         </div>
-        <Button onClick={() => setToolsOpen(true)}>
-          <Calculator className="w-4 h-4" />
-          Open loan tools
-        </Button>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <p className="text-xs font-bold text-foreground mb-1.5">
+              Source of income
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  ["salaried", "Salaried"],
+                  ["business", "Business"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSourceOfIncome(value)}
+                  className={`rounded-lg border px-2 py-2.5 text-xs font-bold transition-colors cursor-pointer ${
+                    sourceOfIncome === value
+                      ? "border-brand bg-brand-soft/60 text-foreground"
+                      : "border-border bg-surface text-muted-foreground hover:border-brand/60"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <FormField label="Monthly income (₹)" htmlFor="loan-income" required>
+            <Input
+              id="loan-income"
+              inputMode="numeric"
+              value={monthlyIncome}
+              onChange={(event) =>
+                setMonthlyIncome(
+                  event.target.value.replace(/[^0-9]/g, "").slice(0, 9)
+                )
+              }
+              placeholder="e.g. 100000"
+            />
+          </FormField>
+
+          <FormField label="Monthly EMIs (₹)" htmlFor="loan-emis" required>
+            <Input
+              id="loan-emis"
+              inputMode="numeric"
+              value={monthlyEmis}
+              onChange={(event) =>
+                setMonthlyEmis(
+                  event.target.value.replace(/[^0-9]/g, "").slice(0, 9)
+                )
+              }
+              placeholder="e.g. 15000 (0 if none)"
+            />
+          </FormField>
+        </div>
+
+        {requirementError && (
+          <p className="mt-3 text-xs font-semibold text-danger-fg">
+            {requirementError}
+          </p>
+        )}
+
+        <div className="mt-4 flex flex-col sm:flex-row gap-2">
+          <Button
+            onClick={() => void checkEligibility()}
+            disabled={checking}
+            className="sm:w-auto"
+          >
+            {checking ? "Checking..." : "Check eligibility"}
+          </Button>
+          <p className="text-[11px] text-muted-foreground leading-relaxed sm:self-center">
+            Takes a few seconds. No application is submitted.
+          </p>
+        </div>
       </Card>
 
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-extrabold text-foreground tracking-tight">
-            Loan types we help with
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Choose a product to see eligibility factors, documents and process.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {LOAN_PRODUCTS.map((product) => {
-            const Icon = PRODUCT_ICONS[product.id] ?? Wallet;
-            return (
-              <Card key={product.id} className="p-5 flex flex-col gap-3">
-                <div className="w-10 h-10 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center">
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-extrabold text-foreground">
-                    {product.name}
-                  </h3>
-                  <p className="text-[11px] font-semibold text-brand mt-0.5">
-                    {product.tagline}
-                  </p>
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {product.description}
-                </p>
-                <div className="grid grid-cols-2 gap-2 rounded-lg bg-surface-muted px-3 py-2">
-                  <div>
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
-                      Rate
-                    </p>
-                    <p className="text-[11px] font-bold text-foreground">
-                      {product.rateHint}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
-                      Tenure
-                    </p>
-                    <p className="text-[11px] font-bold text-foreground">
-                      {product.tenureHint}
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  to={`/loans/${product.id}`}
-                  className="mt-auto inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-xs font-bold text-foreground hover:border-brand/60 transition-colors"
-                >
-                  View guidance
-                  <ArrowRight className="w-3.5 h-3.5 text-brand" />
-                </Link>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-extrabold text-foreground tracking-tight">
-            How we help
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Advisory and coordination, not a loan marketplace.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {LOAN_HELP.map((item, index) => (
-            <Card key={item.title} className="p-5 space-y-2 flex flex-col">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand">
-                0{index + 1}
-              </span>
-              <h3 className="text-sm font-extrabold text-foreground">
-                {item.title}
-              </h3>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                {item.description}
-              </p>
-              {item.title === "Eligibility review" && (
-                <button
-                  type="button"
-                  onClick={() => setToolsOpen(true)}
-                  className="mt-auto inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:text-brand-hover cursor-pointer"
-                >
-                  Open loan tools
-                  <ArrowRight className="w-3 h-3" />
-                </button>
-              )}
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-extrabold text-foreground tracking-tight">
-            What lenders look at
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            The five factors that decide eligibility and pricing.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-          {LOAN_FACTORS.map((factor) => (
-            <Card key={factor.title} className="p-4 space-y-2">
-              <ShieldCheck className="w-4 h-4 text-brand-strong" />
-              <h3 className="text-xs font-extrabold text-foreground">
-                {factor.title}
-              </h3>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                {factor.description}
-              </p>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <Card className="p-5 sm:p-6 space-y-4">
-        <div>
-          <h2 className="text-base font-extrabold text-foreground tracking-tight">
-            How a loan request moves
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Six clear stages from first call to disbursal.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {LOAN_PROCESS_STEPS.map((step, index) => (
-            <div
-              key={step.title}
-              className="flex gap-3 rounded-xl border border-border bg-surface p-3"
-            >
-              <span className="w-6 h-6 rounded-full bg-brand-soft text-brand-strong text-[11px] font-extrabold flex items-center justify-center shrink-0">
-                {index + 1}
-              </span>
+      {recommendation && (
+        <Card className="p-5 sm:p-6 space-y-5">
+          <div className="rounded-2xl bg-inverse p-5 text-white space-y-4">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-inverse-foreground/60">
+              Eligibility result
+            </p>
+            <div className="flex flex-col sm:flex-row sm:items-end gap-2 sm:gap-8">
               <div>
-                <p className="text-xs font-bold text-foreground">{step.title}</p>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {step.description}
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-inverse-foreground/60">
+                  You may be eligible for
+                </p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-brand tracking-tight">
+                  {formatINR(recommendation.eligibleAmount)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-inverse-foreground/60">
+                  Indicative EMI
+                </p>
+                <p className="text-lg font-bold text-white">
+                  {formatINR(recommendation.indicativeEmi)}
                 </p>
               </div>
             </div>
-          ))}
-        </div>
-      </Card>
+            <p className="text-[11px] text-inverse-foreground/50 leading-relaxed">
+              {recommendation.rateBasis}
+            </p>
+          </div>
+
+          {recommendation.plans.length === 0 ? (
+            <div className="rounded-xl bg-surface-muted p-5 text-center space-y-2">
+              <p className="text-sm font-extrabold text-foreground">
+                No bank plans match this profile yet
+              </p>
+              <p className="text-xs text-muted-foreground">
+                An advisor can still review your requirement and suggest
+                options.
+              </p>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  openConsultation(
+                    "Loan eligibility review",
+                    "Loan consultation",
+                    "",
+                    {
+                      requirementId: recommendation.id,
+                      requirement: currentRequirement(),
+                    }
+                  )
+                }
+              >
+                Talk to an advisor
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-base font-extrabold text-foreground tracking-tight">
+                  Recommended plans for you
+                </h3>
+                <span className="text-[11px] font-bold text-muted-foreground">
+                  {recommendation.plans.length} match
+                  {recommendation.plans.length === 1 ? "" : "es"}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {recommendation.plans.map((plan) => (
+                  <Card
+                    key={plan.id}
+                    className="p-4 space-y-3 border-brand/20"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <BankLogo bank={plan.bank} size={34} />
+                        <div>
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                            {plan.bank}
+                          </p>
+                          <h4 className="text-sm font-extrabold text-foreground">
+                            {plan.product}
+                          </h4>
+                          <p className="text-[10px] font-semibold text-brand">
+                            {LOAN_TYPE_LABEL[plan.loanType] ?? plan.loanType}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant="gold">
+                        {plan.annualRate.toFixed(1)}% p.a.
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 rounded-lg bg-surface-muted px-3 py-2">
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
+                          Up to
+                        </p>
+                        <p className="text-xs font-bold text-foreground">
+                          {formatINR(plan.eligibleAmount)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
+                          EMI
+                        </p>
+                        <p className="text-xs font-bold text-foreground">
+                          {formatINR(plan.emi)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
+                          Tenure
+                        </p>
+                        <p className="text-xs font-bold text-foreground">
+                          {Math.round(plan.maxTenureMonths / 12)} yrs
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Fits your EMI headroom of{" "}
+                      {formatINR(recommendation.capacity)}/month at{" "}
+                      {plan.annualRate.toFixed(1)}% p.a.
+                    </p>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => talkAboutPlan(plan.id)}
+                    >
+                      Talk to an advisor
+                    </Button>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
 
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between gap-2 p-5 border-b border-border">
@@ -301,7 +428,11 @@ export function Loans() {
           </Link>
         </div>
 
-        {recentRequests.length === 0 ? (
+        {requestsLoading ? (
+          <div className="p-8 text-center text-xs text-muted-foreground">
+            Loading your loan requests...
+          </div>
+        ) : recentRequests.length === 0 ? (
           <div className="p-8 text-center space-y-2">
             <ClipboardList className="w-8 h-8 text-brand mx-auto" />
             <p className="text-sm font-bold text-foreground">
@@ -354,12 +485,9 @@ export function Loans() {
         defaultService={dialog?.service ?? ""}
         defaultKind={dialog?.kind ?? "Loan consultation"}
         defaultNotes={dialog?.notes ?? ""}
-      />
-
-      <LoanToolsDialog
-        open={toolsOpen}
-        onClose={() => setToolsOpen(false)}
-        onRequestReview={handleToolsReview}
+        requirementId={dialog?.requirementId}
+        bank={dialog?.bank}
+        requirement={dialog?.requirement}
       />
     </div>
   );
