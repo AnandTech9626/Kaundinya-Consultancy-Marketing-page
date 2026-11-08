@@ -5,7 +5,15 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { AlertTriangle, Building2, Plus, Search, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  AlertTriangle,
+  Building2,
+  Inbox,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
 import {
   addAdminEnquiryNote,
   createAdminProperty,
@@ -27,6 +35,7 @@ import {
 } from "../lib/api";
 import { formatDateTime, formatPrice } from "../lib/format";
 import { showToast } from "../lib/toast";
+import { SkeletonRows } from "../components/Skeleton";
 
 const STATUS_STYLES: Record<AdminPropertyStatus, string> = {
   active: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -1150,13 +1159,22 @@ export function RealEstateProperties() {
   return (
     <div className="grid grid-cols-1 gap-6 lg:h-[calc(100vh-8rem)] lg:grid-cols-2">
       <div className="flex min-h-0 flex-col gap-3 lg:h-full">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-extrabold tracking-tight text-charcoal">
             Properties
           </h2>
-          <span className="text-[11px] font-semibold text-muted">
-            {properties.length} total
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-semibold text-muted">
+              {properties.length} total
+            </span>
+            <Link
+              to="/real-estate/requests"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-white px-2.5 py-1.5 text-[11px] font-bold text-charcoal hover:border-gold/60"
+            >
+              <Inbox className="h-3.5 w-3.5" />
+              Client requests
+            </Link>
+          </div>
         </div>
 
         <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-border-subtle bg-white p-4 sm:p-5">
@@ -1269,16 +1287,8 @@ export function RealEstateProperties() {
         </div>
 
         {loading ? (
-          <div className="mt-3 space-y-2">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div
-                key={index}
-                className="space-y-2 rounded-lg border border-border-subtle p-3"
-              >
-                <div className="h-3 w-2/3 animate-pulse rounded bg-ivory-dark" />
-                <div className="h-3 w-1/2 animate-pulse rounded bg-ivory-dark" />
-              </div>
-            ))}
+          <div className="mt-3">
+            <SkeletonRows rows={4} itemClass="h-14" />
           </div>
         ) : error ? (
           <div className="mt-3 space-y-2 rounded-xl border border-dashed border-border-subtle p-6 text-center">
@@ -1808,16 +1818,8 @@ function RequestsPanel({
         )}
 
         {loading ? (
-        <div className="mt-3 space-y-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={index}
-              className="space-y-2 rounded-lg border border-border-subtle p-3"
-            >
-              <div className="h-3 w-2/3 animate-pulse rounded bg-ivory-dark" />
-              <div className="h-3 w-1/2 animate-pulse rounded bg-ivory-dark" />
-            </div>
-          ))}
+        <div className="mt-3">
+          <SkeletonRows rows={4} itemClass="h-14" />
         </div>
       ) : error ? (
         <div className="mt-3 space-y-2 rounded-xl border border-dashed border-border-subtle p-6 text-center">

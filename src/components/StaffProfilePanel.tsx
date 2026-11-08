@@ -11,6 +11,7 @@ import type { StaffUser } from "../lib/staff-session";
 import { formatDateTime } from "../lib/format";
 import { showToast } from "../lib/toast";
 import { StatusBadge, inputClass, labelClass } from "./AdminUi";
+import { SkeletonRows } from "./Skeleton";
 
 interface StaffProfilePanelProps {
   open: boolean;
@@ -554,7 +555,7 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
 
               <div className="mt-4 space-y-2 border-t border-border-subtle pt-4">
                 {teamLoading ? (
-                  <p className="text-[11px] text-muted">Loading partners...</p>
+                  <SkeletonRows rows={3} itemClass="h-14" />
                 ) : partners.length === 0 ? (
                   <p className="text-[11px] text-muted">No partners yet.</p>
                 ) : (

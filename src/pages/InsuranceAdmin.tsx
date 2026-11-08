@@ -5,10 +5,11 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   BellRing,
   CalendarClock,
+  Inbox,
   Pencil,
   Plus,
   Search,
@@ -42,6 +43,7 @@ import {
   inputClass,
   labelClass,
 } from "../components/AdminUi";
+import { SkeletonKpis, SkeletonList } from "../components/Skeleton";
 
 type Tab = "plans" | "policies" | "renewals";
 
@@ -667,33 +669,46 @@ export function InsuranceAdmin() {
             Plans, policies & renewals
           </h1>
         </div>
-        {tab === "plans" && (
-          <button
-            type="button"
-            onClick={() => setEditingPlan("new")}
-            className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-charcoal hover:bg-gold-hover"
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/insurance/requests"
+            className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-bold text-charcoal hover:border-gold/60"
           >
-            <Plus className="h-4 w-4" />
-            Add plan
-          </button>
-        )}
+            <Inbox className="h-4 w-4" />
+            Client requests
+          </Link>
+          {tab === "plans" && (
+            <button
+              type="button"
+              onClick={() => setEditingPlan("new")}
+              className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-charcoal hover:bg-gold-hover"
+            >
+              <Plus className="h-4 w-4" />
+              Add plan
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {kpis.map((kpi) => (
-          <div
-            key={kpi.label}
-            className="rounded-2xl border border-border-subtle bg-white p-4"
-          >
-            <p className="text-xl font-extrabold tracking-tight text-charcoal">
-              {kpi.value}
-            </p>
-            <p className="mt-1 text-[11px] font-semibold text-muted">
-              {kpi.label}
-            </p>
-          </div>
-        ))}
-      </div>
+      {stats === null ? (
+        <SkeletonKpis count={4} />
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {kpis.map((kpi) => (
+            <div
+              key={kpi.label}
+              className="rounded-2xl border border-border-subtle bg-white p-4"
+            >
+              <p className="text-xl font-extrabold tracking-tight text-charcoal">
+                {kpi.value}
+              </p>
+              <p className="mt-1 text-[11px] font-semibold text-muted">
+                {kpi.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {TAB_META.map(({ id, label, icon: Icon }) => (
@@ -762,7 +777,7 @@ export function InsuranceAdmin() {
       )}
 
       {loading ? (
-        <p className="text-sm text-muted">Loading...</p>
+        <SkeletonList rows={5} />
       ) : tab === "plans" ? (
         plans.length === 0 ? (
           <p className="text-sm text-muted">No plans match this filter.</p>

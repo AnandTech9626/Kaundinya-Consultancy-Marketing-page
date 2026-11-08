@@ -108,12 +108,18 @@ export function ConfirmDialog({
   busy,
   onConfirm,
   onCancel,
+  confirmLabel = "Delete",
+  busyLabel = "Deleting...",
+  tone = "danger",
 }: {
   title: string;
   message: string;
   busy: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmLabel?: string;
+  busyLabel?: string;
+  tone?: "danger" | "primary";
 }) {
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -147,9 +153,13 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-50"
+            className={`rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-50 ${
+              tone === "primary"
+                ? "bg-gold text-charcoal hover:bg-gold-hover"
+                : "bg-rose-600 text-white hover:bg-rose-700"
+            }`}
           >
-            {busy ? "Deleting..." : "Delete"}
+            {busy ? busyLabel : confirmLabel}
           </button>
         </div>
       </div>

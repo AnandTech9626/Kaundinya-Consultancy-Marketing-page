@@ -38,6 +38,7 @@ import {
   inputClass,
   labelClass,
 } from "../components/AdminUi";
+import { SkeletonList } from "../components/Skeleton";
 
 type Tab = "documents" | "printouts";
 
@@ -404,14 +405,7 @@ export function DigitalServicesAdmin() {
       )}
 
       {loading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={index}
-              className="h-24 animate-pulse rounded-2xl bg-white"
-            />
-          ))}
-        </div>
+        <SkeletonList rows={4} />
       ) : isEmpty ? (
         <div className="rounded-2xl border border-border-subtle bg-white p-10 text-center">
           {tab === "documents" ? (
