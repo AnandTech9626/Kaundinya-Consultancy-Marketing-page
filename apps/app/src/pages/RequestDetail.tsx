@@ -1,6 +1,9 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Badge, Card, StatusTimeline } from "@kaundinya/ui";
+import type { ServiceRequest } from "@kaundinya/config";
+import { fetchRequest } from "../lib/mockApi";
 import { useMockRequests } from "../lib/mockRequests";
 import { STATUS_META, STATUS_ORDER } from "../lib/status";
 import { getServiceIcon } from "../lib/icons";
@@ -14,8 +17,34 @@ function iconNameFor(category: string) {
 
 export function RequestDetail() {
   const { id } = useParams();
-  const { requests } = useMockRequests();
-  const request = requests.find((entry) => entry.id === id);
+  const { requests: mockRequests } = useMockRequests();
+  const [liveRequest, setLiveRequest] = useState<ServiceRequest | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    fetchRequest(id)
+      .then((item) => {
+        if (active) setLiveRequest(item);
+      })
+      .catch(() => {
+        if (active) setLiveRequest(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  const request =
+    liveRequest ?? mockRequests.find((entry) => entry.id === id) ?? null;
 
   const backLink = (
     <Link
@@ -26,6 +55,17 @@ export function RequestDetail() {
       Back to dashboard
     </Link>
   );
+
+  if (loading && !request) {
+    return (
+      <div className="space-y-4 max-w-3xl">
+        {backLink}
+        <Card className="p-10 text-center text-sm text-muted-foreground">
+          Loading request...
+        </Card>
+      </div>
+    );
+  }
 
   if (!request) {
     return (

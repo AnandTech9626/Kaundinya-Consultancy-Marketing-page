@@ -25,6 +25,7 @@ import { STATUS_META } from "../lib/status";
 import { POLICIES } from "../lib/moduleData";
 import { BRAND_MARK_URL } from "../lib/brand";
 import { InfoTip } from "../components/InfoTip";
+import { SocialLinksCard } from "../components/SocialLinks";
 
 const QUICK_MODULES: { id: ServiceCategoryId; to: string }[] = [
   { id: "real-estate", to: "/real-estate" },
@@ -250,6 +251,8 @@ export function Dashboard() {
           })}
         </div>
       </section>
+
+      <SocialLinksCard />
 
       <section className="space-y-3" aria-label="Totals">
       {error ? (

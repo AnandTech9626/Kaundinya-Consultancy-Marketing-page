@@ -1,7 +1,14 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { Spinner } from "@kaundinya/ui";
 import { AuthProvider } from "./lib/auth";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppShell } from "./components/AppShell";
 import { Login } from "./pages/Login";
@@ -120,8 +127,19 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
+
+function AppRoutes() {
+  const location = useLocation();
+
+  return (
+    <ErrorBoundary resetKey={location.pathname}>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route element={<ProtectedRoute />}>
@@ -187,9 +205,8 @@ export default function App() {
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Suspense>
-      </AuthProvider>
-    </BrowserRouter>
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 }
