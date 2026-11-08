@@ -5,7 +5,6 @@ import {
   Building2,
   CheckCheck,
   Inbox,
-  Loader2,
   ShieldCheck,
   Wallet,
   Wrench,
@@ -17,6 +16,7 @@ import type {
   AdminNotificationKind,
 } from "../lib/api";
 import { useAdminNotifications } from "../lib/admin-notifications";
+import { SkeletonRows } from "./Skeleton";
 
 const KIND_META: Record<
   AdminNotificationKind,
@@ -155,9 +155,8 @@ export function AdminNotificationPanel() {
 
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 p-10 text-xs text-muted">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading notifications...
+            <div className="p-3">
+              <SkeletonRows rows={5} itemClass="h-16" />
             </div>
           ) : error ? (
             <div className="space-y-3 p-10 text-center">

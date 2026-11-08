@@ -6,8 +6,9 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
+  Inbox,
   Ruler,
   Search,
   Sofa,
@@ -31,6 +32,7 @@ import {
 } from "../lib/api";
 import { formatDateTime, formatINR } from "../lib/format";
 import { showToast } from "../lib/toast";
+import { SkeletonList } from "../components/Skeleton";
 
 type Tab = "jobs" | "measurements" | "interiors";
 
@@ -1146,34 +1148,43 @@ export function HomeServicesAdmin() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap gap-1 rounded-xl border border-border-subtle bg-ivory p-1">
-        {TAB_META.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => handleTab(item.id)}
-              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
-                tab === item.id
-                  ? "bg-charcoal text-white"
-                  : "text-charcoal hover:bg-white"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-              <span
-                className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-1 rounded-xl border border-border-subtle bg-ivory p-1">
+          {TAB_META.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleTab(item.id)}
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
                   tab === item.id
-                    ? "bg-white/15 text-white"
-                    : "bg-white text-muted"
+                    ? "bg-charcoal text-white"
+                    : "text-charcoal hover:bg-white"
                 }`}
               >
-                {counts[item.id]}
-              </span>
-            </button>
-          );
-        })}
+                <Icon className="h-4 w-4" />
+                {item.label}
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+                    tab === item.id
+                      ? "bg-white/15 text-white"
+                      : "bg-white text-muted"
+                  }`}
+                >
+                  {counts[item.id]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <Link
+          to="/home-services/requests"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-bold text-charcoal hover:border-gold/60"
+        >
+          <Inbox className="h-4 w-4" />
+          Client requests
+        </Link>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -1223,14 +1234,7 @@ export function HomeServicesAdmin() {
 
         <div className="mt-4 space-y-2">
           {loading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="h-16 animate-pulse rounded-lg bg-ivory"
-                />
-              ))}
-            </div>
+            <SkeletonList rows={5} />
           ) : error ? (
             <div className="rounded-xl border border-dashed border-border-subtle p-6 text-center">
               <p className="text-sm text-muted">{error}</p>

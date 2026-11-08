@@ -11,6 +11,7 @@ import {
   type ServiceRequestStats,
 } from "../lib/api";
 import { formatDateTime } from "../lib/format";
+import { SkeletonKpis, SkeletonRows } from "../components/Skeleton";
 
 type ModuleCard = {
   name: string;
@@ -47,6 +48,7 @@ const MODULES: ModuleCard[] = [
 ];
 
 export function Dashboard() {
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [requestStats, setRequestStats] =
     useState<ServiceRequestStats | null>(null);
@@ -67,7 +69,10 @@ export function Dashboard() {
           setRequestStats(nextRequests);
         }
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     return () => {
       cancelled = true;
@@ -98,21 +103,28 @@ export function Dashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-        {kpis.map((kpi) => (
-          <div
-            key={kpi.label}
-            className="rounded-2xl border border-border-subtle bg-white p-4"
-          >
-            <p className="text-2xl font-extrabold tracking-tight text-charcoal">
-              {kpi.value}
-            </p>
-            <p className="mt-1 text-[11px] font-semibold leading-tight text-muted">
-              {kpi.label}
-            </p>
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <SkeletonKpis
+          count={7}
+          gridClass="grid-cols-2 sm:grid-cols-3 xl:grid-cols-5"
+        />
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+          {kpis.map((kpi) => (
+            <div
+              key={kpi.label}
+              className="rounded-2xl border border-border-subtle bg-white p-4"
+            >
+              <p className="text-2xl font-extrabold tracking-tight text-charcoal">
+                {kpi.value}
+              </p>
+              <p className="mt-1 text-[11px] font-semibold leading-tight text-muted">
+                {kpi.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {MODULES.map(({ name, description, icon: Icon, to }) => {
@@ -168,7 +180,11 @@ export function Dashboard() {
         <h2 className="text-sm font-extrabold tracking-tight text-charcoal">
           Recent activity
         </h2>
-        {activity.length === 0 ? (
+        {loading ? (
+          <div className="mt-3">
+            <SkeletonRows rows={4} itemClass="h-12" />
+          </div>
+        ) : activity.length === 0 ? (
           <p className="mt-2 text-xs text-muted">
             No admin activity recorded yet.
           </p>
