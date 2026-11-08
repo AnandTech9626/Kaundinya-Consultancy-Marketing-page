@@ -109,6 +109,11 @@ export interface CreateRequestInput {
   serviceCategory: string;
   specificService: string;
   comments?: string;
+  loanRequirementId?: string;
+  loanBank?: string;
+  requirementSource?: "salaried" | "business";
+  requirementMonthlyIncome?: number;
+  requirementMonthlyEmis?: number;
 }
 
 export function fetchRequests(): Promise<ServiceRequest[]> {
@@ -557,6 +562,71 @@ export function estimateLoanEligibility(
     monthlyIncome,
     obligations,
   });
+}
+
+export type LoanIncomeSource = "salaried" | "business";
+
+export interface LoanPlanSummary {
+  id: string;
+  bank: string;
+  product: string;
+  loanType: "Home" | "Personal" | "Business" | "Mortgage";
+  employmentTypes: LoanIncomeSource[];
+  minMonthlyIncome: number;
+  annualRate: number;
+  maxTenureMonths: number;
+  minAmount: number;
+  maxAmount: number;
+  active: boolean;
+}
+
+/** Admin-maintained plans that are currently live for clients. */
+export function fetchActiveLoanPlans(): Promise<LoanPlanSummary[]> {
+  return api.get<LoanPlanSummary[]>("/loans/plans");
+}
+
+
+/** The three requirement fields the client collects. Nothing more. */
+export interface LoanRequirementInput {
+  sourceOfIncome: LoanIncomeSource;
+  monthlyIncome: number;
+  monthlyEmis: number;
+}
+
+export interface RecommendedLoanPlan {
+  id: string;
+  bank: string;
+  product: string;
+  loanType: "Home" | "Personal" | "Business" | "Mortgage";
+  employmentTypes: LoanIncomeSource[];
+  minMonthlyIncome: number;
+  annualRate: number;
+  maxTenureMonths: number;
+  minAmount: number;
+  maxAmount: number;
+  active: boolean;
+  eligibleAmount: number;
+  emi: number;
+}
+
+export interface LoanRecommendationResult {
+  id: string;
+  eligibleAmount: number;
+  indicativeEmi: number;
+  rateBasis: string;
+  capacity: number;
+  plans: RecommendedLoanPlan[];
+}
+
+/**
+ * Matches the client's three requirement fields against the bank plans an
+ * admin has added and kept live. Every call is stored as a requirement the
+ * admin can review and export.
+ */
+export function recommendLoanPlans(
+  input: LoanRequirementInput
+): Promise<LoanRecommendationResult> {
+  return api.post<LoanRecommendationResult>("/loans/recommend", input);
 }
 
 export function fetchLoanApplications(): Promise<LoanApplication[]> {

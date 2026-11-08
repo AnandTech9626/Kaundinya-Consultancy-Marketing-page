@@ -68,11 +68,3 @@ export function useInsuranceRequests(): ServiceRequest[] {
     [requests]
   );
 }
-
-export function useLoanRequests(): ServiceRequest[] {
-  const { requests } = useMockRequests();
-  return useMemo(
-    () => requests.filter((request) => request.serviceCategory === "Loans"),
-    [requests]
-  );
-}

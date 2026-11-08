@@ -10,7 +10,7 @@ import {
 } from "@kaundinya/ui";
 import type { ServiceRequest } from "@kaundinya/config";
 import { useAuth } from "../lib/auth";
-import { useMockRequests } from "../lib/mockRequests";
+import { createRequest, type LoanIncomeSource } from "../lib/mockApi";
 
 const REQUEST_KINDS = [
   "Loan consultation",
@@ -26,6 +26,16 @@ interface LoanRequestDialogProps {
   defaultService?: string;
   defaultKind?: string;
   defaultNotes?: string;
+  /** Eligibility check this consultation belongs to, if any. */
+  requirementId?: string;
+  /** Bank the client picked, if any. */
+  bank?: string;
+  /** The three requirement fields captured by the eligibility check. */
+  requirement?: {
+    sourceOfIncome: LoanIncomeSource;
+    monthlyIncome: number;
+    monthlyEmis: number;
+  };
   title?: string;
   description?: string;
 }
@@ -36,16 +46,20 @@ export function LoanRequestDialog({
   defaultService = "",
   defaultKind = "Loan consultation",
   defaultNotes = "",
+  requirementId,
+  bank,
+  requirement,
   title = "Talk to a loan advisor",
   description = "Share a few details and our team will call you back. No loan application or payment happens here.",
 }: LoanRequestDialogProps) {
   const { user } = useAuth();
-  const { raiseRequest } = useMockRequests();
 
   const [kind, setKind] = useState(defaultKind);
   const [service, setService] = useState(defaultService);
   const [notes, setNotes] = useState(defaultNotes);
   const [created, setCreated] = useState<ServiceRequest | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -53,6 +67,8 @@ export function LoanRequestDialog({
     setService(defaultService);
     setNotes(defaultNotes);
     setCreated(null);
+    setError(null);
+    setSubmitting(false);
   }, [open, defaultKind, defaultService, defaultNotes]);
 
   useEffect(() => {
@@ -73,16 +89,32 @@ export function LoanRequestDialog({
 
   if (!open) return null;
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const callback = user?.mobile ? ` Preferred callback: +91 ${user.mobile}.` : "";
-    const request = raiseRequest({
-      serviceCategory: "Loans",
-      specificService:
-        service.trim() || defaultService || `${kind} · Loans`,
-      comments: `${kind} requested from the loans module.${notes.trim() ? ` ${notes.trim()}` : ""}${callback}`,
-    });
-    setCreated(request);
+    setSubmitting(true);
+    setError(null);
+    try {
+      const request = await createRequest({
+        serviceCategory: "Loans",
+        specificService:
+          service.trim() || defaultService || `${kind} - Loans`,
+        comments: notes.trim(),
+        loanRequirementId: requirementId,
+        loanBank: bank?.trim() || undefined,
+        requirementSource: requirement?.sourceOfIncome,
+        requirementMonthlyIncome: requirement?.monthlyIncome,
+        requirementMonthlyEmis: requirement?.monthlyEmis,
+      });
+      setCreated(request);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not raise the request. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const close = () => {
@@ -210,11 +242,19 @@ export function LoanRequestDialog({
               </div>
             )}
 
+            {error && (
+              <p className="rounded-lg border border-danger-fg/20 bg-danger-soft px-3 py-2 text-xs font-semibold text-danger-fg">
+                {error}
+              </p>
+            )}
+
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 border-t border-border pt-4">
               <Button type="button" variant="secondary" onClick={close}>
                 Cancel
               </Button>
-              <Button type="submit">Raise request</Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Sending..." : "Raise request"}
+              </Button>
             </div>
           </form>
         )}
