@@ -976,6 +976,165 @@ export function deleteAdminLoan(id: string): Promise<void> {
   return jsonRequest<void>(`/api/admin/loans/applications/${id}`, "DELETE");
 }
 
+/* --------------------- Bank plans & client requirements ------------------ */
+
+export type LoanType = "Home" | "Personal" | "Business" | "Mortgage";
+export type IncomeSource = "salaried" | "business";
+
+export type AdminLoanPlan = {
+  id: string;
+  bank: string;
+  product: string;
+  loanType: LoanType;
+  employmentTypes: IncomeSource[];
+  minMonthlyIncome: number;
+  annualRate: number;
+  maxTenureMonths: number;
+  minAmount: number;
+  maxAmount: number;
+  active: boolean;
+  updatedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminLoanPlanInput = {
+  bank: string;
+  product: string;
+  loanType: LoanType;
+  employmentTypes: IncomeSource[];
+  minMonthlyIncome: number;
+  annualRate: number;
+  maxTenureMonths: number;
+  minAmount: number;
+  maxAmount: number;
+  active?: boolean;
+};
+
+export type AdminLoanRequirement = {
+  id: string;
+  userId: string;
+  clientName: string;
+  mobile: string;
+  sourceOfIncome: IncomeSource;
+  monthlyIncome: number;
+  monthlyEmis: number;
+  eligibleAmount: number;
+  indicativeEmi: number;
+  recommendedPlanIds: string[];
+  topBank: string | null;
+  topRateBps: number | null;
+  createdAt: string;
+};
+
+export type LoanRequirementFilters = {
+  q?: string;
+  from?: string;
+  to?: string;
+  bank?: string;
+};
+
+function loanRequirementQuery(filters: LoanRequirementFilters): string {
+  const url = new URL(`${API_BASE}/api/admin/loan-requirements`);
+  if (filters.q?.trim()) url.searchParams.set("q", filters.q.trim());
+  if (filters.from) url.searchParams.set("from", filters.from);
+  if (filters.to) url.searchParams.set("to", filters.to);
+  if (filters.bank) url.searchParams.set("bank", filters.bank);
+  return url.toString();
+}
+
+export function fetchAdminLoanPlans(
+  filters: { q?: string; active?: boolean } = {},
+): Promise<AdminLoanPlan[]> {
+  const url = new URL(`${API_BASE}/api/admin/loan-plans`);
+  if (filters.q?.trim()) url.searchParams.set("q", filters.q.trim());
+  if (filters.active !== undefined) {
+    url.searchParams.set("active", String(filters.active));
+  }
+  return jsonRequest<AdminLoanPlan[]>(url.toString(), "GET");
+}
+
+export function createAdminLoanPlan(
+  input: AdminLoanPlanInput,
+): Promise<AdminLoanPlan> {
+  return jsonRequest<AdminLoanPlan>("/api/admin/loan-plans", "POST", input);
+}
+
+export function updateAdminLoanPlan(
+  id: string,
+  patch: Partial<AdminLoanPlanInput>,
+): Promise<AdminLoanPlan> {
+  return jsonRequest<AdminLoanPlan>(
+    `/api/admin/loan-plans/${id}`,
+    "PATCH",
+    patch,
+  );
+}
+
+export function deleteAdminLoanPlan(id: string): Promise<void> {
+  return jsonRequest<void>(`/api/admin/loan-plans/${id}`, "DELETE");
+}
+
+export function convertAdminLoanRequirement(
+  id: string,
+): Promise<AdminServiceRequest> {
+  return jsonRequest<AdminServiceRequest>(
+    `/api/admin/loan-requirements/${id}/convert`,
+    "POST",
+  );
+}
+
+export function fetchAdminLoanRequirements(
+  filters: LoanRequirementFilters = {},
+): Promise<AdminLoanRequirement[]> {
+  return jsonRequest<AdminLoanRequirement[]>(
+    loanRequirementQuery(filters),
+    "GET",
+  );
+}
+
+export function fetchLoanRequirementBanks(): Promise<string[]> {
+  return jsonRequest<string[]>(
+    "/api/admin/loan-requirements/banks",
+    "GET",
+  );
+}
+
+export async function downloadLoanRequirementsCsv(
+  filters: LoanRequirementFilters = {},
+): Promise<void> {
+  const exportUrl = new URL(loanRequirementQuery(filters));
+  exportUrl.pathname = "/api/admin/loan-requirements/export";
+  exportUrl.searchParams.set("format", "csv");
+
+  const response = await apiFetch(exportUrl.toString(), { method: "GET" });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as
+      | { message?: string }
+      | null;
+    throw new Error(
+      payload?.message || `Export failed (${response.status}).`,
+    );
+  }
+
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const matched = /filename="?([^";]+)"?/i.exec(disposition);
+  const fileName =
+    matched?.[1] ??
+    `loan-requirements-${new Date().toISOString().slice(0, 10)}.csv`;
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
+
 /* --------------------------- Service requests --------------------------- */
 
 export type AdminServiceRequestStatus =
@@ -994,14 +1153,51 @@ export type AdminServiceRequest = {
   specificService: string;
   status: AdminServiceRequestStatus;
   comments: string;
+  loanBank?: string | null;
+  requirementSource?: "salaried" | "business" | null;
+  requirementMonthlyIncome?: number | null;
+  requirementMonthlyEmis?: number | null;
   createdAt: string;
 };
+
+export type AdminLoanConsultationPage = {
+  items: AdminServiceRequest[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export function fetchAdminLoanConsultations(
+  filters: {
+    page?: number;
+    pageSize?: number;
+    q?: string;
+    status?: string;
+  } = {},
+): Promise<AdminLoanConsultationPage> {
+  const url = new URL(`${API_BASE}/api/admin/loan-consultations`);
+  url.searchParams.set("page", String(filters.page ?? 1));
+  url.searchParams.set("pageSize", String(filters.pageSize ?? 10));
+  if (filters.q?.trim()) url.searchParams.set("q", filters.q.trim());
+  if (filters.status) url.searchParams.set("status", filters.status);
+  return jsonRequest<AdminLoanConsultationPage>(url.toString(), "GET");
+}
 
 export type ServiceRequestStats = {
   total: number;
   new: number;
   inProgress: number;
   completed: number;
+  cancelled: number;
+  categories: Array<{
+    category: string;
+    total: number;
+    new: number;
+    inProgress: number;
+    completed: number;
+    cancelled: number;
+  }>;
 };
 
 export function fetchServiceRequestStats(): Promise<ServiceRequestStats> {
@@ -1011,14 +1207,32 @@ export function fetchServiceRequestStats(): Promise<ServiceRequestStats> {
   );
 }
 
+export type AdminServiceRequestPage = {
+  items: AdminServiceRequest[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 export function fetchAdminServiceRequests(
-  filters: { q?: string; category?: string; status?: string } = {},
-): Promise<AdminServiceRequest[]> {
+  filters: {
+    q?: string;
+    category?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+    focus?: string;
+  } = {},
+): Promise<AdminServiceRequestPage> {
   const url = new URL(`${API_BASE}/api/admin/requests`);
   if (filters.q?.trim()) url.searchParams.set("q", filters.q.trim());
   if (filters.category) url.searchParams.set("category", filters.category);
   if (filters.status) url.searchParams.set("status", filters.status);
-  return jsonRequest<AdminServiceRequest[]>(url.toString(), "GET");
+  url.searchParams.set("page", String(filters.page ?? 1));
+  url.searchParams.set("pageSize", String(filters.pageSize ?? 10));
+  if (filters.focus) url.searchParams.set("focus", filters.focus);
+  return jsonRequest<AdminServiceRequestPage>(url.toString(), "GET");
 }
 
 export function updateAdminServiceRequest(

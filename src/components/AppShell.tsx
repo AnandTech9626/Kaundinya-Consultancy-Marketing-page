@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { AdminNotificationPanel } from "./AdminNotificationPanel";
 import { AdminNotificationToasts } from "./AdminNotificationToasts";
 import { StaffProfilePanel } from "./StaffProfilePanel";
 import { Toaster } from "./Toaster";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { AdminNotificationsProvider, useAdminNotifications } from "../lib/admin-notifications";
 import { useStaffAuth } from "../lib/staff-auth";
 import { BrandLockup } from "./BrandLockup";
@@ -13,6 +14,8 @@ import {
   FileText,
   Inbox,
   Menu,
+  ShieldCheck,
+  Wallet,
   Wrench,
   X,
 } from "lucide-react";
@@ -26,6 +29,7 @@ export function AppShell() {
 }
 
 function AppShellContent() {
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const { unreadCount, openPanel } = useAdminNotifications();
@@ -109,6 +113,20 @@ function AppShellContent() {
             Home Services
           </NavLink>
           <NavLink
+            to="/insurance"
+            onClick={() => setOpen(false)}
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors ${
+                isActive
+                  ? "bg-gold text-charcoal"
+                  : "text-white/70 hover:bg-white/5 hover:text-white"
+              }`
+            }
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Insurance
+          </NavLink>
+          <NavLink
             to="/digital-services"
             onClick={() => setOpen(false)}
             className={({ isActive }) =>
@@ -121,6 +139,20 @@ function AppShellContent() {
           >
             <FileText className="h-4 w-4" />
             Digital Services
+          </NavLink>
+          <NavLink
+            to="/loans"
+            onClick={() => setOpen(false)}
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors ${
+                isActive
+                  ? "bg-gold text-charcoal"
+                  : "text-white/70 hover:bg-white/5 hover:text-white"
+              }`
+            }
+          >
+            <Wallet className="h-4 w-4" />
+            Loans
           </NavLink>
         </nav>
 
@@ -186,7 +218,9 @@ function AppShellContent() {
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <Outlet />
+          <ErrorBoundary resetKey={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
 
