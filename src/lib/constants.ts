@@ -53,6 +53,13 @@ export const LOAN_TYPE_LABELS: Record<string, string> = {
   Mortgage: "Mortgage / LAP",
 };
 
+export const LOAN_TYPE_CONSULTATION_LABELS: Record<string, string> = {
+  Home: "Home loan",
+  Personal: "Personal loan",
+  Business: "Business loan",
+  Mortgage: "Loan against property",
+};
+
 export const INCOME_SOURCE_LABELS: Record<string, string> = {
   salaried: "Salaried",
   business: "Business",

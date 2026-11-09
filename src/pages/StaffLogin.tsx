@@ -46,8 +46,9 @@ export function StaffLogin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const afterLogin = (profileComplete: boolean) => {
-    navigate(profileComplete ? "/dashboard" : "/setup", { replace: true });
+  const afterLogin = (profileComplete: boolean, role?: string) => {
+    const home = role === "partner" ? "/daily-tasks" : "/requests";
+    navigate(profileComplete ? home : "/setup", { replace: true });
   };
 
   const sendOtp = async (target: string) => {
@@ -99,7 +100,7 @@ export function StaffLogin() {
       const session = await staffPinLogin(clean, pin);
       login(session);
       writeRememberedStaffMobile(clean);
-      afterLogin(session.staff.profileComplete);
+      afterLogin(session.staff.profileComplete, session.staff.role);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign in.");
     } finally {
@@ -120,7 +121,7 @@ export function StaffLogin() {
       const session = await staffVerifyOtp(clean, otp);
       login(session);
       writeRememberedStaffMobile(clean);
-      afterLogin(session.staff.profileComplete);
+      afterLogin(session.staff.profileComplete, session.staff.role);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not verify OTP.");
     } finally {

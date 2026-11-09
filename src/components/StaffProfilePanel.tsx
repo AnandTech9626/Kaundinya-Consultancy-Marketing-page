@@ -1,9 +1,20 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Eye, EyeOff, KeyRound, Loader2, LogOut, UserPlus, Users, X } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  LogOut,
+  Pencil,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
 import {
   createAdminPartner,
   fetchAdminStaff,
   staffChangePin,
+  staffUpdateProfile,
   updateAdminStaff,
 } from "../lib/api";
 import { useStaffAuth } from "../lib/staff-auth";
@@ -29,6 +40,12 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
   const [pinError, setPinError] = useState<string | null>(null);
   const [editingPin, setEditingPin] = useState(false);
   const [showPin, setShowPin] = useState(false);
+
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileName, setProfileName] = useState(staff?.name ?? "");
+  const [profileEmail, setProfileEmail] = useState(staff?.email ?? "");
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   const [team, setTeam] = useState<StaffUser[]>([]);
   const [teamLoading, setTeamLoading] = useState(false);
@@ -104,6 +121,47 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
       );
     } finally {
       setPinBusy(false);
+    }
+  };
+
+  const startEditProfile = () => {
+    setProfileName(staff?.name ?? "");
+    setProfileEmail(staff?.email ?? "");
+    setProfileError(null);
+    setEditingProfile(true);
+  };
+
+  const saveProfile = async (event: FormEvent) => {
+    event.preventDefault();
+    setProfileError(null);
+
+    if (profileName.trim().length < 2) {
+      setProfileError("Enter your name.");
+      return;
+    }
+    if (
+      profileEmail.trim() &&
+      !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(profileEmail.trim())
+    ) {
+      setProfileError("Enter a valid email address.");
+      return;
+    }
+
+    setProfileBusy(true);
+    try {
+      const updated = await staffUpdateProfile({
+        name: profileName.trim(),
+        email: profileEmail.trim(),
+      });
+      updateStaff(updated);
+      setEditingProfile(false);
+      showToast("Profile updated.");
+    } catch (err) {
+      setProfileError(
+        err instanceof Error ? err.message : "Could not update your profile.",
+      );
+    } finally {
+      setProfileBusy(false);
     }
   };
 
@@ -227,7 +285,7 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-charcoal text-lg font-extrabold text-gold">
                 {(staff?.name || "S").charAt(0).toUpperCase()}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-extrabold text-charcoal">
                   {staff?.name}
                 </p>
@@ -235,43 +293,117 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
                   {staff?.role} · {staff?.staffCode}
                 </p>
               </div>
+              {!editingProfile && (
+                <button
+                  type="button"
+                  onClick={startEditProfile}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border-subtle bg-white px-2.5 py-1.5 text-[11px] font-bold text-charcoal hover:border-gold/60 cursor-pointer"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit
+                </button>
+              )}
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border-subtle pt-4 text-xs">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                  Mobile
-                </p>
-                <p className="mt-0.5 font-semibold text-charcoal">
-                  +91 {staff?.mobile}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                  Email
-                </p>
-                <p className="mt-0.5 truncate font-semibold text-charcoal">
-                  {staff?.email || "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                  Last login
-                </p>
-                <p className="mt-0.5 font-semibold text-charcoal">
-                  {staff?.lastLoginAt
-                    ? formatDateTime(staff.lastLoginAt)
-                    : "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                  Status
-                </p>
-                <div className="mt-1">
-                  <StatusBadge status={staff?.active ? "active" : "lapsed"} />
+            {editingProfile ? (
+              <form
+                onSubmit={saveProfile}
+                className="mt-4 space-y-3 border-t border-border-subtle pt-4"
+              >
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className={labelClass} htmlFor="profile-name">
+                      Name
+                    </label>
+                    <input
+                      id="profile-name"
+                      className={inputClass}
+                      value={profileName}
+                      onChange={(event) => setProfileName(event.target.value)}
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="profile-email">
+                      Email
+                    </label>
+                    <input
+                      id="profile-email"
+                      type="email"
+                      className={inputClass}
+                      value={profileEmail}
+                      onChange={(event) => setProfileEmail(event.target.value)}
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                </div>
+                {profileError && (
+                  <p className="text-[11px] text-rose-600">{profileError}</p>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="submit"
+                    disabled={profileBusy}
+                    className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-xs font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
+                  >
+                    {profileBusy ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save changes"
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingProfile(false);
+                      setProfileError(null);
+                    }}
+                    className="rounded-lg border border-border-subtle bg-white px-4 py-2 text-xs font-bold text-charcoal hover:border-gold/60"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border-subtle pt-4 text-xs">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                    Mobile
+                  </p>
+                  <p className="mt-0.5 font-semibold text-charcoal">
+                    +91 {staff?.mobile}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                    Email
+                  </p>
+                  <p className="mt-0.5 truncate font-semibold text-charcoal">
+                    {staff?.email || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                    Last login
+                  </p>
+                  <p className="mt-0.5 font-semibold text-charcoal">
+                    {staff?.lastLoginAt
+                      ? formatDateTime(staff.lastLoginAt)
+                      : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                    Status
+                  </p>
+                  <div className="mt-1">
+                    <StatusBadge status={staff?.active ? "active" : "lapsed"} />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
             <button
               type="button"
               onClick={logout}

@@ -1,4 +1,4 @@
-﻿import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -53,6 +53,7 @@ import {
 import {
   INCOME_SOURCE_LABELS,
   LOAN_TYPES,
+  LOAN_TYPE_CONSULTATION_LABELS,
   LOAN_TYPE_LABELS,
   SERVICE_REQUEST_STATUSES,
 } from "../lib/constants";
@@ -976,9 +977,7 @@ export function LoansAdmin() {
                     <th className="px-3 py-2">Checked</th>
                     <th className="px-3 py-2">Client</th>
                     <th className="px-3 py-2">Mobile</th>
-                    <th className="px-3 py-2">Income source</th>
-                    <th className="px-3 py-2 text-right">Monthly income</th>
-                    <th className="px-3 py-2 text-right">Existing EMIs</th>
+                    <th className="px-3 py-2">Requirement</th>
                     <th className="px-3 py-2 text-right">Eligible</th>
                     <th className="px-3 py-2 text-right">Indicative EMI</th>
                     <th className="px-3 py-2">Top bank</th>
@@ -1095,7 +1094,7 @@ export function LoansAdmin() {
           </div>
 
           {loadingConsultations ? (
-            <SkeletonTable rows={8} columns={10} />
+            <SkeletonTable rows={8} columns={9} />
           ) : consultations.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border-subtle bg-white p-8 text-center">
               <p className="text-sm font-bold text-charcoal">
@@ -1108,7 +1107,7 @@ export function LoansAdmin() {
             </div>
           ) : (
             <div className="overflow-x-auto rounded-2xl border border-border-subtle bg-white">
-              <table className="w-full min-w-[1080px] text-left text-xs">
+              <table className="w-full min-w-[960px] text-left text-xs">
                 <thead className="bg-ivory text-[10px] font-bold uppercase tracking-wider text-muted">
                   <tr>
                     <th className="px-3 py-2">Date</th>
@@ -1116,9 +1115,8 @@ export function LoansAdmin() {
                     <th className="px-3 py-2">Mobile</th>
                     <th className="px-3 py-2">Bank</th>
                     <th className="px-3 py-2">Plan</th>
-                    <th className="px-3 py-2">Income source</th>
-                    <th className="px-3 py-2 text-right">Monthly income</th>
-                    <th className="px-3 py-2 text-right">Existing EMIs</th>
+                    <th className="px-3 py-2">Loan type</th>
+                    <th className="px-3 py-2">Requirement</th>
                     <th className="px-3 py-2">Status</th>
                     <th className="px-3 py-2" />
                   </tr>
@@ -1149,23 +1147,34 @@ export function LoansAdmin() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-3 py-2">{item.specificService}</td>
+                        <td className="px-3 py-2 font-semibold">
+                          {item.specificService}
+                        </td>
                         <td className="px-3 py-2">
-                          {item.requirementSource
-                            ? INCOME_SOURCE_LABELS[item.requirementSource]
-                            : "â€”"}
+                          {item.loanType
+                            ? LOAN_TYPE_CONSULTATION_LABELS[item.loanType]
+                            : "—"}
                         </td>
-                        <td className="px-3 py-2 text-right">
-                          {item.requirementMonthlyIncome === null ||
-                          item.requirementMonthlyIncome === undefined
-                            ? "â€”"
-                            : formatINR(item.requirementMonthlyIncome)}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          {item.requirementMonthlyEmis === null ||
-                          item.requirementMonthlyEmis === undefined
-                            ? "â€”"
-                            : formatINR(item.requirementMonthlyEmis)}
+                        <td className="px-3 py-2">
+                          <p className="font-semibold">
+                            {item.requirementSource
+                              ? INCOME_SOURCE_LABELS[item.requirementSource]
+                              : "Source —"}
+                          </p>
+                          <p className="text-[10px] text-muted">
+                            Income{" "}
+                            {item.requirementMonthlyIncome === null ||
+                            item.requirementMonthlyIncome === undefined
+                              ? "—"
+                              : formatINR(item.requirementMonthlyIncome)}
+                          </p>
+                          <p className="text-[10px] text-muted">
+                            EMIs{" "}
+                            {item.requirementMonthlyEmis === null ||
+                            item.requirementMonthlyEmis === undefined
+                              ? "—"
+                              : formatINR(item.requirementMonthlyEmis)}
+                          </p>
                         </td>
                         <td className="px-3 py-2">
                           <select
@@ -1214,7 +1223,7 @@ export function LoansAdmin() {
                       {expandedId === item.id && item.comments && (
                         <tr className="border-t border-border-subtle bg-ivory/60">
                           <td
-                            colSpan={10}
+                            colSpan={9}
                             className="px-3 py-2 text-[11px] leading-relaxed text-muted"
                           >
                             {item.comments}

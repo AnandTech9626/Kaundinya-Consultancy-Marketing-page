@@ -25,7 +25,12 @@ export function StaffProtectedRoute() {
   }
 
   if (staff.profileComplete && atSetup) {
-    return <Navigate to="/dashboard" replace />;
+    return (
+      <Navigate
+        to={staff.role === "partner" ? "/daily-tasks" : "/requests"}
+        replace
+      />
+    );
   }
 
   return <Outlet />;

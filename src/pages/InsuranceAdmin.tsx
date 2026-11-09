@@ -9,30 +9,40 @@ import { Link, useSearchParams } from "react-router-dom";
 import {
   BellRing,
   CalendarClock,
+  Download,
+  FileSpreadsheet,
   Inbox,
   Pencil,
   Plus,
+  RefreshCw,
   Search,
   ShieldCheck,
   Trash2,
+  Upload,
 } from "lucide-react";
 import {
   createAdminInsurancePlan,
+  createAdminPolicy,
   deleteAdminInsurancePlan,
   deleteAdminPolicy,
+  downloadPolicyImportTemplate,
   fetchAdminInsurancePlans,
   fetchAdminPolicies,
   fetchAdminRenewals,
   fetchInsuranceStats,
+  importAdminPoliciesCsv,
+  runAdminRenewalEngine,
   sendAdminRenewalReminder,
   updateAdminInsurancePlan,
   updateAdminPolicy,
+  uploadInsuranceMedia,
   type AdminFamilyOption,
   type AdminInsurancePlan,
   type AdminInsuranceType,
   type AdminPolicy,
   type AdminRenewal,
   type InsuranceStats,
+  type PolicyImportResult,
 } from "../lib/api";
 import { formatINR } from "../lib/format";
 import { showToast } from "../lib/toast";
@@ -45,12 +55,13 @@ import {
 } from "../components/AdminUi";
 import { SkeletonKpis, SkeletonList } from "../components/Skeleton";
 
-type Tab = "plans" | "policies" | "renewals";
+type Tab = "plans" | "policies" | "renewals" | "import";
 
 const TAB_META: Array<{ id: Tab; label: string; icon: typeof ShieldCheck }> = [
   { id: "plans", label: "Plans", icon: ShieldCheck },
   { id: "policies", label: "Policies", icon: ShieldCheck },
   { id: "renewals", label: "Renewals", icon: CalendarClock },
+  { id: "import", label: "Import", icon: FileSpreadsheet },
 ];
 
 const TYPES: AdminInsuranceType[] = ["life", "health", "motor", "property"];
@@ -100,12 +111,34 @@ function PlanSheet({
     current?.cashlessNetwork ? String(current.cashlessNetwork) : "",
   );
   const [pospLicense, setPospLicense] = useState(current?.pospLicense ?? "");
+  const [insurerLogoUrl, setInsurerLogoUrl] = useState(
+    current?.insurerLogoUrl ?? "",
+  );
+  const [brochureUrl, setBrochureUrl] = useState(
+    current?.brochureUrl ?? "",
+  );
+  const [uploading, setUploading] = useState<"logo" | "brochure" | null>(null);
   const [familyOption, setFamilyOption] = useState<AdminFamilyOption | "">(
     current?.familyOption ?? "",
   );
   const [active, setActive] = useState(current?.active ?? true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const uploadMedia = async (file: File, kind: "logo" | "brochure") => {
+    setUploading(kind);
+    setError(null);
+    try {
+      const saved = await uploadInsuranceMedia(file);
+      if (kind === "logo") setInsurerLogoUrl(saved.url);
+      else setBrochureUrl(saved.url);
+      showToast(kind === "logo" ? "Logo uploaded." : "Brochure uploaded.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not upload file.");
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
@@ -127,6 +160,8 @@ function PlanSheet({
           ? Number(cashlessNetwork)
           : null,
         pospLicense: pospLicense.trim() || null,
+        insurerLogoUrl: insurerLogoUrl.trim() || null,
+        brochureUrl: brochureUrl.trim() || null,
         familyOption: familyOption || null,
         active,
       };
@@ -290,6 +325,62 @@ function PlanSheet({
           </div>
         </div>
         <div>
+          <label className={labelClass} htmlFor="plan-logo">
+            Insurer logo URL
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="plan-logo"
+              className={inputClass}
+              value={insurerLogoUrl}
+              onChange={(event) => setInsurerLogoUrl(event.target.value)}
+              placeholder="https://… or upload"
+            />
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle px-3 py-2 text-xs font-bold text-charcoal hover:border-gold/60">
+              <Upload className="h-3.5 w-3.5" />
+              {uploading === "logo" ? "Uploading…" : "Upload"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void uploadMedia(file, "logo");
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+        </div>
+        <div>
+          <label className={labelClass} htmlFor="plan-brochure">
+            Brochure URL
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="plan-brochure"
+              className={inputClass}
+              value={brochureUrl}
+              onChange={(event) => setBrochureUrl(event.target.value)}
+              placeholder="https://… or upload PDF"
+            />
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle px-3 py-2 text-xs font-bold text-charcoal hover:border-gold/60">
+              <Upload className="h-3.5 w-3.5" />
+              {uploading === "brochure" ? "Uploading…" : "Upload"}
+              <input
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void uploadMedia(file, "brochure");
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+        </div>
+        <div>
           <label className={labelClass} htmlFor="plan-features">
             Features (comma separated)
           </label>
@@ -341,6 +432,11 @@ function PolicySheet({
   const [premium, setPremium] = useState(String(policy.premium));
   const [renewalDate, setRenewalDate] = useState(policy.renewalDate);
   const [holder, setHolder] = useState(policy.holder ?? "");
+  const [type, setType] = useState(policy.type);
+  const [vehicleType, setVehicleType] = useState<"2W" | "4W" | "">(
+    policy.vehicleType ?? "",
+  );
+  const [validFrom, setValidFrom] = useState(policy.validFrom ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -353,10 +449,13 @@ function PolicySheet({
         status,
         provider: provider.trim(),
         policyNumber: policyNumber.trim(),
+        type,
+        vehicleType: type === "Motor" ? vehicleType || null : null,
         coverAmount: Number(coverAmount),
         premium: Number(premium),
         renewalDate,
         holder: holder.trim() || null,
+        validFrom: validFrom || null,
       });
       showToast("Policy updated.");
       onSaved();
@@ -419,6 +518,57 @@ function PolicySheet({
             required
           />
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="policy-type">
+              Policy type
+            </label>
+            <select
+              id="policy-type"
+              className={inputClass}
+              value={type}
+              onChange={(event) =>
+                setType(event.target.value as AdminPolicy["type"])
+              }
+            >
+              <option value="Life & Term">Life &amp; Term</option>
+              <option value="Health">Health</option>
+              <option value="Motor">Motor</option>
+              <option value="Property">Property</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="policy-start">
+              Start date
+            </label>
+            <input
+              id="policy-start"
+              type="date"
+              className={inputClass}
+              value={validFrom}
+              onChange={(event) => setValidFrom(event.target.value)}
+            />
+          </div>
+        </div>
+        {type === "Motor" && (
+          <div>
+            <label className={labelClass} htmlFor="policy-vehicle">
+              Vehicle type
+            </label>
+            <select
+              id="policy-vehicle"
+              className={inputClass}
+              value={vehicleType}
+              onChange={(event) =>
+                setVehicleType(event.target.value as "2W" | "4W" | "")
+              }
+            >
+              <option value="">Not set</option>
+              <option value="2W">Two-wheeler</option>
+              <option value="4W">Four-wheeler</option>
+            </select>
+          </div>
+        )}
         <div>
           <label className={labelClass} htmlFor="policy-number">
             Policy number
@@ -485,6 +635,267 @@ function PolicySheet({
   );
 }
 
+function PolicyCreateSheet({
+  onClose,
+  onSaved,
+}: {
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const nextYear = new Date();
+  nextYear.setFullYear(nextYear.getFullYear() + 1);
+  const [clientMobile, setClientMobile] = useState("");
+  const [policyNumber, setPolicyNumber] = useState("");
+  const [provider, setProvider] = useState("");
+  const [type, setType] = useState<AdminPolicy["type"]>("Health");
+  const [vehicleType, setVehicleType] = useState<"2W" | "4W" | "">("");
+  const [holder, setHolder] = useState("");
+  const [coverAmount, setCoverAmount] = useState("1000000");
+  const [premium, setPremium] = useState("10000");
+  const [validFrom, setValidFrom] = useState(today);
+  const [renewalDate, setRenewalDate] = useState(
+    nextYear.toISOString().slice(0, 10),
+  );
+  const [status, setStatus] = useState<AdminPolicy["status"]>("active");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const save = async (event: FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await createAdminPolicy({
+        clientMobile: clientMobile.trim(),
+        policyNumber: policyNumber.trim(),
+        provider: provider.trim(),
+        type,
+        vehicleType: type === "Motor" ? vehicleType || null : null,
+        holder: holder.trim() || null,
+        coverAmount: Number(coverAmount),
+        premium: Number(premium),
+        validFrom: validFrom || null,
+        renewalDate,
+        status,
+      });
+      showToast("Policy added.");
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add policy.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <SheetShell
+      eyebrow="Client policy"
+      title="Add a policy"
+      subtitle="The client is matched by their registered mobile number."
+      onClose={onClose}
+    >
+      <form onSubmit={save} className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="new-client-mobile">
+              Client mobile
+            </label>
+            <input
+              id="new-client-mobile"
+              className={inputClass}
+              value={clientMobile}
+              onChange={(event) => setClientMobile(event.target.value)}
+              placeholder="10-digit mobile"
+              required
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="new-holder">
+              Client name
+            </label>
+            <input
+              id="new-holder"
+              className={inputClass}
+              value={holder}
+              onChange={(event) => setHolder(event.target.value)}
+              placeholder="Optional"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="new-provider">
+              Company
+            </label>
+            <input
+              id="new-provider"
+              className={inputClass}
+              value={provider}
+              onChange={(event) => setProvider(event.target.value)}
+              placeholder="e.g. Star Health"
+              required
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="new-policy-number">
+              Serial / policy number
+            </label>
+            <input
+              id="new-policy-number"
+              className={inputClass}
+              value={policyNumber}
+              onChange={(event) => setPolicyNumber(event.target.value)}
+              required
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="new-type">
+              Insurance type
+            </label>
+            <select
+              id="new-type"
+              className={inputClass}
+              value={type}
+              onChange={(event) =>
+                setType(event.target.value as AdminPolicy["type"])
+              }
+            >
+              <option value="Life & Term">Life &amp; Term</option>
+              <option value="Health">Health</option>
+              <option value="Motor">Motor</option>
+              <option value="Property">Property</option>
+            </select>
+          </div>
+          {type === "Motor" ? (
+            <div>
+              <label className={labelClass} htmlFor="new-vehicle">
+                Vehicle type
+              </label>
+              <select
+                id="new-vehicle"
+                className={inputClass}
+                value={vehicleType}
+                onChange={(event) =>
+                  setVehicleType(event.target.value as "2W" | "4W" | "")
+                }
+              >
+                <option value="">Not set</option>
+                <option value="2W">Two-wheeler</option>
+                <option value="4W">Four-wheeler</option>
+              </select>
+            </div>
+          ) : (
+            <div>
+              <label className={labelClass} htmlFor="new-status">
+                Status
+              </label>
+              <select
+                id="new-status"
+                className={inputClass}
+                value={status}
+                onChange={(event) =>
+                  setStatus(event.target.value as AdminPolicy["status"])
+                }
+              >
+                <option value="active">Active</option>
+                <option value="expiring">Expiring</option>
+                <option value="lapsed">Lapsed</option>
+              </select>
+            </div>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="new-cover">
+              Cover amount (₹)
+            </label>
+            <input
+              id="new-cover"
+              type="number"
+              min={0}
+              className={inputClass}
+              value={coverAmount}
+              onChange={(event) => setCoverAmount(event.target.value)}
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="new-premium">
+              Payment amount (₹)
+            </label>
+            <input
+              id="new-premium"
+              type="number"
+              min={0}
+              className={inputClass}
+              value={premium}
+              onChange={(event) => setPremium(event.target.value)}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="new-start">
+              Start date
+            </label>
+            <input
+              id="new-start"
+              type="date"
+              className={inputClass}
+              value={validFrom}
+              onChange={(event) => setValidFrom(event.target.value)}
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="new-end">
+              End / renewal date
+            </label>
+            <input
+              id="new-end"
+              type="date"
+              className={inputClass}
+              value={renewalDate}
+              onChange={(event) => setRenewalDate(event.target.value)}
+              required
+            />
+          </div>
+        </div>
+        {type === "Motor" && (
+          <div>
+            <label className={labelClass} htmlFor="new-status-motor">
+              Status
+            </label>
+            <select
+              id="new-status-motor"
+              className={inputClass}
+              value={status}
+              onChange={(event) =>
+                setStatus(event.target.value as AdminPolicy["status"])
+              }
+            >
+              <option value="active">Active</option>
+              <option value="expiring">Expiring</option>
+              <option value="lapsed">Lapsed</option>
+            </select>
+          </div>
+        )}
+
+        {error && <p className="text-xs text-rose-600">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={busy}
+          className="w-full rounded-lg bg-gold px-4 py-2.5 text-sm font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
+        >
+          {busy ? "Saving..." : "Add policy"}
+        </button>
+      </form>
+    </SheetShell>
+  );
+}
+
 export function InsuranceAdmin() {
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState<Tab>("plans");
@@ -507,6 +918,14 @@ export function InsuranceAdmin() {
   const [deletePolicy, setDeletePolicy] = useState<AdminPolicy | null>(null);
   const [busy, setBusy] = useState(false);
   const [reminding, setReminding] = useState<string | null>(null);
+  const [addingPolicy, setAddingPolicy] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<PolicyImportResult | null>(
+    null,
+  );
+  const [importError, setImportError] = useState<string | null>(null);
+  const [runningRenewals, setRunningRenewals] = useState(false);
 
   const refreshStats = useCallback(async () => {
     try {
@@ -529,7 +948,7 @@ export function InsuranceAdmin() {
         );
       } else if (tab === "policies") {
         setPolicies(await fetchAdminPolicies(appliedSearch));
-      } else {
+      } else if (tab === "renewals") {
         setRenewals(await fetchAdminRenewals());
       }
     } catch (err) {
@@ -546,7 +965,8 @@ export function InsuranceAdmin() {
     if (
       requestedTab === "plans" ||
       requestedTab === "policies" ||
-      requestedTab === "renewals"
+      requestedTab === "renewals" ||
+      requestedTab === "import"
     ) {
       setTab(requestedTab);
     }
@@ -640,6 +1060,55 @@ export function InsuranceAdmin() {
     }
   };
 
+  const onDownloadTemplate = async () => {
+    try {
+      await downloadPolicyImportTemplate();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Could not download template.",
+        "error",
+      );
+    }
+  };
+
+  const onImport = async () => {
+    if (!importFile) return;
+    setImporting(true);
+    setImportError(null);
+    setImportResult(null);
+    try {
+      const result = await importAdminPoliciesCsv(importFile);
+      setImportResult(result);
+      showToast(
+        `Import done: ${result.created} created, ${result.updated} updated, ${result.failed} failed.`,
+      );
+      setImportFile(null);
+      await reloadAll();
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "Import failed.");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const onRunRenewals = async () => {
+    setRunningRenewals(true);
+    try {
+      const result = await runAdminRenewalEngine();
+      showToast(
+        `Renewal engine: ${result.reminded} of ${result.checked} policies reminded.`,
+      );
+      await reloadAll();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Could not run the renewal engine.",
+        "error",
+      );
+    } finally {
+      setRunningRenewals(false);
+    }
+  };
+
   const kpis =
     tab === "plans"
       ? [
@@ -657,6 +1126,14 @@ export function InsuranceAdmin() {
             { label: "Renewals due", value: stats?.renewalsDue ?? 0 },
             { label: "Active policies", value: stats?.activePolicies ?? 0 },
           ];
+
+  const importKpis = [
+    { label: "Policies", value: stats?.policiesTotal ?? 0 },
+    { label: "Active", value: stats?.activePolicies ?? 0 },
+    { label: "Renewals due", value: stats?.renewalsDue ?? 0 },
+  ];
+
+  const activeKpis = tab === "import" ? importKpis : kpis;
 
   return (
     <div className="space-y-5">
@@ -687,6 +1164,29 @@ export function InsuranceAdmin() {
               Add plan
             </button>
           )}
+          {tab === "policies" && (
+            <button
+              type="button"
+              onClick={() => setAddingPolicy(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-charcoal hover:bg-gold-hover"
+            >
+              <Plus className="h-4 w-4" />
+              Add policy
+            </button>
+          )}
+          {tab === "renewals" && (
+            <button
+              type="button"
+              onClick={() => void onRunRenewals()}
+              disabled={runningRenewals}
+              className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${runningRenewals ? "animate-spin" : ""}`}
+              />
+              {runningRenewals ? "Running..." : "Run renewal engine"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -694,7 +1194,7 @@ export function InsuranceAdmin() {
         <SkeletonKpis count={4} />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {kpis.map((kpi) => (
+          {activeKpis.map((kpi) => (
             <div
               key={kpi.label}
               className="rounded-2xl border border-border-subtle bg-white p-4"
@@ -728,7 +1228,7 @@ export function InsuranceAdmin() {
         ))}
       </div>
 
-      {tab !== "renewals" && (
+      {tab !== "renewals" && tab !== "import" && (
         <div className="flex flex-wrap gap-2">
           <form
             onSubmit={(event) => {
@@ -853,6 +1353,13 @@ export function InsuranceAdmin() {
                     <StatusBadge status={policy.status} />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
                       {policy.type}
+                      {policy.type === "Motor" && policy.vehicleType
+                        ? ` · ${
+                            policy.vehicleType === "2W"
+                              ? "Two-wheeler"
+                              : "Four-wheeler"
+                          }`
+                        : ""}
                     </span>
                   </div>
                   <p className="mt-1 text-sm font-extrabold text-charcoal">
@@ -890,6 +1397,116 @@ export function InsuranceAdmin() {
             ))}
           </div>
         )
+      ) : tab === "import" ? (
+        <div className="space-y-4">
+          <div className="space-y-3 rounded-2xl border border-border-subtle bg-white p-5">
+            <div>
+              <h2 className="text-base font-extrabold tracking-tight text-charcoal">
+                Bulk import policies
+              </h2>
+              <p className="mt-1 text-xs text-muted">
+                Upload a CSV exported from Excel. Existing policy numbers are
+                updated; new ones are created.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void onDownloadTemplate()}
+                className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-bold text-charcoal hover:border-gold/60"
+              >
+                <Download className="h-4 w-4" />
+                Download CSV template
+              </button>
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-bold text-charcoal hover:border-gold/60">
+                <Upload className="h-4 w-4" />
+                Choose CSV
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    setImportFile(file);
+                    setImportResult(null);
+                    setImportError(null);
+                    event.target.value = "";
+                  }}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => void onImport()}
+                disabled={!importFile || importing}
+                className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
+              >
+                {importing ? "Importing..." : "Import file"}
+              </button>
+            </div>
+            {importFile && (
+              <p className="text-[11px] text-muted">
+                Selected:{" "}
+                <span className="font-bold text-charcoal">
+                  {importFile.name}
+                </span>
+              </p>
+            )}
+            {importError && (
+              <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700">
+                {importError}
+              </p>
+            )}
+            {importResult && (
+              <div className="space-y-2 rounded-xl border border-border-subtle bg-ivory/50 p-3">
+                <p className="text-xs font-bold text-charcoal">Import result</p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-lg font-extrabold text-emerald-700">
+                      {importResult.created}
+                    </p>
+                    <p className="text-[10px] text-muted">Created</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-extrabold text-blue-700">
+                      {importResult.updated}
+                    </p>
+                    <p className="text-[10px] text-muted">Updated</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-extrabold text-rose-700">
+                      {importResult.failed}
+                    </p>
+                    <p className="text-[10px] text-muted">Failed</p>
+                  </div>
+                </div>
+                {importResult.errors.length > 0 && (
+                  <ul className="space-y-1">
+                    {importResult.errors.slice(0, 20).map((error, index) => (
+                      <li
+                        key={`${error.row}-${index}`}
+                        className="text-[11px] text-rose-700"
+                      >
+                        Row {error.row}: {error.message}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="rounded-2xl border border-border-subtle bg-white p-4 text-[11px] text-muted">
+            <p className="font-bold text-charcoal">Expected columns</p>
+            <p className="mt-1">
+              policy_number, client_name, client_mobile, company_name,
+              insurance_type, vehicle_type, start_date, end_date,
+              payment_amount, cover_amount
+            </p>
+            <p className="mt-2">
+              Dates accept YYYY-MM-DD or DD-MM-YYYY. Vehicle type is 2W / 4W
+              for motor policies.
+            </p>
+          </div>
+        </div>
       ) : renewals.length === 0 ? (
         <p className="text-sm text-muted">
           No renewals due in the next 120 days.
@@ -948,6 +1565,16 @@ export function InsuranceAdmin() {
           onClose={() => setEditingPlan(null)}
           onSaved={() => {
             setEditingPlan(null);
+            void reloadAll();
+          }}
+        />
+      )}
+
+      {addingPolicy && (
+        <PolicyCreateSheet
+          onClose={() => setAddingPolicy(false)}
+          onSaved={() => {
+            setAddingPolicy(false);
             void reloadAll();
           }}
         />

@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  NavLink,
+  Outlet,
+  useLocation,
+} from "react-router-dom";
 import { AdminNotificationPanel } from "./AdminNotificationPanel";
 import { AdminNotificationToasts } from "./AdminNotificationToasts";
 import { StaffProfilePanel } from "./StaffProfilePanel";
@@ -14,6 +20,7 @@ import {
   FileText,
   Inbox,
   Menu,
+  PhoneCall,
   ShieldCheck,
   Wallet,
   Wrench,
@@ -21,8 +28,11 @@ import {
 } from "lucide-react";
 
 export function AppShell() {
+  const { staff } = useStaffAuth();
+  const isAdmin = staff?.role === "admin";
+
   return (
-    <AdminNotificationsProvider>
+    <AdminNotificationsProvider enabled={isAdmin}>
       <AppShellContent />
     </AdminNotificationsProvider>
   );
@@ -34,7 +44,20 @@ function AppShellContent() {
   const [profileOpen, setProfileOpen] = useState(false);
   const { unreadCount, openPanel } = useAdminNotifications();
   const { staff } = useStaffAuth();
+  const isAdmin = staff?.role === "admin";
   const initial = (staff?.name || "A").charAt(0).toUpperCase();
+
+  // Partners (call-center agents) can only use the Daily Tasks module.
+  if (!isAdmin && location.pathname !== "/daily-tasks") {
+    return <Navigate to="/daily-tasks" replace />;
+  }
+
+  const navClass = ({ isActive }: { isActive: boolean }) =>
+    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors ${
+      isActive
+        ? "bg-gold text-charcoal"
+        : "text-white/70 hover:bg-white/5 hover:text-white"
+    }`;
 
   return (
     <div className="flex h-screen overflow-hidden bg-ivory">
@@ -53,7 +76,7 @@ function AppShellContent() {
       >
         <div className="flex h-24 items-center justify-between border-b border-white/10 px-4">
           <Link
-            to="/dashboard"
+            to={isAdmin ? "/requests" : "/daily-tasks"}
             onClick={() => setOpen(false)}
             className="flex flex-col items-start gap-1"
           >
@@ -71,94 +94,73 @@ function AppShellContent() {
 
         <nav className="flex-1 space-y-1 p-3">
           <NavLink
-            to="/requests"
+            to="/daily-tasks"
             onClick={() => setOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors ${
-                isActive
-                  ? "bg-gold text-charcoal"
-                  : "text-white/70 hover:bg-white/5 hover:text-white"
-              }`
-            }
+            className={navClass}
           >
-            <Inbox className="h-4 w-4" />
-            Requests
+            <PhoneCall className="h-4 w-4" />
+            Daily Tasks
           </NavLink>
-          <NavLink
-            to="/real-estate"
-            onClick={() => setOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors ${
-                isActive
-                  ? "bg-gold text-charcoal"
-                  : "text-white/70 hover:bg-white/5 hover:text-white"
-              }`
-            }
-          >
-            <Building2 className="h-4 w-4" />
-            Real Estate
-          </NavLink>
-          <NavLink
-            to="/home-services"
-            onClick={() => setOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors ${
-                isActive
-                  ? "bg-gold text-charcoal"
-                  : "text-white/70 hover:bg-white/5 hover:text-white"
-              }`
-            }
-          >
-            <Wrench className="h-4 w-4" />
-            Home Services
-          </NavLink>
-          <NavLink
-            to="/insurance"
-            onClick={() => setOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors ${
-                isActive
-                  ? "bg-gold text-charcoal"
-                  : "text-white/70 hover:bg-white/5 hover:text-white"
-              }`
-            }
-          >
-            <ShieldCheck className="h-4 w-4" />
-            Insurance
-          </NavLink>
-          <NavLink
-            to="/digital-services"
-            onClick={() => setOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors ${
-                isActive
-                  ? "bg-gold text-charcoal"
-                  : "text-white/70 hover:bg-white/5 hover:text-white"
-              }`
-            }
-          >
-            <FileText className="h-4 w-4" />
-            Digital Services
-          </NavLink>
-          <NavLink
-            to="/loans"
-            onClick={() => setOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors ${
-                isActive
-                  ? "bg-gold text-charcoal"
-                  : "text-white/70 hover:bg-white/5 hover:text-white"
-              }`
-            }
-          >
-            <Wallet className="h-4 w-4" />
-            Loans
-          </NavLink>
+          {isAdmin && (
+            <>
+              <NavLink
+                to="/requests"
+                onClick={() => setOpen(false)}
+                className={navClass}
+              >
+                <Inbox className="h-4 w-4" />
+                Requests
+              </NavLink>
+              <NavLink
+                to="/real-estate"
+                onClick={() => setOpen(false)}
+                className={navClass}
+              >
+                <Building2 className="h-4 w-4" />
+                Real Estate
+              </NavLink>
+              <NavLink
+                to="/home-services"
+                onClick={() => setOpen(false)}
+                className={navClass}
+              >
+                <Wrench className="h-4 w-4" />
+                Home Services
+              </NavLink>
+              <NavLink
+                to="/insurance"
+                onClick={() => setOpen(false)}
+                className={navClass}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Insurance
+              </NavLink>
+              <NavLink
+                to="/digital-services"
+                onClick={() => setOpen(false)}
+                className={navClass}
+              >
+                <FileText className="h-4 w-4" />
+                Digital Services
+              </NavLink>
+              <NavLink
+                to="/loans"
+                onClick={() => setOpen(false)}
+                className={navClass}
+              >
+                <Wallet className="h-4 w-4" />
+                Loans
+              </NavLink>
+            </>
+          )}
         </nav>
 
         <div className="border-t border-white/10 p-4">
           <p className="text-[11px] text-white/40">Signed in as</p>
-          <p className="text-sm font-bold">Admin</p>
+          <p className="text-sm font-bold">{staff?.name || "Staff"}</p>
+          <p className="text-[10px] font-semibold capitalize text-white/40">
+            {staff?.role} · {staff?.staffCode}
+          </p>
         </div>
       </aside>
 
@@ -174,28 +176,30 @@ function AppShellContent() {
               <Menu className="h-4 w-4" />
             </button>
             <span className="text-sm font-extrabold tracking-tight text-charcoal">
-              Admin panel
+              {isAdmin ? "Admin panel" : "Agent panel"}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={openPanel}
-              className="relative rounded-lg border border-border-subtle p-2 text-charcoal hover:border-gold/60 cursor-pointer"
-              aria-label={
-                unreadCount > 0
-                  ? `${unreadCount} unread notifications`
-                  : "Notifications"
-              }
-            >
-              <Bell className="h-4 w-4" />
-              {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-extrabold text-white">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              )}
-            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={openPanel}
+                className="relative rounded-lg border border-border-subtle p-2 text-charcoal hover:border-gold/60 cursor-pointer"
+                aria-label={
+                  unreadCount > 0
+                    ? `${unreadCount} unread notifications`
+                    : "Notifications"
+                }
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-extrabold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setProfileOpen(true)}
@@ -225,8 +229,12 @@ function AppShellContent() {
       </div>
 
       <Toaster />
-      <AdminNotificationToasts />
-      <AdminNotificationPanel />
+      {isAdmin && (
+        <>
+          <AdminNotificationToasts />
+          <AdminNotificationPanel />
+        </>
+      )}
       <StaffProfilePanel
         open={profileOpen}
         onClose={() => setProfileOpen(false)}

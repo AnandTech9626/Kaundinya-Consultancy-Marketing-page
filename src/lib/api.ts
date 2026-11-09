@@ -743,6 +743,8 @@ export type AdminInsurancePlan = {
   features: string[];
   cashlessNetwork?: number;
   pospLicense?: string;
+  insurerLogoUrl?: string | null;
+  brochureUrl?: string | null;
   familyOption?: AdminFamilyOption;
   active: boolean;
 };
@@ -767,6 +769,7 @@ export type AdminPolicy = {
   status: "active" | "expiring" | "lapsed";
   holder?: string;
   validFrom?: string;
+  vehicleType?: "2W" | "4W" | null;
   pdfUrl?: string;
   userId: string;
   clientName: string;
@@ -800,6 +803,8 @@ export type AdminInsurancePlanInput = {
   features?: string[];
   cashlessNetwork?: number | null;
   pospLicense?: string | null;
+  insurerLogoUrl?: string | null;
+  brochureUrl?: string | null;
   familyOption?: AdminFamilyOption | null;
   active?: boolean;
 };
@@ -879,6 +884,8 @@ export function updateAdminPolicy(
     status?: "active" | "expiring" | "lapsed";
     provider?: string;
     policyNumber?: string;
+    type?: AdminPolicy["type"];
+    vehicleType?: "2W" | "4W" | null;
     coverAmount?: number;
     premium?: number;
     renewalDate?: string;
@@ -891,6 +898,105 @@ export function updateAdminPolicy(
 
 export function deleteAdminPolicy(id: string): Promise<void> {
   return jsonRequest<void>(`/api/admin/policies/${id}`, "DELETE");
+}
+
+export type CreateAdminPolicyInput = {
+  clientMobile: string;
+  policyNumber: string;
+  provider: string;
+  type: AdminPolicy["type"];
+  vehicleType?: "2W" | "4W" | null;
+  holder?: string | null;
+  coverAmount: number;
+  premium: number;
+  validFrom?: string | null;
+  renewalDate: string;
+  status?: "active" | "expiring" | "lapsed";
+};
+
+export function createAdminPolicy(
+  input: CreateAdminPolicyInput,
+): Promise<AdminPolicy> {
+  return jsonRequest<AdminPolicy>("/api/admin/policies", "POST", input);
+}
+
+export type PolicyImportResult = {
+  created: number;
+  updated: number;
+  failed: number;
+  errors: Array<{ row: number; message: string }>;
+};
+
+export async function importAdminPoliciesCsv(
+  file: File,
+): Promise<PolicyImportResult> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await apiFetch(`${API_BASE}/api/admin/policies/import`, {
+    method: "POST",
+    body: form,
+  });
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: PolicyImportResult }
+    | null;
+  if (!response.ok || !payload?.success) {
+    throw new Error(
+      payload?.message || `Import failed (${response.status}).`,
+    );
+  }
+  return payload.data as PolicyImportResult;
+}
+
+export async function downloadPolicyImportTemplate(): Promise<void> {
+  const response = await apiFetch(
+    `${API_BASE}/api/admin/policies/import/template`,
+  );
+  if (!response.ok) {
+    throw new Error(`Could not download the template (${response.status}).`);
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "insurance-policies-template.csv";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+export async function uploadInsuranceMedia(
+  file: File,
+): Promise<{ url: string; name: string; mimeType: string; size: number }> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await apiFetch(`${API_BASE}/api/admin/insurance/media`, {
+    method: "POST",
+    body: form,
+  });
+  const payload = (await response.json().catch(() => null)) as
+    | {
+        success?: boolean;
+        message?: string;
+        data?: { url: string; name: string; mimeType: string; size: number };
+      }
+    | null;
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(
+      payload?.message || `Upload failed (${response.status}).`,
+    );
+  }
+  return payload.data;
+}
+
+export function runAdminRenewalEngine(): Promise<{
+  checked: number;
+  reminded: number;
+}> {
+  return jsonRequest<{ checked: number; reminded: number }>(
+    "/api/admin/renewals/run",
+    "POST",
+  );
 }
 
 export function fetchAdminRenewals(): Promise<AdminRenewal[]> {
@@ -1154,6 +1260,7 @@ export type AdminServiceRequest = {
   status: AdminServiceRequestStatus;
   comments: string;
   loanBank?: string | null;
+  loanType?: "Home" | "Personal" | "Business" | "Mortgage" | null;
   requirementSource?: "salaried" | "business" | null;
   requirementMonthlyIncome?: number | null;
   requirementMonthlyEmis?: number | null;
@@ -1361,6 +1468,13 @@ export function staffMe(): Promise<StaffUser> {
   return jsonRequest<StaffUser>("/api/staff/me", "GET");
 }
 
+export function staffUpdateProfile(input: {
+  name?: string;
+  email?: string;
+}): Promise<StaffUser> {
+  return jsonRequest<StaffUser>("/api/staff/me", "PATCH", input);
+}
+
 export function staffSetPin(
   pin: string,
   currentPin?: string,
@@ -1408,4 +1522,136 @@ export function updateAdminStaff(
   },
 ): Promise<StaffUser> {
   return jsonRequest<StaffUser>(`/api/admin/staff/${id}`, "PATCH", patch);
+}
+
+/* ------------------------------ Daily tasks ----------------------------- */
+
+export type DailyTaskStatus =
+  | "connected_interested"
+  | "connected_not_interested"
+  | "not_reachable"
+  | "call_back";
+
+export type DailyTaskDisplayStatus =
+  | DailyTaskStatus
+  | "pending"
+  | "not_contacted";
+
+export type AdminDailyTask = {
+  id: string;
+  taskDate: string;
+  sortOrder: number;
+  mobilePrimary: string;
+  mobileSecondary: string;
+  customerName: string;
+  email: string;
+  status: DailyTaskStatus | null;
+  displayStatus: DailyTaskDisplayStatus;
+  interested: boolean | null;
+  reasonNotInterested: string;
+  nextStep: string;
+  comments: string;
+  calledAt: string | null;
+  durationMinutes: number | null;
+  assignedTo: string;
+  assignedByName: string | null;
+  assignedByCode: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminDailyTaskAssignee = {
+  id: string;
+  name: string;
+  staffCode: string;
+  role: "admin" | "partner";
+};
+
+export type AdminDailyTaskStats = {
+  total: number;
+  pending: number;
+  notContacted: number;
+  connectedInterested: number;
+  connectedNotInterested: number;
+  notReachable: number;
+  callBack: number;
+};
+
+export type AdminDailyTaskFilters = {
+  date?: string;
+  status?: string;
+  assignedTo?: string;
+};
+
+export type AdminDailyTaskCreateInput = {
+  taskDate: string;
+  sortOrder?: number;
+  mobilePrimary: string;
+  mobileSecondary?: string;
+  customerName?: string;
+  email?: string;
+  assignedTo?: string;
+};
+
+export type AdminDailyTaskPatch = {
+  taskDate?: string;
+  sortOrder?: number;
+  mobilePrimary?: string;
+  mobileSecondary?: string;
+  customerName?: string;
+  email?: string;
+  assignedTo?: string;
+  status?: DailyTaskStatus | null;
+  interested?: boolean | null;
+  reasonNotInterested?: string;
+  nextStep?: string;
+  comments?: string;
+  calledAt?: string | null;
+  durationMinutes?: number | null;
+};
+
+export function fetchDailyTasks(
+  filters: AdminDailyTaskFilters = {},
+): Promise<AdminDailyTask[]> {
+  const params = new URLSearchParams();
+  if (filters.date) params.set("date", filters.date);
+  if (filters.status) params.set("status", filters.status);
+  if (filters.assignedTo) params.set("assignedTo", filters.assignedTo);
+  const query = params.toString();
+  return jsonRequest<AdminDailyTask[]>(
+    `/api/admin/daily-tasks${query ? `?${query}` : ""}`,
+    "GET",
+  );
+}
+
+export function fetchDailyTaskStats(): Promise<AdminDailyTaskStats> {
+  return jsonRequest<AdminDailyTaskStats>("/api/admin/daily-tasks/stats", "GET");
+}
+
+export function fetchDailyTaskAssignees(): Promise<AdminDailyTaskAssignee[]> {
+  return jsonRequest<AdminDailyTaskAssignee[]>(
+    "/api/admin/daily-tasks/agents",
+    "GET",
+  );
+}
+
+export function createDailyTask(
+  input: AdminDailyTaskCreateInput,
+): Promise<AdminDailyTask> {
+  return jsonRequest<AdminDailyTask>("/api/admin/daily-tasks", "POST", input);
+}
+
+export function updateDailyTask(
+  id: string,
+  patch: AdminDailyTaskPatch,
+): Promise<AdminDailyTask> {
+  return jsonRequest<AdminDailyTask>(
+    `/api/admin/daily-tasks/${id}`,
+    "PATCH",
+    patch,
+  );
+}
+
+export function deleteDailyTask(id: string): Promise<void> {
+  return jsonRequest<void>(`/api/admin/daily-tasks/${id}`, "DELETE");
 }
