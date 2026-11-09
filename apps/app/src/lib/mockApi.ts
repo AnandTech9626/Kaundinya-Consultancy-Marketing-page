@@ -111,6 +111,7 @@ export interface CreateRequestInput {
   comments?: string;
   loanRequirementId?: string;
   loanBank?: string;
+  loanType?: "Home" | "Personal" | "Business" | "Mortgage";
   requirementSource?: "salaried" | "business";
   requirementMonthlyIncome?: number;
   requirementMonthlyEmis?: number;
@@ -378,8 +379,12 @@ export function fetchPolicies(): Promise<PolicyRecord[]> {
   return api.get<PolicyRecord[]>("/policies");
 }
 
-export function downloadPolicy(id: string): Promise<{ fileName: string }> {
-  return api.get<{ fileName: string }>(`/policies/${id}/download`);
+export function downloadPolicy(
+  id: string
+): Promise<{ fileName: string; url?: string | null }> {
+  return api.get<{ fileName: string; url?: string | null }>(
+    `/policies/${id}/download`
+  );
 }
 
 /* ----------------------------- Home services ----------------------------- */
@@ -686,12 +691,12 @@ export interface OtpVerifyResult {
   user: User;
 }
 
-export function otpSend(mobile: string): Promise<{ expiresInSeconds: number }> {
-  return api.post<{ expiresInSeconds: number }>("/otp/send", { mobile });
+export function otpSend(email: string): Promise<{ expiresInSeconds: number }> {
+  return api.post<{ expiresInSeconds: number }>("/otp/send", { email });
 }
 
-export function otpVerify(mobile: string, otp: string): Promise<OtpVerifyResult> {
-  return api.post<OtpVerifyResult>("/otp/verify", { mobile, otp });
+export function otpVerify(email: string, otp: string): Promise<OtpVerifyResult> {
+  return api.post<OtpVerifyResult>("/otp/verify", { email, otp });
 }
 
 export interface UpdateProfileInput {
@@ -710,15 +715,15 @@ export interface LoginMethod {
   profileComplete: boolean;
 }
 
-export function checkLoginMethod(mobile: string): Promise<LoginMethod> {
-  return api.post<LoginMethod>("/auth/login-method", { mobile });
+export function checkLoginMethod(email: string): Promise<LoginMethod> {
+  return api.post<LoginMethod>("/auth/login-method", { email });
 }
 
 export function pinLogin(
-  mobile: string,
+  email: string,
   pin: string
 ): Promise<OtpVerifyResult> {
-  return api.post<OtpVerifyResult>("/auth/pin/login", { mobile, pin });
+  return api.post<OtpVerifyResult>("/auth/pin/login", { email, pin });
 }
 
 export function setPin(pin: string, currentPin?: string): Promise<User> {

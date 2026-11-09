@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, KeyRound, Loader2 } from "lucide-react";
 import {
@@ -21,8 +21,8 @@ import {
   setPin as setPinApi,
 } from "../lib/mockApi";
 import {
-  readRememberedMobile,
-  writeRememberedMobile,
+  readRememberedEmail,
+  writeRememberedEmail,
 } from "../lib/session";
 
 function describeError(error: unknown): string {
@@ -30,7 +30,7 @@ function describeError(error: unknown): string {
     if (error.status === 429) {
       return error.message || "Too many attempts. Please try again in a few minutes.";
     }
-    if (error.fieldErrors?.mobile) return error.fieldErrors.mobile;
+    if (error.fieldErrors?.email) return error.fieldErrors.email;
     if (error.fieldErrors?.pin) return error.fieldErrors.pin;
     if (error.status === 0) return error.message;
     return error.message;
@@ -38,7 +38,11 @@ function describeError(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-type Step = "mobile" | "pin" | "otp" | "reset";
+type Step = "email" | "pin" | "otp" | "reset";
+
+function isEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
 
 function isStrongPin(pin: string): boolean {
   return (
@@ -53,19 +57,23 @@ export function Login() {
   const { login, updateUser, logout } = useAuth();
   const [params] = useSearchParams();
 
-  const initialMobile = (params.get("mobile") ?? "").replace(/\D/g, "");
+  const initialEmail = (params.get("email") ?? "").trim().toLowerCase();
   const startAtOtp =
-    params.get("step") === "otp" && initialMobile.length >= 10;
-  const remembered = readRememberedMobile();
+    params.get("step") === "otp" && isEmail(initialEmail);
+  const remembered = readRememberedEmail();
+  const sentOnMount = useRef(false);
 
-  const [step, setStep] = useState<Step>(startAtOtp ? "otp" : "mobile");
-  const [mobile, setMobile] = useState(initialMobile || remembered || "");
+  const [step, setStep] = useState<Step>(startAtOtp ? "otp" : "email");
+  const [email, setEmail] = useState(initialEmail || remembered || "");
   const [pin, setPin] = useState("");
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [resetMode, setResetMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
   const afterLogin = (user: User) => {
     navigate(user.profileComplete ? "/dashboard" : "/onboarding", {
@@ -73,14 +81,38 @@ export function Login() {
     });
   };
 
-  const sendOtp = async (target: string) => {
-    await otpSend(target.replace(/\D/g, ""));
+  const sendCode = async (target: string) => {
+    await otpSend(target);
     setStep("otp");
   };
 
-  // Returning on this browser: go straight to the PIN step.
+  // Arriving from the marketing site: send the email OTP and show the code form.
   useEffect(() => {
-    if (startAtOtp || initialMobile || !remembered) return;
+    if (!startAtOtp || sentOnMount.current) return;
+    sentOnMount.current = true;
+    let cancelled = false;
+    setSending(true);
+    otpSend(initialEmail)
+      .then(() => {
+        if (!cancelled) writeRememberedEmail(initialEmail);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(describeError(err));
+        setStep("email");
+      })
+      .finally(() => {
+        if (!cancelled) setSending(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startAtOtp, initialEmail]);
+
+  // Returning on this browser: jump straight to the PIN step if one is set.
+  useEffect(() => {
+    if (startAtOtp || initialEmail || !remembered) return;
     let cancelled = false;
     checkLoginMethod(remembered)
       .then((method) => {
@@ -97,9 +129,9 @@ export function Login() {
 
   const handleContinue = async (event: FormEvent) => {
     event.preventDefault();
-    const clean = mobile.replace(/\D/g, "");
-    if (!/^[6-9]\d{9}$/.test(clean)) {
-      setError("Please enter a valid 10-digit mobile number.");
+    const clean = email.trim().toLowerCase();
+    if (!isEmail(clean)) {
+      setError("Please enter a valid email address.");
       return;
     }
 
@@ -107,15 +139,21 @@ export function Login() {
     setBusy(true);
     try {
       const method = await checkLoginMethod(clean);
-      writeRememberedMobile(clean);
+      writeRememberedEmail(clean);
+      setEmail(clean);
 
       if (method.exists && method.hasPin) {
         setPin("");
+        setResetMode(false);
+        setNotice(
+          "This account is already registered. Please enter your PIN to continue to your dashboard.",
+        );
         setStep("pin");
         return;
       }
 
-      await sendOtp(clean);
+      setNotice(null);
+      await sendCode(clean);
     } catch (err) {
       setError(describeError(err));
     } finally {
@@ -125,7 +163,7 @@ export function Login() {
 
   const handlePinSignIn = async (event: FormEvent) => {
     event.preventDefault();
-    const clean = mobile.replace(/\D/g, "");
+    const clean = email.trim().toLowerCase();
     if (!/^\d{6}$/.test(pin)) {
       setError("Enter your 6-digit PIN.");
       return;
@@ -136,7 +174,7 @@ export function Login() {
     try {
       const session = await pinLogin(clean, pin);
       login(session);
-      writeRememberedMobile(clean);
+      writeRememberedEmail(clean);
       void savePasswordCredential(clean, pin, session.user.name);
       afterLogin(session.user);
     } catch (err) {
@@ -148,12 +186,12 @@ export function Login() {
 
   const handleVerify = async (otp: string) => {
     setError(null);
-    setBusy(true);
+    setVerifying(true);
     try {
-      const clean = mobile.replace(/\D/g, "");
+      const clean = email.trim().toLowerCase();
       const session = await otpVerify(clean, otp);
       login(session);
-      writeRememberedMobile(clean);
+      writeRememberedEmail(clean);
 
       if (resetMode) {
         setNewPin("");
@@ -167,7 +205,7 @@ export function Login() {
     } catch (err) {
       setError(describeError(err));
     } finally {
-      setBusy(false);
+      setVerifying(false);
     }
   };
 
@@ -188,7 +226,8 @@ export function Login() {
     try {
       const updated = await setPinApi(newPin);
       updateUser(updated);
-      const clean = mobile.replace(/\D/g, "");
+      const clean = email.trim().toLowerCase();
+      writeRememberedEmail(clean);
       void savePasswordCredential(clean, newPin, updated.name);
       afterLogin(updated);
     } catch (err) {
@@ -200,31 +239,32 @@ export function Login() {
 
   const handleResend = async () => {
     setError(null);
-    setBusy(true);
+    setSending(true);
     try {
-      await sendOtp(mobile);
+      await otpSend(email.trim().toLowerCase());
     } catch (err) {
       setError(describeError(err));
     } finally {
-      setBusy(false);
+      setSending(false);
     }
   };
 
   const switchToOtp = async (forgotPin = false) => {
-    const clean = mobile.replace(/\D/g, "");
-    if (!/^[6-9]\d{9}$/.test(clean)) {
-      setStep("mobile");
+    const clean = email.trim().toLowerCase();
+    if (!isEmail(clean)) {
+      setStep("email");
       return;
     }
     setResetMode(forgotPin);
     setError(null);
-    setBusy(true);
+    setNotice(null);
+    setSending(true);
     try {
-      await sendOtp(clean);
+      await sendCode(clean);
     } catch (err) {
       setError(describeError(err));
     } finally {
-      setBusy(false);
+      setSending(false);
     }
   };
 
@@ -236,31 +276,27 @@ export function Login() {
 
       <main className="flex-1 flex items-center justify-center p-6">
         <Card className="w-full max-w-md p-6 sm:p-8">
-          {step === "mobile" ? (
+          {step === "email" ? (
             <form onSubmit={handleContinue} className="space-y-5">
               <div className="text-center space-y-1.5">
                 <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
                   Sign in to your account
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Enter your registered mobile number to continue.
+                  Enter your registered email address to continue.
                 </p>
               </div>
 
-              <FormField label="Mobile number" htmlFor="mobile" required>
+              <FormField label="Email address" htmlFor="email" required>
                 <Input
-                  id="mobile"
+                  id="email"
                   name="username"
                   autoComplete="username"
-                  type="tel"
-                  inputMode="numeric"
-                  placeholder="10-digit mobile number"
-                  value={mobile}
-                  onChange={(event) =>
-                    setMobile(
-                      event.target.value.replace(/\D/g, "").slice(0, 10),
-                    )
-                  }
+                  type="email"
+                  inputMode="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                   invalid={!!error}
                 />
               </FormField>
@@ -279,8 +315,8 @@ export function Login() {
                 )}
               </Button>
               <p className="text-[11px] text-subtle-foreground text-center leading-relaxed">
-                New clients verify with a one-time password and set a 6-digit
-                PIN on the next step.
+                New clients submit the enquiry form, then verify with a
+                one-time code sent to their email and set a 6-digit PIN.
               </p>
             </form>
           ) : step === "pin" ? (
@@ -293,12 +329,12 @@ export function Login() {
                 type="hidden"
                 name="username"
                 autoComplete="username"
-                value={mobile}
+                value={email}
                 readOnly
               />
 
               <div className="text-center space-y-1.5">
-                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand-strong">
+                <div className="mx-auto h-11 w-11 flex items-center justify-center rounded-full bg-brand-soft text-brand-strong">
                   <KeyRound className="h-5 w-5" />
                 </div>
                 <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
@@ -309,24 +345,31 @@ export function Login() {
                 </p>
               </div>
 
+              {notice && (
+                <div className="rounded-lg border border-brand/30 bg-brand-soft px-3 py-2 text-[11px] font-semibold text-brand-strong">
+                  {notice}
+                </div>
+              )}
+
               <div className="rounded-xl bg-surface-muted px-4 py-3 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Mobile number
+                  Email address
                 </p>
-                <p className="mt-0.5 text-sm font-extrabold text-foreground">
-                  +91 {mobile}
+                <p className="mt-0.5 truncate text-sm font-extrabold text-foreground">
+                  {email}
                 </p>
                 <button
                   type="button"
                   onClick={() => {
                     setError(null);
+                    setNotice(null);
                     setPin("");
                     setResetMode(false);
-                    setStep("mobile");
+                    setStep("email");
                   }}
                   className="mt-1 text-[11px] font-bold text-brand hover:text-brand-hover cursor-pointer"
                 >
-                  Change number
+                  Change email
                 </button>
               </div>
 
@@ -371,7 +414,7 @@ export function Login() {
                   onClick={() => void switchToOtp()}
                   className="text-brand hover:text-brand-hover cursor-pointer"
                 >
-                  Use OTP instead
+                  Use email code instead
                 </button>
                 <span className="text-subtle-foreground">·</span>
                 <button
@@ -386,14 +429,14 @@ export function Login() {
           ) : step === "reset" ? (
             <form onSubmit={handleResetPin} className="space-y-5">
               <div className="text-center space-y-1.5">
-                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand-strong">
+                <div className="mx-auto h-11 w-11 flex items-center justify-center rounded-full bg-brand-soft text-brand-strong">
                   <KeyRound className="h-5 w-5" />
                 </div>
                 <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
                   Set a new PIN
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Choose a new 6-digit PIN for +91 {mobile}.
+                  Choose a new 6-digit PIN for {email}.
                 </p>
               </div>
 
@@ -453,7 +496,7 @@ export function Login() {
                 onClick={() => {
                   logout();
                   setResetMode(false);
-                  setStep("mobile");
+                  setStep("email");
                 }}
                 className="w-full text-center text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer"
               >
@@ -462,14 +505,17 @@ export function Login() {
             </form>
           ) : (
             <OtpVerification
-              mobile={mobile}
-              isVerifying={busy}
+              identifier={email}
+              channel="email"
+              isVerifying={verifying}
+              isSending={sending}
               errorMessage={error}
               onVerify={(otp) => void handleVerify(otp)}
               onResend={() => void handleResend()}
               onEdit={() => {
                 setError(null);
-                setStep("mobile");
+                setNotice(null);
+                setStep("email");
               }}
             />
           )}

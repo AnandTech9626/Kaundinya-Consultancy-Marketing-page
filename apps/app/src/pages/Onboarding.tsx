@@ -75,8 +75,8 @@ export function Onboarding() {
 
       if (needsPin) {
         finalUser = await setPin(pin);
-        if (user?.mobile) {
-          void savePasswordCredential(user.mobile, pin, finalUser.name);
+        if (finalUser.email) {
+          void savePasswordCredential(finalUser.email, pin, finalUser.name);
         }
       }
 

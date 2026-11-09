@@ -33,9 +33,11 @@ const UNAVAILABLE = "Shared after your eligibility check";
 export function LoanProduct() {
   const { product: productId } = useParams();
   const product = LOAN_PRODUCTS.find((item) => item.id === productId);
-  const [dialog, setDialog] = useState<{ service: string; kind: string } | null>(
-    null
-  );
+  const [dialog, setDialog] = useState<{
+    service: string;
+    kind: string;
+    loanType?: LoanPlanSummary["loanType"];
+  } | null>(null);
   const [plans, setPlans] = useState<LoanPlanSummary[]>([]);
   const [plansLoading, setPlansLoading] = useState(true);
 
@@ -101,7 +103,11 @@ export function LoanProduct() {
         </div>
         <Button
           onClick={() =>
-            setDialog({ service: product.name, kind: "Loan consultation" })
+            setDialog({
+              service: product.name,
+              kind: "Loan consultation",
+              loanType: LOAN_TYPE_BY_PRODUCT[product.id],
+            })
           }
         >
           <ShieldCheck className="w-4 h-4" />
@@ -311,6 +317,7 @@ export function LoanProduct() {
         onClose={() => setDialog(null)}
         defaultService={dialog?.service ?? ""}
         defaultKind={dialog?.kind ?? "Loan consultation"}
+        loanType={dialog?.loanType}
       />
     </div>
   );

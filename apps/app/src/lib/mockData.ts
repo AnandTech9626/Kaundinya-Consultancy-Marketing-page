@@ -84,10 +84,18 @@ export const MOCK_REQUESTS: ServiceRequest[] = [
   {
     id: "req-1011",
     serviceCategory: "Loans",
-    specificService: "Loan against property · lender coordination",
+    specificService: "Loan against property A� lender coordination",
     status: "in_progress",
     createdAt: "2026-10-23",
     comments: "Comparing two lenders for a 15-year mortgage.",
+  },
+  {
+    id: "req-1012",
+    serviceCategory: "Insurance",
+    specificService: "Health insurance review - Star Health",
+    status: "completed",
+    createdAt: "2026-10-20",
+    comments: "Plan comparison and premium review completed with the client.",
   },
 ];
 

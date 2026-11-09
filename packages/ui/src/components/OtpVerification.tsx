@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { ShieldCheck, Loader2, RotateCcw, AlertCircle, Pencil } from "lucide-react";
 
 interface OtpVerificationProps {
-  mobile: string;
+  identifier: string;
+  channel?: "mobile" | "email";
   isVerifying: boolean;
+  isSending?: boolean;
   errorMessage?: string | null;
   onVerify: (otp: string) => void;
   onResend: () => void;
@@ -14,8 +16,10 @@ const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
 
 export function OtpVerification({
-  mobile,
+  identifier,
+  channel = "mobile",
   isVerifying,
+  isSending = false,
   errorMessage,
   onVerify,
   onResend,
@@ -80,9 +84,14 @@ export function OtpVerification({
   };
 
   const complete = otp.every((d) => d !== "");
-  const cleanMobile = mobile.trim().replace(/\s+/g, "");
-  const displayMobile =
-    /^\d{10}$/.test(cleanMobile) ? `+91 ${cleanMobile}` : mobile.trim();
+  const cleanIdentifier = identifier.trim().replace(/\s+/g, "");
+  const displayIdentifier =
+    channel === "email"
+      ? identifier.trim()
+      : /^\d{10}$/.test(cleanIdentifier)
+        ? `+91 ${cleanIdentifier}`
+        : identifier.trim();
+  const isEmail = channel === "email";
 
   return (
     <div className="space-y-5">
@@ -94,15 +103,17 @@ export function OtpVerification({
 
       <div className="text-center space-y-1.5">
         <h3 className="text-2xl font-extrabold text-foreground tracking-tight">
-          Verify Your Mobile Number
+          {isEmail ? "Verify Your Email" : "Verify Your Mobile Number"}
         </h3>
         <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-          We've sent a 6-digit OTP to your registered mobile number.
+          {isEmail
+            ? "We've emailed a 6-digit code to your registered email address."
+            : "We've sent a 6-digit OTP to your registered mobile number."}
         </p>
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <span className="text-sm font-semibold text-foreground">{displayMobile}</span>
+        <span className="text-sm font-semibold text-foreground">{displayIdentifier}</span>
         <button
           type="button"
           onClick={onEdit}
@@ -112,6 +123,12 @@ export function OtpVerification({
           Edit
         </button>
       </div>
+
+      {isSending && (
+        <p className="text-center text-[11px] font-semibold text-brand">
+          Sending a fresh code…
+        </p>
+      )}
 
       <div className="flex items-center justify-center gap-2 sm:gap-2.5" onPaste={handlePaste}>
         {otp.map((digit, i) => (

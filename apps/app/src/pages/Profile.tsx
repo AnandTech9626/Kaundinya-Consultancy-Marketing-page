@@ -83,8 +83,18 @@ export function ProfileContent({ compact = false }: { compact?: boolean }) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setError(null);
+
+    if (name.trim().length < 2) {
+      setError("Enter your full name.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError("Enter a valid email address — it is used to sign in.");
+      return;
+    }
+
+    setSaving(true);
     try {
       const updated = await updateProfile({
         name: name.trim(),

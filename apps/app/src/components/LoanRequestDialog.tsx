@@ -30,6 +30,8 @@ interface LoanRequestDialogProps {
   requirementId?: string;
   /** Bank the client picked, if any. */
   bank?: string;
+  /** Loan product type the client picked, if any. */
+  loanType?: "Home" | "Personal" | "Business" | "Mortgage";
   /** The three requirement fields captured by the eligibility check. */
   requirement?: {
     sourceOfIncome: LoanIncomeSource;
@@ -48,6 +50,7 @@ export function LoanRequestDialog({
   defaultNotes = "",
   requirementId,
   bank,
+  loanType,
   requirement,
   title = "Talk to a loan advisor",
   description = "Share a few details and our team will call you back. No loan application or payment happens here.",
@@ -101,6 +104,7 @@ export function LoanRequestDialog({
         comments: notes.trim(),
         loanRequirementId: requirementId,
         loanBank: bank?.trim() || undefined,
+        loanType,
         requirementSource: requirement?.sourceOfIncome,
         requirementMonthlyIncome: requirement?.monthlyIncome,
         requirementMonthlyEmis: requirement?.monthlyEmis,

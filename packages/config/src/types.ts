@@ -272,6 +272,8 @@ export interface InsurancePlan {
   features: string[];
   cashlessNetwork?: number;
   pospLicense?: string;
+  insurerLogoUrl?: string;
+  brochureUrl?: string;
   familyOption?: "self" | "couple" | "parents" | "family";
 }
 
@@ -326,6 +328,7 @@ export interface PolicyRecord {
   status: "active" | "expiring" | "lapsed";
   holder?: string;
   validFrom?: string;
+  vehicleType?: "2W" | "4W";
   pdfUrl?: string;
 }
 

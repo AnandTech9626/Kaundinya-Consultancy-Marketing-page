@@ -99,6 +99,6 @@ export function submitEnquiry(
   return postJson<{ id: string }>("/api/enquiries", payload);
 }
 
-export function sendOtp(mobile: string): Promise<ApiResponse<OtpSendData>> {
-  return postJson<OtpSendData>("/api/otp/send", { mobile });
+export function sendOtp(email: string): Promise<ApiResponse<OtpSendData>> {
+  return postJson<OtpSendData>("/api/otp/send", { email });
 }

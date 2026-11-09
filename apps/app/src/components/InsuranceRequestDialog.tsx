@@ -10,7 +10,7 @@ import {
 } from "@kaundinya/ui";
 import type { ServiceRequest } from "@kaundinya/config";
 import { useAuth } from "../lib/auth";
-import { useMockRequests } from "../lib/mockRequests";
+import { createRequest } from "../lib/mockApi";
 
 const REQUEST_KINDS = [
   "Insurance consultation",
@@ -40,12 +40,13 @@ export function InsuranceRequestDialog({
   description = "Share a few details and our team will call you back. No payment or policy purchase happens here.",
 }: InsuranceRequestDialogProps) {
   const { user } = useAuth();
-  const { raiseRequest } = useMockRequests();
 
   const [kind, setKind] = useState(defaultKind);
   const [service, setService] = useState(defaultService);
   const [notes, setNotes] = useState("");
   const [created, setCreated] = useState<ServiceRequest | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -53,6 +54,8 @@ export function InsuranceRequestDialog({
     setService(defaultService);
     setNotes(defaultNotes);
     setCreated(null);
+    setError(null);
+    setSubmitting(false);
   }, [open, defaultKind, defaultService, defaultNotes]);
 
   useEffect(() => {
@@ -73,16 +76,27 @@ export function InsuranceRequestDialog({
 
   if (!open) return null;
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const callback = user?.mobile ? ` Preferred callback: +91 ${user.mobile}.` : "";
-    const request = raiseRequest({
-      serviceCategory: "Insurance",
-      specificService:
-        service.trim() || defaultService || `${kind} · Insurance`,
-      comments: `${kind} requested from the insurance module.${notes.trim() ? ` ${notes.trim()}` : ""}${callback}`,
-    });
-    setCreated(request);
+    setSubmitting(true);
+    setError(null);
+    try {
+      const request = await createRequest({
+        serviceCategory: "Insurance",
+        specificService:
+          service.trim() || defaultService || `${kind} - Insurance`,
+        comments: notes.trim(),
+      });
+      setCreated(request);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not raise the request. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const close = () => {
@@ -210,11 +224,19 @@ export function InsuranceRequestDialog({
               </div>
             )}
 
+            {error && (
+              <p className="rounded-lg border border-danger-fg/20 bg-danger-soft px-3 py-2 text-xs font-semibold text-danger-fg">
+                {error}
+              </p>
+            )}
+
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 border-t border-border pt-4">
               <Button type="button" variant="secondary" onClick={close}>
                 Cancel
               </Button>
-              <Button type="submit">Raise request</Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Sending..." : "Raise request"}
+              </Button>
             </div>
           </form>
         )}

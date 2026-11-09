@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertTriangle,
@@ -8,10 +8,10 @@ import {
   Loader2,
   ShieldCheck,
 } from "lucide-react";
-import { Badge, Button, Card, StatCard } from "@kaundinya/ui";
+import { Badge, Button, Card, Skeleton, StatCard } from "@kaundinya/ui";
 import type { BadgeVariant } from "@kaundinya/ui";
 import type { PolicyRecord } from "@kaundinya/config";
-import { POLICIES } from "../lib/moduleData";
+import { downloadPolicy, fetchPolicies } from "../lib/mockApi";
 import { formatDate, formatINR } from "../lib/formats";
 import { InsuranceRequestDialog } from "../components/InsuranceRequestDialog";
 
@@ -36,26 +36,57 @@ function daysUntil(iso: string) {
 }
 
 export function PolicyVault() {
+  const [policies, setPolicies] = useState<PolicyRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [downloaded, setDownloaded] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<{ service: string; kind: string } | null>(
     null
   );
 
-  const policies = POLICIES;
+  useEffect(() => {
+    let active = true;
+    fetchPolicies()
+      .then((rows) => {
+        if (active) setPolicies(rows);
+      })
+      .catch(() => {
+        if (active) setPolicies([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const active = policies.filter((policy) => policy.status === "active").length;
   const expiring = policies.filter((policy) => policy.status === "expiring");
   const totalCover = policies
     .filter((policy) => policy.status !== "lapsed")
     .reduce((sum, policy) => sum + policy.coverAmount, 0);
 
-  const handleDownload = (policy: PolicyRecord) => {
+  const handleDownload = async (policy: PolicyRecord) => {
     setDownloading(policy.id);
     setDownloaded(null);
-    window.setTimeout(() => {
-      setDownloading(null);
+    setError(null);
+    try {
+      const result = await downloadPolicy(policy.id);
+      if (result.url) {
+        window.open(result.url, "_blank", "noopener,noreferrer");
+      }
       setDownloaded(policy.policyNumber);
-    }, 500);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not request the policy document."
+      );
+    } finally {
+      setDownloading(null);
+    }
   };
 
   const openRequest = (service: string, kind = "Insurance consultation") =>
@@ -130,7 +161,18 @@ export function PolicyVault() {
         />
       </div>
 
-      {policies.length === 0 ? (
+      {error && (
+        <p className="rounded-lg border border-danger-fg/20 bg-danger-soft px-3 py-2 text-xs font-semibold text-danger-fg">
+          {error}
+        </p>
+      )}
+
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Skeleton className="h-44 rounded-2xl" />
+          <Skeleton className="h-44 rounded-2xl" />
+        </div>
+      ) : policies.length === 0 ? (
         <Card className="p-10 text-center space-y-3">
           <ShieldCheck className="w-8 h-8 text-brand mx-auto" />
           <p className="text-sm font-bold text-foreground">No policies yet</p>
@@ -228,7 +270,7 @@ export function PolicyVault() {
 
               {downloaded === policy.policyNumber && (
                 <p className="text-[10px] text-success-fg text-center">
-                  {policy.policyNumber}.pdf is ready (mock download).
+                    {policy.policyNumber}.pdf requested.
                 </p>
               )}
             </Card>

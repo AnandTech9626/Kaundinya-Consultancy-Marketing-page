@@ -35,6 +35,7 @@ export function Loans() {
     notes?: string;
     requirementId?: string;
     bank?: string;
+    loanType?: "Home" | "Personal" | "Business" | "Mortgage";
     requirement?: {
       sourceOfIncome: LoanIncomeSource;
       monthlyIncome: number;
@@ -81,6 +82,7 @@ export function Loans() {
     extra?: {
       requirementId?: string;
       bank?: string;
+      loanType?: "Home" | "Personal" | "Business" | "Mortgage";
       requirement?: {
         sourceOfIncome: LoanIncomeSource;
         monthlyIncome: number;
@@ -145,6 +147,7 @@ export function Loans() {
       {
         requirementId: recommendation.id,
         bank: plan.bank,
+        loanType: plan.loanType,
         requirement: currentRequirement(),
       }
     );
@@ -164,6 +167,7 @@ export function Loans() {
               openConsultation("", "Loan consultation", "", {
                 requirementId: recommendation?.id,
                 bank: recommendation?.plans[0]?.bank,
+                loanType: recommendation?.plans[0]?.loanType,
                 requirement: recommendation
                   ? currentRequirement()
                   : undefined,
@@ -487,6 +491,7 @@ export function Loans() {
         defaultNotes={dialog?.notes ?? ""}
         requirementId={dialog?.requirementId}
         bank={dialog?.bank}
+        loanType={dialog?.loanType}
         requirement={dialog?.requirement}
       />
     </div>

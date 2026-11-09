@@ -12,6 +12,7 @@ import { api, ApiError } from "./api";
 import {
   clearSession,
   readSession,
+  writeRememberedEmail,
   writeRememberedMobile,
   writeSession,
   type Session,
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         updateUser(me);
         writeRememberedMobile(me.mobile);
+        writeRememberedEmail(me.email);
       } catch (err) {
         if (cancelled) return;
         // Network hiccups should not hold the app on the loader; keep the

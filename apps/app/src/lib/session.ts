@@ -8,6 +8,7 @@ export interface Session {
 const STORAGE_KEY = "kaundinya.session";
 const LEGACY_USER_KEY = "kaundinya.user";
 const REMEMBERED_MOBILE_KEY = "kaundinya.lastMobile";
+const REMEMBERED_EMAIL_KEY = "kaundinya.lastEmail";
 
 function storage(): Storage | null {
   return typeof window === "undefined" ? null : window.sessionStorage;
@@ -49,6 +50,7 @@ export function writeSession(session: Session): void {
   localStore()?.removeItem(LEGACY_USER_KEY);
   localStore()?.removeItem(STORAGE_KEY);
   writeRememberedMobile(session.user.mobile);
+  writeRememberedEmail(session.user.email);
 }
 
 export function clearSession(): void {
@@ -73,4 +75,17 @@ export function writeRememberedMobile(mobile: string): void {
   const clean = mobile.replace(/\D/g, "").slice(-10);
   if (!/^[6-9]\d{9}$/.test(clean)) return;
   localStore()?.setItem(REMEMBERED_MOBILE_KEY, clean);
+}
+
+export function readRememberedEmail(): string | null {
+  const store = localStore();
+  if (!store) return null;
+  const value = store.getItem(REMEMBERED_EMAIL_KEY);
+  return value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : null;
+}
+
+export function writeRememberedEmail(email: string): void {
+  const clean = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) return;
+  localStore()?.setItem(REMEMBERED_EMAIL_KEY, clean);
 }

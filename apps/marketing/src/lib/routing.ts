@@ -7,10 +7,12 @@ export function getAppUrl(): string {
 }
 
 /**
- * Hand the user off to the main app's OTP screen. Only the mobile number is
- * carried across; the rest of the enquiry is posted to the backend later.
+ * Hand the user off to the main app's OTP screen with the email they submitted.
+ * The app sends the email OTP itself and takes over from there.
  */
-export function redirectToAppOtp(mobile: string) {
-  const clean = mobile.replace(/\D/g, "");
-  window.location.href = `${getAppUrl()}/login?mobile=${encodeURIComponent(clean)}&step=otp`;
+export function redirectToAppOtp(email: string) {
+  const clean = email.trim().toLowerCase();
+  window.location.href = `${getAppUrl()}/login?email=${encodeURIComponent(
+    clean,
+  )}&step=otp`;
 }

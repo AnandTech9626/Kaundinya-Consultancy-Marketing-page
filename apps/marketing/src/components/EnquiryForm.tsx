@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Loader2, ArrowRight } from "lucide-react";
 import { redirectToAppOtp } from "../lib/routing";
-import { sendOtp, submitEnquiry } from "../lib/api";
+import { submitEnquiry } from "../lib/api";
 
 const CATEGORY_OPTIONS: Record<string, string[]> = {
   "Real Estate": [
@@ -70,7 +70,6 @@ export default function EnquiryForm() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [devOtp, setDevOtp] = useState<string | null>(null);
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -131,7 +130,6 @@ export default function EnquiryForm() {
     const cleanMobile = formData.mobile.replace(/\D/g, "").slice(-10);
 
     setSubmitError(null);
-    setDevOtp(null);
     setIsSubmitting(true);
 
     try {
@@ -151,19 +149,7 @@ export default function EnquiryForm() {
         return;
       }
 
-      const otp = await sendOtp(cleanMobile);
-
-      if (!otp.success) {
-        setSubmitError(otp.message);
-        return;
-      }
-
-      if (otp.data?.devOtp) {
-        setDevOtp(otp.data.devOtp);
-        await new Promise((resolve) => setTimeout(resolve, 2500));
-      }
-
-      redirectToAppOtp(cleanMobile);
+      redirectToAppOtp(formData.email.trim());
     } catch {
       setSubmitError("Something went wrong. Please try again.");
     } finally {
@@ -344,11 +330,6 @@ export default function EnquiryForm() {
           <div className="pt-2 space-y-2">
             {submitError && (
               <p className="text-[11px] text-rose-600">{submitError}</p>
-            )}
-            {devOtp && (
-              <p className="text-[11px] text-emerald-700">
-                Dev OTP: <span className="font-bold tracking-widest">{devOtp}</span>
-              </p>
             )}
             <button
               type="submit"
