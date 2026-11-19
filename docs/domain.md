@@ -189,6 +189,9 @@ deploys on 2026-11-19 succeeded and are live:
   No identity numbers are recorded in this repo.
 - 2026-11-19 — GoDaddy also requires **account email verification** before the
   site hold is lifted; awaiting the verification email on the account address.
+- 2026-11-19 — Registry-policy **KYC/contact validation** step reached: the
+  registrant name/phone on the domain must match the Aadhaar identity exactly
+  before clicking Verify. Contact data is not stored in this repo.
 
 ---
 
