@@ -19,7 +19,8 @@
     "check": "npm run check --workspace @kaundinya/marketing",
     "typecheck:app": "npm run typecheck --workspace @kaundinya/app",
     "typecheck:admin": "npm run typecheck --workspace @kaundinya/admin",
-    "check:domain": "node scripts/check-domain.mjs"
+    "check:domain": "node scripts/check-domain.mjs",
+    "seo:assets": "node scripts/generate-seo-assets.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.111.0"
