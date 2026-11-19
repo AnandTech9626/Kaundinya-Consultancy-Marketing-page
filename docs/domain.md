@@ -184,6 +184,9 @@ deploys on 2026-11-19 succeeded and are live:
   completed. Verify the order before changing nameservers.
 - 2026-11-19 — GoDaddy shows the domain as Active but blocks nameserver edits
   with **Registrar Hold**. DNS cutover is blocked until support clears it.
+- 2026-11-19 — GoDaddy triggered identity verification through **DigiLocker**
+  (masked Aadhaar + name/DOB/gender, consent valid 31 days) to clear the hold.
+  No identity numbers are recorded in this repo.
 
 ---
 
