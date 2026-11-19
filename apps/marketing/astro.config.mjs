@@ -1,4 +1,4 @@
-﻿// @ts-check
+// @ts-check
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
@@ -13,7 +13,7 @@ const monorepoRoot = fileURLToPath(new URL('../..', import.meta.url));
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://kaundinyaconsultancy.pages.dev',
+  site: 'https://kaundinya.co.in',
   integrations: [
     react(),
     sitemap()
