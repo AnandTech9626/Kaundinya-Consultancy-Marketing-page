@@ -10,6 +10,10 @@ const DOMAIN = process.argv[2] || process.env.DOMAIN || "kaundinya.co.in";
 const resolver = new Resolver({ timeout: 6000, tries: 2 });
 resolver.setServers(["1.1.1.1", "8.8.8.8"]);
 
+// Record lookups run against whichever nameserver is actually delegated, so we
+// see the configured zone instead of stale resolver caches.
+let zoneResolver = resolver;
+
 const rows = [];
 
 function record(name, status, detail) {
@@ -34,36 +38,45 @@ const HTTP_TARGETS = [
 
 async function checkDns() {
   const ns = await attempt(() => resolver.resolveNs(DOMAIN));
-  if (ns.error) {
-    record("NS", "MISSING", ns.error);
+  const google = await attempt(async () => {
+    const second = new Resolver({ timeout: 6000, tries: 2 });
+    second.setServers(["8.8.8.8"]);
+    return second.resolveNs(DOMAIN);
+  });
+  const nsList = [...new Set([...(ns.value || []), ...(google.value || [])])];
+  const cloudflare = nsList.filter((host) => host.endsWith(".ns.cloudflare.com"));
+
+  if (cloudflare.length >= 2) {
+    const nsIp = await attempt(() => resolver.resolve4(cloudflare[0]));
+    const target = (nsIp.value && nsIp.value[0]) || "1.1.1.1";
+    zoneResolver = new Resolver({ timeout: 6000, tries: 2 });
+    zoneResolver.setServers([target]);
+    record("NS", "OK", `${cloudflare.join(", ")} (authoritative checks via ${target})`);
+  } else if (nsList.length > 0) {
+    record("NS", "PENDING", `${nsList.join(", ")} (Cloudflare not delegated yet)`);
   } else {
-    const cloudflare = ns.value.filter((host) => host.endsWith(".ns.cloudflare.com"));
-    record(
-      "NS",
-      cloudflare.length >= 2 ? "OK" : "PENDING",
-      ns.value.join(", ") + (cloudflare.length >= 2 ? "" : " (Cloudflare not delegated yet)"),
-    );
+    record("NS", "MISSING", ns.error || "no nameservers");
   }
 
-  const apex4 = await attempt(() => resolver.resolve4(DOMAIN));
-  const apex6 = await attempt(() => resolver.resolve6(DOMAIN));
+  const apex4 = await attempt(() => zoneResolver.resolve4(DOMAIN));
+  const apex6 = await attempt(() => zoneResolver.resolve6(DOMAIN));
   const apex = [...(apex4.value || []), ...(apex6.value || [])];
   record("apex A/AAAA", apex.length > 0 ? "OK" : "MISSING", apex.join(", ") || apex4.error || "none");
 
   for (const host of ["www", "app", "admin", "api"]) {
     const name = `${host}.${DOMAIN}`;
-    const cname = await attempt(() => resolver.resolveCname(name));
-    const addr = await attempt(() => resolver.resolve4(name));
+    const cname = await attempt(() => zoneResolver.resolveCname(name));
+    const addr = await attempt(() => zoneResolver.resolve4(name));
     const detail = (cname.value || []).concat(addr.value || []);
     record(`${host} record`, detail.length > 0 ? "OK" : "MISSING", detail.join(", ") || cname.error || "none");
   }
 
-  const sendMx = await attempt(() => resolver.resolveMx(`send.${DOMAIN}`));
+  const sendMx = await attempt(() => zoneResolver.resolveMx(`send.${DOMAIN}`));
   const mxHosts = (sendMx.value || []).map((row) => row.exchange);
   const mxOk = mxHosts.some((host) => host.includes("amazonses.com") || host.includes("resend"));
   record("send MX", mxOk ? "OK" : "MISSING", mxHosts.join(", ") || sendMx.error || "none");
 
-  const sendTxt = await attempt(() => resolver.resolveTxt(`send.${DOMAIN}`));
+  const sendTxt = await attempt(() => zoneResolver.resolveTxt(`send.${DOMAIN}`));
   const sendTxtValue = (sendTxt.value || []).map((parts) => parts.join("")).join(" ");
   record(
     "send SPF",
@@ -71,11 +84,11 @@ async function checkDns() {
     sendTxtValue || sendTxt.error || "none",
   );
 
-  const dkim = await attempt(() => resolver.resolveTxt(`resend._domainkey.${DOMAIN}`));
+  const dkim = await attempt(() => zoneResolver.resolveTxt(`resend._domainkey.${DOMAIN}`));
   const dkimValue = (dkim.value || []).map((parts) => parts.join("")).join(" ");
   record("DKIM", dkimValue.includes("p=") ? "OK" : "MISSING", dkimValue ? "present" : "none");
 
-  const dmarc = await attempt(() => resolver.resolveTxt(`_dmarc.${DOMAIN}`));
+  const dmarc = await attempt(() => zoneResolver.resolveTxt(`_dmarc.${DOMAIN}`));
   const dmarcValue = (dmarc.value || []).map((parts) => parts.join("")).join(" ");
   record("DMARC", dmarcValue.includes("v=DMARC1") ? "OK" : "MISSING", dmarcValue || "none");
 }
