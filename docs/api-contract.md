@@ -15,11 +15,11 @@
 
 | Thing | Value |
 | --- | --- |
-| Marketing site (Pages) | `https://kaundinya.pages.dev` |
-| Client app (Workers) | `https://app.kaundinya.workers.dev` |
-| Admin panel (Workers) | `https://admin.kaundinya.workers.dev` |
-| Backend base URL | `PUBLIC_API_BASE_URL` (env) — e.g. `https://api.kaundinya.com` |
-| Redirect target used by marketing | `PUBLIC_APP_URL=https://app.kaundinya.workers.dev` |
+| Marketing site (Pages) | `https://kaundinya.co.in` |
+| Client app (Workers) | `https://app.kaundinya.co.in` |
+| Admin panel (Workers) | `https://admin.kaundinya.co.in` |
+| Backend base URL | `PUBLIC_API_BASE_URL` (env) — e.g. `https://api.kaundinya.co.in` |
+| Redirect target used by marketing | `PUBLIC_APP_URL=https://app.kaundinya.co.in` |
 
 **Envelopes (every response):**
 ```json
