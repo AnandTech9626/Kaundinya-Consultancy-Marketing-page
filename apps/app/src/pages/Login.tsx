@@ -99,7 +99,6 @@ export function Login() {
       .catch((err) => {
         if (cancelled) return;
         setError(describeError(err));
-        setStep("email");
       })
       .finally(() => {
         if (!cancelled) setSending(false);

@@ -396,3 +396,13 @@ pm run check:domain: 11/15 rows OK; the four HTTP failures are
   TTL is 21600s (6h). Resolvers that cached the old GoDaddy nameservers still
   answer 3.33.130.190 / 15.197.148.33 (GoDaddy parking). Google, Cloudflare
   and AdGuard DNS all return the Cloudflare IPs. Stale caches clear by ~07:00 IST.
+
+- 2026-11-20 - Fixed marketing -> app handoff: marketing was built with
+  PUBLIC_APP_URL=https://app.kaundinya.workers.dev, whose origin was missing
+  from the backend CORS list, so the app's OTP call failed and fell back to the
+  email screen. Marketing now hands off to https://app.kaundinya.co.in and
+  calls https://api.kaundinya.co.in; the app bundle uses the same API base.
+  Backend CORS also allows the workers.dev and pages.dev origins as fallbacks.
+- 2026-11-20 - Login: arriving with ?email=...&step=otp now stays on the OTP
+  screen with an inline error if sending fails, instead of dropping back to the
+  email form.
