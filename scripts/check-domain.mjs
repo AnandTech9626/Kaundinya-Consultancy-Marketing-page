@@ -71,18 +71,14 @@ async function checkDns() {
     record(`${host} record`, detail.length > 0 ? "OK" : "MISSING", detail.join(", ") || cname.error || "none");
   }
 
-  const sendMx = await attempt(() => zoneResolver.resolveMx(`send.${DOMAIN}`));
-  const mxHosts = (sendMx.value || []).map((row) => row.exchange);
-  const mxOk = mxHosts.some((host) => host.includes("amazonses.com") || host.includes("resend"));
-  record("send MX", mxOk ? "OK" : "MISSING", mxHosts.join(", ") || sendMx.error || "none");
-
-  const sendTxt = await attempt(() => zoneResolver.resolveTxt(`send.${DOMAIN}`));
-  const sendTxtValue = (sendTxt.value || []).map((parts) => parts.join("")).join(" ");
-  record(
-    "send SPF",
-    sendTxtValue.includes("amazonses.com") ? "OK" : "MISSING",
-    sendTxtValue || sendTxt.error || "none",
-  );
+  // Resend (2026 layout): CNAME `send` + `rsend`, TXT DKIM, TXT DMARC.
+  for (const host of ["send", "rsend"]) {
+    const name = `${host}.${DOMAIN}`;
+    const cname = await attempt(() => zoneResolver.resolveCname(name));
+    const target = (cname.value || [])[0] || "";
+    const ok = /forge\.rmta\.net|amazonses\.com|resend/.test(target);
+    record(`resend ${host} CNAME`, ok ? "OK" : "MISSING", target || cname.error || "none");
+  }
 
   const dkim = await attempt(() => zoneResolver.resolveTxt(`resend._domainkey.${DOMAIN}`));
   const dkimValue = (dkim.value || []).map((parts) => parts.join("")).join(" ");

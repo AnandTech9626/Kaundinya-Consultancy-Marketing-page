@@ -59,16 +59,21 @@ before it will send to arbitrary recipients.
 
 ### Records Resend will ask for
 
-Grab the exact values from Resend → Domains → `kaundinya.co.in` after adding it
-(region: Mumbai / `ap-south-1` if offered):
+Resend's 2026 layout for this domain (region `apne1`, verified 2026-11-20):
 
-- `MX  send` → `feedback-smtp.ap-south-1.amazonses.com` priority 10
-- `TXT send` → `v=spf1 include:amazonses.com ~all`
-- `TXT resend._domainkey` → `p=MIGf...` (full DKIM value from dashboard)
-- `TXT _dmarc` → `v=DMARC1; p=none; rua=mailto:<client email>`
+| Type | Name | Content | Proxy | Status |
+| --- | --- | --- | --- | --- |
+| TXT | `resend._domainkey` | `p=MIGf...` (full DKIM value) | n/a | verified |
+| CNAME | `rsend` | `rsend-apne1.forge.rmta.net` | DNS only | verified |
+| CNAME | `send` | `send.forge.rmta.net` | DNS only | verified |
+| TXT | `_dmarc` | `v=DMARC1; p=none;` | n/a | recommended |
 
-Host field must contain only the host part (`send`, `resend._domainkey`,
-`_dmarc`); Cloudflare appends the zone.
+Optional and **not** enabled: Resend "Enable receiving" adds `MX @` ->
+`receive-apne1.forge.rmta.net` (priority 10). Skip it until inbound mail exists.
+
+Host field must contain only the host part (`send`, `rsend`,
+`resend._domainkey`, `_dmarc`); Cloudflare appends the zone. CNAMEs must be
+**DNS only (grey cloud)**.
 
 ### Backend env (Vercel — `kaundinya-backend`)
 
@@ -253,16 +258,16 @@ Use the account that owns the domain and the Cloudflare projects
 ### Phase 4 — Resend
 
 10. Open <https://resend.com/domains/create>.
-11. Enter `kaundinya.co.in`, choose region **Mumbai / ap-south-1** if offered,
-    click **Add**.
-12. Copy the records Resend shows. Expected shape:
-    - `MX  send` → `feedback-smtp.ap-south-1.amazonses.com` priority 10
-    - `TXT send` → `v=spf1 include:amazonses.com ~all`
-    - `TXT resend._domainkey` → `p=MIGf...` (copy the full value)
-    - `TXT _dmarc` → `v=DMARC1; p=none; rua=mailto:<client email>`
+11. Enter `kaundinya.co.in`; region is chosen by Resend (this account resolved
+    to `apne1`).
+12. Add the records Resend shows (2026 layout):
+    - `TXT resend._domainkey` -> full `p=MIGf...` DKIM value (verified)
+    - `CNAME rsend` -> `rsend-apne1.forge.rmta.net`, proxy **DNS only**
+    - `CNAME send` -> `send.forge.rmta.net`, proxy **DNS only**
+    - `TXT _dmarc` -> `v=DMARC1; p=none;`
 13. Add them at
     <https://dash.cloudflare.com/?to=/:account/kaundinya.co.in/dns/records>.
-    In the **Name** field enter only the host part (`send`,
+    In the **Name** field enter only the host part (`send`, `rsend`,
     `resend._domainkey`, `_dmarc`); Cloudflare appends the zone.
 14. Return to <https://resend.com/domains> and click **Verify**.
     Recheck after 30 minutes; DNS can take up to 24h.
