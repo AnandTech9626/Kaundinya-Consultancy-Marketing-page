@@ -197,6 +197,10 @@ deploys on 2026-11-19 succeeded and are live:
 - 2026-11-19 — GoDaddy domain page shows status **Idle** with a KYC banner and a
   **Validate** button; nameserver changes stay disabled until KYC completes.
   Current nameservers are GoDaddy defaults (`NS47/NS48.DOMAINCONTROL.COM`).
+- 2026-11-19 — Registrant contact update submitted and is "in progress".
+  GoDaddy's QR prompt is only the optional mobile app (sensitive-change
+  approvals / 2FA); it is not required for KYC. Await registry sync, then
+  re-run Validate.
 
 ---
 
