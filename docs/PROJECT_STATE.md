@@ -18,11 +18,11 @@ Kaundinya Consultancy monorepo (npm workspaces):
 ## 2. Live URLs
 | App | URL |
 | --- | --- |
-| Marketing (Pages) | https://kaundinya.pages.dev |
-| Client app (Workers) | https://app.kaundinya.workers.dev |
-| Admin (Workers) | https://admin.kaundinya.workers.dev |
+| Marketing (Pages) | https://kaundinya.co.in |
+| Client app (Workers) | https://app.kaundinya.co.in |
+| Admin (Workers) | https://admin.kaundinya.co.in |
 
-`workers.dev` account subdomain = **`kaundinya`**.
+All live surfaces use the custom domain kaundinya.co.in (apex/www = marketing, pp = client app, dmin = admin, pi = backend). Legacy *.workers.dev / *.pages.dev hostnames are no longer referenced.
 
 ## 3. Git
 - Working branch: **`sagar/dev`**
@@ -31,7 +31,7 @@ Kaundinya Consultancy monorepo (npm workspaces):
 
 ## 4. CI/CD (GitHub Actions)
 - `.github/workflows/ci.yml` — typecheck + build for **marketing, app, admin** (on PR/push to main/developer)
-- `.github/workflows/deploy.yml` — marketing → Pages project `kaundinya` (env `PUBLIC_APP_URL=https://app.kaundinya.workers.dev`)
+- `.github/workflows/deploy.yml` — marketing → Pages project `kaundinya` (env `PUBLIC_APP_URL=https://app.kaundinya.co.in`)
 - `.github/workflows/deploy-app.yml` — app → Workers `app`
 - `.github/workflows/deploy-admin.yml` — admin → Workers `admin`
 - Secrets required: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
