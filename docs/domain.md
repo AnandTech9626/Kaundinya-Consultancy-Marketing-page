@@ -374,3 +374,17 @@ Ordered. Steps 1-2 are hard gates; nothing below works until they pass.
   (eedback-smtp.<region>.amazonses.com) and the legacy SPF TXT
   (=spf1 include:amazonses.com ~all). Both must be deleted so the CNAME can
   verify in Resend.
+
+- 2026-11-20 - Vercel: pi.kaundinya.co.in added (verified) and Cloudflare CNAME
+  pi -> cname.vercel-dns.com created (DNS only). Backend env updated:
+  RESEND_API_KEY rotated, EMAIL_FROM=Kaundinya Group <no-reply@kaundinya.co.in>,
+  PUBLIC_BASE_URL=https://api.kaundinya.co.in, CORS_ORIGINS set for apex/www/app/admin,
+  EMAIL_TEST_REDIRECT deleted. Production redeployed (dpl_CvbygRos4N3hhaK3m78R5hY8Savq).
+- 2026-11-20 - End-to-end OTP verified: POST /api/otp/send returned success and
+  Resend shows the message from 
+o-reply@kaundinya.co.in as **delivered**.
+- 2026-11-20 - 
+pm run check:domain: 11/15 rows OK; the four HTTP failures are
+  local resolver cache only (verified 200 via curl --resolve against the edge /
+  Vercel IPs). Resend domain stays partially_verified only because the optional
+  "Receiving" MX is not added.
