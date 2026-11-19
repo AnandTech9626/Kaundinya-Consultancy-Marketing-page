@@ -21,7 +21,7 @@ open items. Keep it updated as each step completes.
 | Auto-renew | ON |
 | Renewal reminders | **PARKED — set up tomorrow** (calendar + verify GoDaddy emails) |
 | WHOIS privacy | Not available on `.co.in` (registry restriction) |
-| Status | Registered. DNS not yet pointed at Cloudflare. |
+| Status | **Purchase unverified.** `.co.in` registry RDAP returns 404 "Object not found" and public DNS is NXDOMAIN (checked 2026-11-19). Confirm the GoDaddy order shows as Active before wiring DNS. |
 
 Ownership note: the account is in the developer's name. The client asked to be
 told at renewal time. GoDaddy supports a free "move domain to another GoDaddy
@@ -176,6 +176,9 @@ deploys on 2026-11-19 succeeded and are live:
 - 2026-11-19 — Found dead `VITE_API_BASE_URL`, invalid CI token, duplicate
   Cloudflare projects; repo variable fixed, scoped secrets added.
 - 2026-11-19 — Manual production deploys succeeded (app worker + Pages).
+- 2026-11-19 — Cloudflare zone added, but registry RDAP still returns 404 and
+  DNS is NXDOMAIN for `kaundinya.co.in`: the GoDaddy purchase may not have
+  completed. Verify the order before changing nameservers.
 
 ---
 
