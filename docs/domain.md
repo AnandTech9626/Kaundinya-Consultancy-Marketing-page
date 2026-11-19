@@ -65,8 +65,12 @@ Resend's 2026 layout for this domain (region `apne1`, verified 2026-11-20):
 | --- | --- | --- | --- | --- |
 | TXT | `resend._domainkey` | `p=MIGf...` (full DKIM value) | n/a | verified |
 | CNAME | `rsend` | `rsend-apne1.forge.rmta.net` | DNS only | verified |
-| CNAME | `send` | `send.forge.rmta.net` | DNS only | verified |
-| TXT | `_dmarc` | `v=DMARC1; p=none;` | n/a | recommended |
+| CNAME | `send` | `send.forge.rmta.net` | DNS only | live in DNS, Resend lagging |
+| TXT | `_dmarc` | `v=DMARC1; p=none;` | n/a | added 2026-11-20 |
+
+Public DNS confirms all four (`send.kaundinya.co.in` resolves through the CNAME to
+`v=spf1 include:amazonses.com ~all`). Resend's `send` row may still show
+`pending` until its verifier re-runs.
 
 Optional and **not** enabled: Resend "Enable receiving" adds `MX @` ->
 `receive-apne1.forge.rmta.net` (priority 10). Skip it until inbound mail exists.
@@ -348,5 +352,9 @@ Ordered. Steps 1-2 are hard gates; nothing below works until they pass.
 - [ ] 10. **CI unblock.** Run `gh auth refresh -h github.com -s workflow`, then
       push the pending two-line workflow change (currently unstaged locally).
 
-
-
+- 2026-11-20 - Email DNS complete: DKIM verified, send CNAME verified,
+  send CNAME live (Resend verifier lagging), _dmarc added.
+- 2026-11-20 - Attached custom domains via API: Pages kaundinya.co.in +
+  www (status pending, needs the two CNAMEs to kaundinya.pages.dev),
+  Worker pp.kaundinya.co.in, Worker dmin.kaundinya.co.in (DNS resolves,
+  edge certificate still provisioning).
