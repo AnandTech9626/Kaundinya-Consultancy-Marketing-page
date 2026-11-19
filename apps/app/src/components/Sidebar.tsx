@@ -17,13 +17,13 @@ import { useAuth } from "../lib/auth";
 import { BrandLockup } from "./BrandLockup";
 import { SocialLinks } from "./SocialLinks";
 
-const NAV: { to: string; label: string; icon: LucideIcon; tag?: string }[] = [
+const NAV: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/real-estate", label: "Real Estate", icon: Building2 },
   { to: "/home-services", label: "Home Services", icon: Wrench },
   { to: "/digital-services", label: "Digital Services", icon: FileText },
-  { to: "/insurance", label: "Insurance", icon: ShieldCheck, tag: "Demo" },
-  { to: "/loans", label: "Loans", icon: Coins, tag: "Demo" },
+  { to: "/insurance", label: "Insurance", icon: ShieldCheck },
+  { to: "/loans", label: "Loans", icon: Coins },
 ];
 
 interface SidebarProps {
@@ -80,14 +80,14 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         </div>
 
         <nav className={`flex-1 p-3 space-y-1 overflow-y-auto ${collapsed ? "lg:px-2" : ""}`}>
-          {NAV.map(({ to, label, icon: Icon, tag }) => (
+          {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               end={to === "/dashboard"}
               onClick={onClose}
-              aria-label={collapsed ? `${label}${tag ? " (Demo)" : ""}` : undefined}
-              title={collapsed ? `${label}${tag ? " (Demo)" : ""}` : undefined}
+              aria-label={collapsed ? label : undefined}
+              title={collapsed ? label : undefined}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   collapsed ? "lg:justify-center lg:px-0" : ""
@@ -98,27 +98,12 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
                 }`
               }
             >
-              {({ isActive }) => (
-                <>
-                  <Icon className="w-4 h-4 shrink-0" />
-                  <span className={`flex-1 ${collapsed ? "lg:hidden" : ""}`}>
-                    {label}
-                  </span>
-                  {tag && (
-                    <span
-                      className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider ${
-                        collapsed ? "lg:hidden" : ""
-                      } ${
-                        isActive
-                          ? "border-on-brand/20 bg-on-brand/10 text-on-brand"
-                          : "border-brand/30 bg-brand/15 text-brand"
-                      }`}
-                    >
-                      {tag}
-                    </span>
-                  )}
-                </>
-              )}
+              <>
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className={`flex-1 ${collapsed ? "lg:hidden" : ""}`}>
+                  {label}
+                </span>
+              </>
             </NavLink>
           ))}
         </nav>

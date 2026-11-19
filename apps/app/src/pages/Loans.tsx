@@ -16,7 +16,7 @@ import {
   type LoanRecommendationResult,
 } from "../lib/mockApi";
 import { ApiError } from "../lib/api";
-import { STATUS_META } from "../lib/status";
+import { statusMeta } from "../lib/status";
 import { formatINR } from "../lib/formats";
 import { LoanRequestDialog } from "../components/LoanRequestDialog";
 import { BankLogo } from "../components/BankLogo";
@@ -462,8 +462,8 @@ export function Loans() {
                     {request.id.toUpperCase()} · {request.createdAt}
                   </p>
                 </div>
-                <Badge variant={STATUS_META[request.status].badge}>
-                  {STATUS_META[request.status].label}
+                <Badge variant={statusMeta(request.status).badge}>
+                  {statusMeta(request.status).label}
                 </Badge>
               </Link>
             ))}

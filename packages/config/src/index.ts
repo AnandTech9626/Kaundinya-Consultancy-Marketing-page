@@ -6,6 +6,8 @@ export {
   MODULE_STAGES,
   MODULE_META,
   REAL_ESTATE_AMENITIES,
+  BHK_OPTIONS,
+  PROPERTY_CONFIGURATIONS,
   COMPLIANCE,
 } from "./constants";
 export * from "./insurance";

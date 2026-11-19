@@ -10,19 +10,17 @@ import {
   Search,
 } from "lucide-react";
 import { Badge, Card, Skeleton } from "@kaundinya/ui";
-import type { BadgeVariant } from "@kaundinya/ui";
 import {
   MODULE_META,
   type ServiceCategoryId,
 } from "@kaundinya/config";
 import { useAuth } from "../lib/auth";
-import { fetchMyRequests, type MyRequestItem } from "../lib/mockApi";
+import { fetchMyRequests, fetchPolicies, type MyRequestItem } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { formatDate } from "../lib/formats";
 import { getServiceIcon } from "../lib/icons";
-import { useMockRequests } from "../lib/mockRequests";
-import { STATUS_META } from "../lib/status";
-import { POLICIES } from "../lib/moduleData";
+import { statusMeta, statusVariant } from "../lib/status";
+import { isPolicyRenewalSolved } from "../lib/renewals";
 import { BRAND_MARK_URL } from "../lib/brand";
 import { InfoTip } from "../components/InfoTip";
 import { SocialLinksCard } from "../components/SocialLinks";
@@ -44,15 +42,6 @@ const IN_PROGRESS = new Set([
   "confirmed",
 ]);
 const NEW = new Set(["requested", "draft"]);
-
-function statusVariant(status: string): BadgeVariant {
-  if (status === "completed" || status === "active") return "success";
-  if (status === "cancelled") return "danger";
-  if (status === "expiring") return "warning";
-  if (status === "requested" || status === "draft") return "warning";
-  if (status === "sold" || status === "rented") return "neutral";
-  return "info";
-}
 
 function DashboardSkeleton() {
   return (
@@ -80,38 +69,22 @@ export function Dashboard() {
     () => fetchMyRequests({ limit: 50 }),
     [],
   );
-  const { requests: mockRequests } = useMockRequests();
+  const { data: policies } = useAsync(fetchPolicies);
 
   const [module, setModule] = useState<"" | MyRequestItem["module"]>("");
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
   const [needsRenewal, setNeedsRenewal] = useState(false);
 
-  const all = [
-    ...(data?.items ?? []),
-    ...mockRequests
-      .filter(
-        (request) =>
-          request.serviceCategory === "Insurance" ||
-          request.serviceCategory === "Loans"
-      )
-      .map((request): MyRequestItem => ({
-        id: request.id,
-        reference: request.id.toUpperCase(),
-        title: request.specificService,
-        module:
-          request.serviceCategory === "Insurance" ? "Insurance" : "Loans",
-        status: request.status,
-        statusLabel: STATUS_META[request.status].label,
-        createdAt: request.createdAt,
-        href: `/requests/${request.id}`,
-      })),
-  ];
+  const all = data?.items ?? [];
 
   const renewalItems: MyRequestItem[] = useMemo(() => {
-    const policyRows: MyRequestItem[] = POLICIES.filter(
-      (policy) => policy.status === "expiring"
-    )
+    const policyRows: MyRequestItem[] = (policies ?? [])
+      .filter(
+        (policy) =>
+          policy.status === "expiring" &&
+          !isPolicyRenewalSolved(policy, data?.items ?? [])
+      )
       .slice()
       .sort((a, b) => (a.renewalDate < b.renewalDate ? -1 : 1))
       .map((policy) => ({
@@ -119,32 +92,25 @@ export function Dashboard() {
         reference: policy.policyNumber.toUpperCase(),
         title: `${policy.provider} ${policy.type} renewal`,
         module: "Insurance",
-        status: "expiring",
-        statusLabel: "Renewal due",
+        status: policy.status,
+        statusLabel: statusMeta(policy.status).label,
         createdAt: policy.renewalDate,
         href: "/insurance/policies",
       }));
 
-    const requestRows: MyRequestItem[] = mockRequests
+    const requestRows: MyRequestItem[] = (data?.items ?? [])
       .filter(
         (request) =>
-          request.specificService.toLowerCase().includes("renewal") &&
+          (request.module === "Insurance" || request.module === "Loans") &&
+          request.title.toLowerCase().includes("renewal") &&
           (request.status === "new" || request.status === "in_progress")
       )
-      .map((request): MyRequestItem => ({
-        id: request.id,
-        reference: request.id.toUpperCase(),
-        title: request.specificService,
-        module:
-          request.serviceCategory === "Loans" ? "Loans" : "Insurance",
-        status: request.status,
-        statusLabel: STATUS_META[request.status].label,
-        createdAt: request.createdAt,
-        href: `/requests/${request.id}`,
+      .map((request) => ({
+        ...request,
       }));
 
     return [...policyRows, ...requestRows];
-  }, [mockRequests]);
+  }, [policies, data]);
 
   const visibleBase = needsRenewal ? renewalItems : all;
 

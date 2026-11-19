@@ -387,6 +387,23 @@ export function downloadPolicy(
   );
 }
 
+export interface CreateMotorPolicyInput {
+  policyNumber: string;
+  provider: string;
+  vehicleType: "2W" | "4W";
+  holder?: string;
+  premium: number;
+  coverAmount?: number;
+  validFrom: string;
+  renewalDate: string;
+}
+
+export function createMotorPolicy(
+  input: CreateMotorPolicyInput
+): Promise<PolicyRecord> {
+  return api.post<PolicyRecord>("/policies", input);
+}
+
 /* ----------------------------- Home services ----------------------------- */
 
 export function fetchMeasurements(): Promise<MeasurementBooking[]> {

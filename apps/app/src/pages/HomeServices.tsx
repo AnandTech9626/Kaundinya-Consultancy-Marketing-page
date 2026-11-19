@@ -36,6 +36,7 @@ import {
   fetchMeasurements,
 } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
+import { statusBadge, statusLabel } from "../lib/status";
 import { useAuth } from "../lib/auth";
 import { InfoTip } from "../components/InfoTip";
 
@@ -90,14 +91,6 @@ type TrackedRequest = {
   status: string;
   href: string;
 };
-
-function statusBadgeVariant(status: string) {
-  if (status === "completed") return "success" as const;
-  if (status === "cancelled") return "danger" as const;
-  if (status === "requested") return "warning" as const;
-  if (status === "in_progress") return "warning" as const;
-  return "info" as const;
-}
 
 export function HomeServices() {
   const { user } = useAuth();
@@ -797,8 +790,8 @@ export function HomeServices() {
                   Request status
                 </h3>
                 {currentRequest ? (
-                  <Badge variant={statusBadgeVariant(currentRequest.status)}>
-                    {currentRequest.status.replace(/_/g, " ")}
+                  <Badge variant={statusBadge(currentRequest.status)}>
+                    {statusLabel(currentRequest.status)}
                   </Badge>
                 ) : (
                   <span className="text-[10px] font-semibold text-subtle-foreground">
