@@ -176,3 +176,76 @@ deploys on 2026-11-19 succeeded and are live:
 - 2026-11-19 — Found dead `VITE_API_BASE_URL`, invalid CI token, duplicate
   Cloudflare projects; repo variable fixed, scoped secrets added.
 - 2026-11-19 — Manual production deploys succeeded (app worker + Pages).
+
+---
+
+## 8. Manual cutover steps (click-by-click)
+
+Use the account that owns the domain and the Cloudflare projects
+(`b811941795b09ce62ffbc94cc72696b6`). Deep links may ask you to pick an account.
+
+### Phase 1 — Cloudflare zone
+
+1. Open <https://dash.cloudflare.com/?to=/:account/add-site>
+2. Enter `kaundinya.co.in` → **Continue** → select **Free** → **Continue**.
+3. Let Cloudflare scan existing DNS, keep whatever it finds (there should be
+   little or nothing on a fresh domain) → **Continue**.
+4. Copy the **two nameservers** shown, e.g. `ada.ns.cloudflare.com` and
+   `bob.ns.cloudflare.com`.
+
+### Phase 2 — GoDaddy nameservers
+
+5. Open <https://dcc.godaddy.com/control/portfolio> and click `kaundinya.co.in`
+   (direct: <https://dcc.godaddy.com/control/portfolio/kaundinya.co.in/settings>).
+6. **Nameservers** tab → **Change nameservers** → choose *I'll use my own
+   nameservers* → paste both Cloudflare nameservers → **Save** → confirm.
+7. Screenshot the previous nameservers first — that is the rollback path.
+
+### Phase 3 — wait for activation
+
+8. Watch <https://dash.cloudflare.com/?to=/:account/kaundinya.co.in> until the
+   zone status is **Active** (usually 15–60 minutes, up to 24h).
+9. Do not edit GoDaddy DNS after this point — GoDaddy DNS is inert once the
+   nameservers move.
+
+### Phase 4 — Resend
+
+10. Open <https://resend.com/domains/create>.
+11. Enter `kaundinya.co.in`, choose region **Mumbai / ap-south-1** if offered,
+    click **Add**.
+12. Copy the records Resend shows. Expected shape:
+    - `MX  send` → `feedback-smtp.ap-south-1.amazonses.com` priority 10
+    - `TXT send` → `v=spf1 include:amazonses.com ~all`
+    - `TXT resend._domainkey` → `p=MIGf...` (copy the full value)
+    - `TXT _dmarc` → `v=DMARC1; p=none; rua=mailto:<client email>`
+13. Add them at
+    <https://dash.cloudflare.com/?to=/:account/kaundinya.co.in/dns/records>.
+    In the **Name** field enter only the host part (`send`,
+    `resend._domainkey`, `_dmarc`); Cloudflare appends the zone.
+14. Return to <https://resend.com/domains> and click **Verify**.
+    Recheck after 30 minutes; DNS can take up to 24h.
+
+### Phase 5 — attach custom domains (after Resend is green)
+
+15. Pages: <https://dash.cloudflare.com/?to=/:account/pages/view/kaundinya> →
+    **Custom domains** → add `kaundinya.co.in` and `www.kaundinya.co.in`.
+16. Worker app:
+    <https://dash.cloudflare.com/?to=/:account/workers/services/view/app> →
+    **Settings → Domains & Routes** → **Add custom domain** →
+    `app.kaundinya.co.in`.
+17. Worker admin: same flow for `admin.kaundinya.co.in` — resolve the duplicate
+    `admin` name in `apps/admin/wrangler.jsonc` (unused) first.
+18. Vercel backend: <https://vercel.com/dashboard> → `kaundinya-backend` →
+    **Settings → Domains** → add `api.kaundinya.co.in`. Then in Cloudflare create
+    `CNAME api → cname.vercel-dns.com` with **proxy OFF (DNS only)**.
+
+### Phase 6 — env + redeploy
+
+19. Vercel env: `EMAIL_FROM`, `EMAIL_REPLY_TO`, clear `EMAIL_TEST_REDIRECT`,
+    `PUBLIC_BASE_URL`, `CORS_ORIGINS` (see §3). Redeploy.
+20. GitHub repo variables/secrets:
+    <https://github.com/AnandTech9626/Kaundinya-Consultancy-Marketing-page/settings/secrets/actions>
+    and `.../settings/variables/actions`.
+21. Update `apps/marketing/astro.config.mjs` `site` to `https://kaundinya.co.in`,
+    then PR → `developer` → `main`.
+
