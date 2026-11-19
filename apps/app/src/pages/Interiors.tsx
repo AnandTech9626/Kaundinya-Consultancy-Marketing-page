@@ -17,6 +17,7 @@ import {
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import { formatDate } from "../lib/formats";
+import { statusLabel } from "../lib/status";
 
 const PORTFOLIO = [
   { title: "Warm minimal living room", meta: "Kondapur · 3 BHK", tone: "from-[#3b3420] via-[#171717] to-[#2a2117]" },
@@ -243,7 +244,7 @@ export function Interiors() {
                     {item.style} · {item.budget}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    {item.status} · {formatDate(item.createdAt)}
+                    {statusLabel(item.status)} · {formatDate(item.createdAt)}
                   </p>
                 </div>
               ))}

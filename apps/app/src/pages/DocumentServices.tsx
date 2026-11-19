@@ -17,15 +17,14 @@ import {
   Skeleton,
   StatusTimeline,
 } from "@kaundinya/ui";
-import type { BadgeVariant } from "@kaundinya/ui";
 import {
   MODULE_STAGES,
   SERVICE_CATALOG,
-  type DigitalServiceStatus,
 } from "@kaundinya/config";
 import { fetchDocuments, uploadDocument } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { formatDate } from "../lib/formats";
+import { statusMeta } from "../lib/status";
 
 const DOC_SERVICE = SERVICE_CATALOG.find((item) => item.id === "hs-documents");
 const DOC_TYPES = DOC_SERVICE?.issueTypes ?? [
@@ -59,16 +58,6 @@ const DOC_REQUIREMENTS: Record<string, string[]> = {
 };
 
 const STATUS_STAGES = MODULE_STAGES["digital-services"];
-
-const STATUS_META: Record<
-  DigitalServiceStatus,
-  { label: string; variant: BadgeVariant }
-> = {
-  submitted: { label: "Submitted", variant: "warning" },
-  documents_received: { label: "Documents received", variant: "info" },
-  processing: { label: "Processing", variant: "gold" },
-  completed: { label: "Completed", variant: "success" },
-};
 
 export function DocumentServices() {
   const { data, loading, error, refetch } = useAsync(fetchDocuments);
@@ -247,8 +236,8 @@ export function DocumentServices() {
                 </h2>
               </div>
               {latestDocument && (
-                <Badge variant={STATUS_META[latestStatus].variant}>
-                  {STATUS_META[latestStatus].label}
+                <Badge variant={statusMeta(latestStatus).badge}>
+                  {statusMeta(latestStatus).label}
                 </Badge>
               )}
             </div>
@@ -302,7 +291,7 @@ export function DocumentServices() {
             ) : (
               <ul className="space-y-2">
                 {documents.map((document) => {
-                  const status = STATUS_META[document.status ?? "documents_received"];
+                  const status = statusMeta(document.status ?? "documents_received");
                   return (
                     <li
                       key={document.id}
@@ -314,7 +303,7 @@ export function DocumentServices() {
                           <p className="text-xs font-bold text-foreground truncate">
                             {document.fileName}
                           </p>
-                          <Badge variant={status.variant}>{status.label}</Badge>
+                          <Badge variant={status.badge}>{status.label}</Badge>
                         </div>
                         <p className="text-[10px] text-muted-foreground">
                           {document.docType} · {formatDate(document.createdAt)}

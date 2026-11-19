@@ -20,7 +20,7 @@ import {
 } from "@kaundinya/config";
 import type { ServiceRequest } from "@kaundinya/config";
 import { fetchRequests } from "../lib/mockApi";
-import { STATUS_META } from "../lib/status";
+import { statusMeta } from "../lib/status";
 import { LoanRequestDialog } from "../components/LoanRequestDialog";
 
 const TOPIC_ICONS: Record<string, LucideIcon> = {
@@ -223,8 +223,8 @@ export function LoanSupport() {
                     {request.id.toUpperCase()} · {request.createdAt}
                   </p>
                 </div>
-                <Badge variant={STATUS_META[request.status].badge}>
-                  {STATUS_META[request.status].label}
+                <Badge variant={statusMeta(request.status).badge}>
+                  {statusMeta(request.status).label}
                 </Badge>
               </Link>
             ))}

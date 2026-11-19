@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { subscribeLiveData } from "./live";
 
 export interface AsyncResult<T> {
   data: T | null;
@@ -8,9 +9,11 @@ export interface AsyncResult<T> {
 }
 
 /**
- * Minimal async data hook. Mirrors the shape a real data-fetching library
- * (React Query / SWR) exposes so pages can be wired to the mock API now and
- * swapped to the live API later without touching component code.
+ * Minimal async data hook with live revalidation.
+ *
+ * It re-runs the fetcher whenever a notification arrives (SSE) and when the
+ * tab becomes visible again, so admin-side status changes reach the client
+ * without a manual reload.
  */
 export function useAsync<T>(
   fn: () => Promise<T>,
@@ -19,14 +22,16 @@ export function useAsync<T>(
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loadedOnce = useRef(false);
 
   const run = useCallback(() => {
     let cancelled = false;
-    setLoading(true);
+    if (!loadedOnce.current) setLoading(true);
     setError(null);
     fn()
       .then((result) => {
         if (!cancelled) {
+          loadedOnce.current = true;
           setData(result);
           setLoading(false);
         }
@@ -45,5 +50,40 @@ export function useAsync<T>(
 
   useEffect(() => run(), [run]);
 
+  useEffect(() => {
+    const unsubscribe = subscribeLiveData(run);
+    const interval = window.setInterval(run, 45000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") run();
+    };
+    window.addEventListener("focus", run);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      unsubscribe();
+      window.clearInterval(interval);
+      window.removeEventListener("focus", run);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [run]);
+
   return { data, loading, error, refetch: run };
+}
+
+/** Re-runs a manual loader on live events and when the tab regains focus. */
+export function useLiveRefetch(refetch: () => void) {
+  useEffect(() => {
+    const unsubscribe = subscribeLiveData(refetch);
+    const interval = window.setInterval(refetch, 45000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refetch();
+    };
+    window.addEventListener("focus", refetch);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      unsubscribe();
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refetch);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refetch]);
 }

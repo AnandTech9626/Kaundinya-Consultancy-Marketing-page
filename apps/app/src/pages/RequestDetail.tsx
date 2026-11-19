@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Badge, Card, StatusTimeline } from "@kaundinya/ui";
 import type { ServiceRequest } from "@kaundinya/config";
 import { fetchRequest } from "../lib/mockApi";
-import { useMockRequests } from "../lib/mockRequests";
-import { STATUS_META, STATUS_ORDER } from "../lib/status";
+import { useLiveRefetch } from "../lib/useAsync";
+import { statusMeta, STATUS_ORDER } from "../lib/status";
 import { getServiceIcon } from "../lib/icons";
 
 function iconNameFor(category: string) {
@@ -17,34 +17,26 @@ function iconNameFor(category: string) {
 
 export function RequestDetail() {
   const { id } = useParams();
-  const { requests: mockRequests } = useMockRequests();
-  const [liveRequest, setLiveRequest] = useState<ServiceRequest | null>(null);
+  const [request, setRequest] = useState<ServiceRequest | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let active = true;
+  const load = useCallback(() => {
     if (!id) {
       setLoading(false);
       return;
     }
     setLoading(true);
     fetchRequest(id)
-      .then((item) => {
-        if (active) setLiveRequest(item);
-      })
-      .catch(() => {
-        if (active) setLiveRequest(null);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+      .then((item) => setRequest(item))
+      .catch(() => setRequest(null))
+      .finally(() => setLoading(false));
   }, [id]);
 
-  const request =
-    liveRequest ?? mockRequests.find((entry) => entry.id === id) ?? null;
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useLiveRefetch(load);
 
   const backLink = (
     <Link
@@ -99,8 +91,8 @@ export function RequestDetail() {
               </h1>
             </div>
           </div>
-          <Badge variant={STATUS_META[request.status].badge}>
-            {STATUS_META[request.status].label}
+          <Badge variant={statusMeta(request.status).badge}>
+            {statusMeta(request.status).label}
           </Badge>
         </div>
 
@@ -142,7 +134,7 @@ export function RequestDetail() {
         <StatusTimeline
           stages={STATUS_ORDER.map((status) => ({
             id: status,
-            label: STATUS_META[status].label,
+            label: statusMeta(status).label,
           }))}
           currentId={request.status}
           cancelled={request.status === "cancelled"}

@@ -11,25 +11,11 @@ import {
 } from "lucide-react";
 import { Badge, Card, Skeleton } from "@kaundinya/ui";
 import type { BadgeVariant } from "@kaundinya/ui";
-import type { PrintJob } from "@kaundinya/config";
 import { fetchDocuments, fetchPrintJobs } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { formatDate, formatINR } from "../lib/formats";
+import { statusMeta } from "../lib/status";
 import { InfoTip } from "../components/InfoTip";
-
-const DOC_STATUS: Record<string, { label: string; variant: BadgeVariant }> = {
-  submitted: { label: "Submitted", variant: "warning" },
-  documents_received: { label: "Documents received", variant: "info" },
-  processing: { label: "Processing", variant: "gold" },
-  completed: { label: "Completed", variant: "success" },
-};
-
-const PRINT_STATUS: Record<PrintJob["status"], { label: string; variant: BadgeVariant }> = {
-  queued: { label: "Queued", variant: "warning" },
-  printing: { label: "Printing", variant: "info" },
-  ready_for_pickup: { label: "Ready for pickup", variant: "gold" },
-  completed: { label: "Completed", variant: "success" },
-};
 
 const STEPS = [
   {
@@ -77,25 +63,25 @@ export function DigitalServices() {
 
   const activity: ActivityItem[] = [
     ...documents.slice(0, 3).map((document) => {
-      const status = DOC_STATUS[document.status ?? "documents_received"];
+      const status = statusMeta(document.status ?? "documents_received");
       return {
         id: document.id,
         title: document.docType,
         detail: document.fileName,
         status: status.label,
-        variant: status.variant,
+        variant: status.badge,
         date: document.createdAt,
         href: "/digital-services/id-updates",
       };
     }),
     ...prints.slice(0, 3).map((print) => {
-      const status = PRINT_STATUS[print.status];
+      const status = statusMeta(print.status);
       return {
         id: print.id,
         title: "Printout",
         detail: `${print.fileName} · ${formatINR(print.price)}`,
         status: status.label,
-        variant: status.variant,
+        variant: status.badge,
         date: print.createdAt,
         href: "/digital-services/printouts",
       };

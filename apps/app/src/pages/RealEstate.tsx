@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  ArrowRight,
   Building2,
   CalendarDays,
   Plus,
   Search,
-  ShieldCheck,
   SlidersHorizontal,
 } from "lucide-react";
 import { Badge, Card, Input, Select, Skeleton } from "@kaundinya/ui";
-import type { PropertyListing, SiteVisit } from "@kaundinya/config";
-import { COMPLIANCE } from "@kaundinya/config";
-import { PropertyCard } from "../components/PropertyCard";
+import type { PropertyListing } from "@kaundinya/config";
+import { BHK_OPTIONS } from "@kaundinya/config";
+import { PropertyRow } from "../components/PropertyRow";
 import { InfoTip } from "../components/InfoTip";
 import {
   fetchBuyProperties,
@@ -21,7 +21,8 @@ import {
   fetchSiteVisits,
 } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
-import { formatDate, formatPropertyPrice } from "../lib/formats";
+import { formatArea, formatDate, formatPropertyPrice } from "../lib/formats";
+import { statusBadge, statusLabel, statusMeta } from "../lib/status";
 
 export type RealEstateMode = "buy" | "rent" | "sell";
 
@@ -65,27 +66,7 @@ const PLUS_ACTION: Record<RealEstateMode, { label: string; to: string }> = {
   sell: { label: "Sale", to: "/real-estate/list?intent=sale" },
 };
 
-const BHK_OPTIONS = ["all", "1 BHK", "2 BHK", "3 BHK", "4 BHK"];
-
-const VISIT_BADGE: Record<
-  SiteVisit["status"],
-  "gold" | "info" | "success" | "neutral"
-> = {
-  requested: "gold",
-  confirmed: "info",
-  completed: "success",
-  cancelled: "neutral",
-};
-
-const STATUS_META: Record<
-  PropertyListing["status"],
-  { label: string; variant: "neutral" | "gold" | "success" | "info" | "warning" | "danger" }
-> = {
-  draft: { label: "Pending review", variant: "neutral" },
-  active: { label: "Live", variant: "success" },
-  sold: { label: "Sold", variant: "info" },
-  rented: { label: "Rented", variant: "info" },
-};
+const BHK_FILTER_OPTIONS = ["all", ...BHK_OPTIONS];
 
 function numeric(value: string) {
   return value.replace(/\D/g, "").slice(0, 10);
@@ -152,7 +133,7 @@ function MyPropertiesSection({
       ) : (
         <div className="space-y-2">
           {items.map((listing) => {
-            const status = STATUS_META[listing.status] ?? STATUS_META.draft;
+            const status = statusMeta(listing.status);
             return (
               <Link
                 key={listing.id}
@@ -170,7 +151,7 @@ function MyPropertiesSection({
                     {formatPropertyPrice(listing.price, listing.priceUnit)}
                   </p>
                 </div>
-                <Badge variant={status.variant}>{status.label}</Badge>
+                <Badge variant={status.badge}>{status.label}</Badge>
               </Link>
             );
           })}
@@ -243,6 +224,7 @@ export function RealEstate({ mode }: RealEstateProps) {
 
   const copy = MODE_COPY[mode];
   const priceLabel = mode === "rent" ? "rent (₹/mo)" : "price (₹)";
+  const marketPreview = properties.slice(0, 3);
 
   const reset = () => {
     setLocation("");
@@ -290,6 +272,7 @@ export function RealEstate({ mode }: RealEstateProps) {
         ))}
       </div>
 
+      {!isSell && (
       <div className="flex flex-col xl:flex-row xl:items-end gap-3">
         <div className="min-w-0 xl:flex-[3]">
           <label
@@ -322,7 +305,7 @@ export function RealEstate({ mode }: RealEstateProps) {
             value={bhk}
             onChange={(event) => setBhk(event.target.value)}
           >
-            {BHK_OPTIONS.map((option) => (
+            {BHK_FILTER_OPTIONS.map((option) => (
               <option key={option} value={option}>
                 {option === "all" ? "Any" : option}
               </option>
@@ -380,24 +363,10 @@ export function RealEstate({ mode }: RealEstateProps) {
           <Plus className="w-4 h-4 shrink-0" />
           <span className="truncate">{PLUS_ACTION[mode].label}</span>
         </Link>
-      </div>
-
-      {isSell && (
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-extrabold text-foreground tracking-tight">
-            Available properties for sale
-          </h2>
-          <Link
-            to="/real-estate/list?intent=sale"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:text-brand-hover"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Sell a property
-          </Link>
         </div>
       )}
 
-      {error ? (
+      {!isSell && (error ? (
         <Card className="p-10 text-center space-y-3">
           <p className="text-sm text-muted-foreground">We couldn't load properties.</p>
           <button
@@ -408,14 +377,16 @@ export function RealEstate({ mode }: RealEstateProps) {
           </button>
         </Card>
       ) : loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
           {Array.from({ length: 6 }).map((_, index) => (
-            <Card key={index} className="overflow-hidden p-0">
-              <Skeleton className="h-40 w-full rounded-none" />
-              <div className="p-4 space-y-2">
-                <Skeleton className="h-4 w-4/5" />
-                <Skeleton className="h-3 w-2/3" />
-                <Skeleton className="h-3 w-1/2" />
+            <Card key={index} className="p-3">
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-24 h-20 rounded-xl shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3 w-1/3" />
+                  <Skeleton className="h-4 w-4/5" />
+                  <Skeleton className="h-3 w-2/3" />
+                </div>
               </div>
             </Card>
           ))}
@@ -451,43 +422,79 @@ export function RealEstate({ mode }: RealEstateProps) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
             {properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
+              <PropertyRow key={property.id} property={property} />
             ))}
           </div>
         </>
-      )}
+      ))}
 
-      {!isSell && upcomingVisits.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="w-4 h-4 text-brand" />
-            <h2 className="text-lg font-extrabold text-foreground tracking-tight">
-              Your site visits
-            </h2>
+      {!isSell && (
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between gap-3 p-5 border-b border-border">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="w-9 h-9 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
+                <CalendarDays className="w-4 h-4" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-base font-extrabold text-foreground tracking-tight">
+                  Your site visits
+                </h2>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Upcoming visits you booked with property owners.
+                </p>
+              </div>
+            </div>
+            {upcomingVisits.length > 0 && (
+              <span className="text-[11px] font-bold text-muted-foreground whitespace-nowrap">
+                {upcomingVisits.length} scheduled
+              </span>
+            )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {upcomingVisits.map((visit) => (
-              <Card key={visit.id} className="p-4">
-                <div className="flex items-start justify-between gap-3">
+
+          {upcomingVisits.length === 0 ? (
+            <div className="p-8 text-center space-y-1.5">
+              <CalendarDays className="w-8 h-8 text-brand mx-auto" aria-hidden="true" />
+              <p className="text-sm font-bold text-foreground">No site visits yet</p>
+              <p className="text-xs text-muted-foreground">
+                Book a visit from any property and it will appear here.
+              </p>
+              <Link
+                to="/real-estate/buy"
+                className="inline-flex items-center gap-1.5 pt-1 text-xs font-bold text-brand hover:text-brand-hover"
+              >
+                Browse properties
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </Link>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {upcomingVisits.map((visit) => (
+                <Link
+                  key={visit.id}
+                  to={`/real-estate/${visit.propertyId}`}
+                  className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-surface-muted/60 transition-colors"
+                >
                   <div className="min-w-0">
-                    <Link
-                      to={`/real-estate/${visit.propertyId}`}
-                      className="text-sm font-bold text-foreground hover:text-brand transition-colors line-clamp-1"
-                    >
+                    <p className="text-sm font-bold text-foreground truncate">
                       {visit.propertyTitle}
-                    </Link>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
                       {formatDate(visit.date)} · {visit.slot}
                     </p>
                   </div>
-                  <Badge variant={VISIT_BADGE[visit.status]}>{visit.status}</Badge>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
+                  <Badge
+                    variant={statusBadge(visit.status)}
+                    className="shrink-0 capitalize"
+                  >
+                    {statusLabel(visit.status)}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          )}
+        </Card>
       )}
 
       {isSell && (
@@ -546,21 +553,81 @@ export function RealEstate({ mode }: RealEstateProps) {
         </div>
       )}
 
-      <Card className="p-4 sm:p-5 bg-surface-muted/60">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-4 h-4" />
+      {isSell && (
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between gap-2 p-5 border-b border-border">
+            <div className="min-w-0">
+              <h2 className="text-base font-extrabold text-foreground tracking-tight">
+                Live in the market
+              </h2>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                A quick look at the latest sale properties.
+              </p>
+            </div>
+            <Link
+              to="/real-estate/buy"
+              className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-hover whitespace-nowrap"
+            >
+              View all
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </Link>
           </div>
-          <div className="text-xs text-muted-foreground leading-relaxed">
-            <p className="font-bold text-foreground">
-              {COMPLIANCE.tsRera.label}: {COMPLIANCE.tsRera.value}
-            </p>
-            <p>{COMPLIANCE.tsRera.note}</p>
-            <p className="mt-1.5 font-bold text-foreground">{COMPLIANCE.dpdp.label}</p>
-            <p>{COMPLIANCE.dpdp.note}</p>
-          </div>
-        </div>
-      </Card>
+
+          {error ? (
+            <div className="p-6 text-center space-y-2">
+              <p className="text-xs text-muted-foreground">
+                We couldn't load the market right now.
+              </p>
+              <button
+                type="button"
+                onClick={refetch}
+                className="text-xs font-bold text-brand hover:text-brand-hover cursor-pointer"
+              >
+                Try again
+              </button>
+            </div>
+          ) : loading ? (
+            <div className="p-5 space-y-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="flex items-center justify-between gap-3">
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          ) : properties.length === 0 ? (
+            <div className="p-6 text-center text-xs text-muted-foreground">
+              No sale properties in the market yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {marketPreview.map((property) => (
+                <Link
+                  key={property.id}
+                  to={`/real-estate/${property.id}`}
+                  className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-surface-muted/60 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-foreground truncate">
+                      {property.title}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                      {property.location}, {property.city} · {property.bhk} ·{" "}
+                      {formatArea(property.areaSqft)}
+                    </p>
+                  </div>
+                  <p className="text-sm font-extrabold text-foreground tracking-tight whitespace-nowrap">
+                    {formatPropertyPrice(property.price, property.priceUnit)}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
     </div>
   );
 }

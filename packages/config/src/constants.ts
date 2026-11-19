@@ -208,6 +208,17 @@ export const REAL_ESTATE_AMENITIES = [
   "Piped gas",
 ];
 
+export const BHK_OPTIONS = [
+  "1 BHK",
+  "2 BHK",
+  "2.5 BHK",
+  "3 BHK",
+  "3.5 BHK",
+  "4 BHK",
+];
+
+export const PROPERTY_CONFIGURATIONS = [...BHK_OPTIONS, "Plot", "Office"];
+
 export const SERVICE_CATALOG: ServiceCatalogItem[] = [
   {
     id: "re-rent",

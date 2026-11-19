@@ -1,22 +1,13 @@
 import { Link } from "react-router-dom";
 import { ChevronRight, ClipboardList, Ruler, Wrench } from "lucide-react";
 import { Badge, Card, Skeleton } from "@kaundinya/ui";
-import type { BadgeVariant } from "@kaundinya/ui";
 import { MODULE_STAGES } from "@kaundinya/config";
 import { fetchJobs, fetchMeasurements } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { formatDate, formatINR } from "../lib/formats";
+import { statusBadge, statusLabel } from "../lib/status";
 
 const STAGES = MODULE_STAGES["property-home-services"];
-
-const JOB_BADGE: Record<string, BadgeVariant> = {
-  requested: "gold",
-  assigned: "info",
-  en_route: "warning",
-  in_progress: "info",
-  completed: "success",
-  cancelled: "danger",
-};
 
 function stageLabel(status: string) {
   return STAGES.find((stage) => stage.id === status)?.label ?? status;
@@ -53,7 +44,7 @@ export function JobTracker() {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Badge variant={JOB_BADGE[job.status] ?? "neutral"}>
+              <Badge variant={statusBadge(job.status)}>
                 {stageLabel(job.status)}
               </Badge>
               <ChevronRight className="w-4 h-4 text-subtle-foreground" />
@@ -184,8 +175,8 @@ export function JobTracker() {
                       {measurement.address} · {measurement.pincode}
                     </p>
                   </div>
-                  <Badge variant={measurement.status === "completed" ? "success" : "gold"}>
-                    {measurement.status}
+                  <Badge variant={statusBadge(measurement.status)}>
+                    {statusLabel(measurement.status)}
                   </Badge>
                 </div>
               </Card>

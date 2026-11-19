@@ -18,7 +18,6 @@ import {
   Skeleton,
   StatusTimeline,
 } from "@kaundinya/ui";
-import type { BadgeVariant } from "@kaundinya/ui";
 import type {
   PaperSize,
   PrintBinding,
@@ -29,22 +28,9 @@ import type {
 import { createPrintJob, fetchPrintJobs } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { formatDate, formatINR } from "../lib/formats";
+import { statusBadge, statusLabel } from "../lib/status";
 
 const PAGE_RATE = 5;
-
-const PRINT_BADGE: Record<PrintJob["status"], BadgeVariant> = {
-  queued: "warning",
-  printing: "info",
-  ready_for_pickup: "gold",
-  completed: "success",
-};
-
-const PRINT_LABEL: Record<PrintJob["status"], string> = {
-  queued: "Queued",
-  printing: "Printing",
-  ready_for_pickup: "Ready for pickup",
-  completed: "Completed",
-};
 
 const PRINT_STAGES = [
   { id: "queued", label: "Queued", description: "File received securely" },
@@ -348,8 +334,8 @@ export function Printouts() {
                     Current print status
                   </h2>
                 </div>
-                <Badge variant={PRINT_BADGE[latestJob.status]}>
-                  {PRINT_LABEL[latestJob.status]}
+                <Badge variant={statusBadge(latestJob.status)}>
+                  {statusLabel(latestJob.status)}
                 </Badge>
               </div>
               <p className="text-[11px] text-muted-foreground truncate">
@@ -399,8 +385,8 @@ export function Printouts() {
                       <p className="text-xs font-bold text-foreground truncate">
                         {job.fileName}
                       </p>
-                      <Badge variant={PRINT_BADGE[job.status]}>
-                        {PRINT_LABEL[job.status]}
+                      <Badge variant={statusBadge(job.status)}>
+                        {statusLabel(job.status)}
                       </Badge>
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-0.5">

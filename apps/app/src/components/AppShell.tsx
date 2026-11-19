@@ -7,7 +7,6 @@ import { ProfilePanel } from "./ProfilePanel";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { NotificationsProvider } from "../lib/notifications";
-import { MockRequestsProvider } from "../lib/mockRequests";
 
 export function AppShell() {
   const location = useLocation();
@@ -16,8 +15,7 @@ export function AppShell() {
 
   return (
     <NotificationsProvider>
-      <MockRequestsProvider>
-        <div className="min-h-screen bg-surface-muted flex">
+      <div className="min-h-screen bg-surface-muted flex">
           <Sidebar
             mobileOpen={mobileNavOpen}
             onClose={() => setMobileNavOpen(false)}
@@ -40,7 +38,6 @@ export function AppShell() {
             onClose={() => setProfileOpen(false)}
           />
         </div>
-      </MockRequestsProvider>
     </NotificationsProvider>
   );
 }

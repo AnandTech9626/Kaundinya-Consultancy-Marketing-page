@@ -13,7 +13,10 @@ import {
   Wizard,
 } from "@kaundinya/ui";
 import type { PropertyListing } from "@kaundinya/config";
-import { REAL_ESTATE_AMENITIES } from "@kaundinya/config";
+import {
+  PROPERTY_CONFIGURATIONS,
+  REAL_ESTATE_AMENITIES,
+} from "@kaundinya/config";
 import { submitListing } from "../lib/mockApi";
 import { formatINR, formatPropertyPrice } from "../lib/formats";
 
@@ -25,7 +28,6 @@ const PROPERTY_TYPES: PropertyListing["propertyType"][] = [
   "Commercial",
 ];
 
-const BHK_OPTIONS = ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "Plot", "Office"];
 const FURNISHING = ["Unfurnished", "Semi-furnished", "Fully furnished"];
 
 export function PropertyListing() {
@@ -258,7 +260,7 @@ export function PropertyListing() {
                         value={bhk}
                         onChange={(event) => setBhk(event.target.value)}
                       >
-                        {BHK_OPTIONS.map((option) => (
+                        {PROPERTY_CONFIGURATIONS.map((option) => (
                           <option key={option} value={option}>
                             {option}
                           </option>

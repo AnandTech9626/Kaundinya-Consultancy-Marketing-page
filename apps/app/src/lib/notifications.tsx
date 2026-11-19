@@ -15,6 +15,7 @@ import {
   markNotificationRead,
 } from "./mockApi";
 import { readToken } from "./session";
+import { bumpLiveData } from "./live";
 
 export type NotificationToast = {
   key: string;
@@ -96,6 +97,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         seenIds.add(item.id);
       }
       showToasts(fresh);
+      if (fresh.length > 0) bumpLiveData();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not load notifications.",
@@ -147,6 +149,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         }
         seenIds.add(notification.id);
         seen.current = seenIds;
+        bumpLiveData();
       }
     };
 

@@ -15,11 +15,11 @@ import { useAuth } from "../lib/auth";
 import {
   changePin,
   fetchMyRequests,
+  fetchPolicies,
   updateProfile,
 } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
-import { useMockRequests } from "../lib/mockRequests";
-import { POLICIES } from "../lib/moduleData";
+import { isPolicyRenewalSolved } from "../lib/renewals";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -38,26 +38,26 @@ function formatMobile(raw: string): string {
 
 export function ProfileContent({ compact = false }: { compact?: boolean }) {
   const { user, updateUser } = useAuth();
-  const { data } = useAsync(() => fetchMyRequests({ limit: 1 }));
+  const { data } = useAsync(() => fetchMyRequests({ limit: 50 }));
   const requestCount = data?.total ?? 0;
-  const { requests } = useMockRequests();
+  const { data: policies } = useAsync(fetchPolicies);
+  const requests = data?.items ?? [];
 
   const insuranceRequests = requests.filter(
-    (request) => request.serviceCategory === "Insurance"
+    (request) => request.module === "Insurance"
   );
-  const activePolicies = POLICIES.filter(
+  const activePolicies = (policies ?? []).filter(
     (policy) => policy.status === "active"
   ).length;
-  const renewalsDue = POLICIES.filter(
-    (policy) => policy.status === "expiring"
+  const renewalsDue = (policies ?? []).filter(
+    (policy) =>
+      policy.status === "expiring" && !isPolicyRenewalSolved(policy, requests)
   ).length;
   const openInsuranceRequests = insuranceRequests.filter(
     (request) => request.status === "new" || request.status === "in_progress"
   ).length;
 
-  const loanRequests = requests.filter(
-    (request) => request.serviceCategory === "Loans"
-  );
+  const loanRequests = requests.filter((request) => request.module === "Loans");
   const openLoanRequests = loanRequests.filter(
     (request) => request.status === "new" || request.status === "in_progress"
   ).length;
