@@ -366,3 +366,11 @@ Ordered. Steps 1-2 are hard gates; nothing below works until they pass.
   same name (invalid), and the MX content is the literal placeholder
   eedback-smtp.<region>.amazonses.com. Delete that MX and the legacy SPF TXT,
   keep only the send CNAME. www CNAME is still missing.
+
+- 2026-11-20 - All four hostnames serve through the Cloudflare edge: apex and www
+  return the marketing site, app and admin return the client app. Verified with
+  curl against the edge IP (local resolvers still cache the old lander).
+- 2026-11-20 - Still present at send: the placeholder MX
+  (eedback-smtp.<region>.amazonses.com) and the legacy SPF TXT
+  (=spf1 include:amazonses.com ~all). Both must be deleted so the CNAME can
+  verify in Resend.
