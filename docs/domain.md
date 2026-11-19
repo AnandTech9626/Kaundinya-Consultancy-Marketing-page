@@ -21,7 +21,7 @@ open items. Keep it updated as each step completes.
 | Auto-renew | ON |
 | Renewal reminders | **PARKED — set up tomorrow** (calendar + verify GoDaddy emails) |
 | WHOIS privacy | Not available on `.co.in` (registry restriction) |
-| Status | **Registrar Hold at GoDaddy.** Editing nameservers returns "This domain has been placed on Registrar Hold. Contact customer support." Registry RDAP still returns 404 and DNS is NXDOMAIN (checked 2026-11-19). Hold must be cleared before any DNS work. |
+| Status | **KYC cleared 2026-11-20**; nameserver editing is enabled. Cloudflare zone `cbd55a1c50bb409a756d7ec0f90b47bc` is `pending` delegation to `holly.ns.cloudflare.com` / `norman.ns.cloudflare.com`. |
 
 Ownership note: the account is in the developer's name. The client asked to be
 told at renewal time. GoDaddy supports a free "move domain to another GoDaddy
@@ -149,11 +149,11 @@ deploys on 2026-11-19 succeeded and are live:
 
 ## 6. Open items
 
-- [ ] **Clear GoDaddy Registrar Hold** on `kaundinya.co.in` (support ticket;
-      usually contact/email verification or payment review). Nameservers cannot
-      be edited until the hold is lifted.
-- [ ] **Complete GoDaddy KYC ("Validate")** — domain status is `Idle` and the
-      "Change Nameservers" action is disabled until KYC passes.
+- [x] **Clear GoDaddy Registrar Hold** — KYC finished 2026-11-20; nameserver
+      editing is enabled.
+- [x] **Complete GoDaddy KYC ("Validate")** — domain no longer `Idle`.
+- [ ] **Cloudflare zone is pending delegation** — set the GoDaddy nameservers to
+      `holly.ns.cloudflare.com` and `norman.ns.cloudflare.com`.
 - [ ] **CI**: refresh git credentials with `workflow` scope (`gh auth refresh -s workflow`)
       or push workflow edits from an IDE, then switch the two deploy workflows to
       the per-service tokens.
@@ -207,6 +207,10 @@ deploys on 2026-11-19 succeeded and are live:
 - 2026-11-19 — Added `scripts/check-domain.mjs` (`npm run check:domain`) so the
   next session can verify NS, DNS, Resend and HTTPS in one command; ignored
   stray local log files.
+- 2026-11-20 — KYC cleared at GoDaddy; nameserver editing enabled. Cloudflare
+  zone `cbd55a1c50bb409a756d7ec0f90b47bc` assigned
+  `holly.ns.cloudflare.com` / `norman.ns.cloudflare.com` (status `pending`).
+  Next action: set those two at GoDaddy, wait for the zone to become `active`.
 
 ---
 
