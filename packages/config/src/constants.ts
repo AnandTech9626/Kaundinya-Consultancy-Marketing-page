@@ -14,7 +14,7 @@ export const SITE_INFO = {
     "Integrated professional consultancy for real estate, insurance, property management, home services, and loans across Hyderabad and surrounding areas.",
   serviceArea: "Hyderabad and surrounding areas, Telangana, India",
   establishedNotice: "Professional Integrated Services in Telangana",
-  url: "https://kaundinyaconsultancy.com",
+  url: "https://kaundinya.co.in",
 };
 
 export const CONTACT_PERSONS = [
