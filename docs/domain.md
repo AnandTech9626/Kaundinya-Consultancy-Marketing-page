@@ -358,3 +358,11 @@ Ordered. Steps 1-2 are hard gates; nothing below works until they pass.
   www (status pending, needs the two CNAMEs to kaundinya.pages.dev),
   Worker pp.kaundinya.co.in, Worker dmin.kaundinya.co.in (DNS resolves,
   edge certificate still provisioning).
+
+- 2026-11-20 - Apex CNAME kaundinya.co.in -> kaundinya.pages.dev (proxied) added;
+  hitting the Cloudflare edge returns the real marketing site (local resolvers
+  still show a cached GoDaddy lander).
+- 2026-11-20 - DNS cleanup required: send currently has CNAME + TXT + MX at the
+  same name (invalid), and the MX content is the literal placeholder
+  eedback-smtp.<region>.amazonses.com. Delete that MX and the legacy SPF TXT,
+  keep only the send CNAME. www CNAME is still missing.
