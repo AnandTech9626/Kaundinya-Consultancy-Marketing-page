@@ -21,7 +21,7 @@ open items. Keep it updated as each step completes.
 | Auto-renew | ON |
 | Renewal reminders | **PARKED — set up tomorrow** (calendar + verify GoDaddy emails) |
 | WHOIS privacy | Not available on `.co.in` (registry restriction) |
-| Status | **KYC cleared 2026-11-20**; nameserver editing is enabled. Cloudflare zone `cbd55a1c50bb409a756d7ec0f90b47bc` is `pending` delegation to `holly.ns.cloudflare.com` / `norman.ns.cloudflare.com`. |
+| Status | **Live delegation.** KYC cleared 2026-11-20; GoDaddy nameservers changed to `holly.ns.cloudflare.com` / `norman.ns.cloudflare.com`; Cloudflare zone `cbd55a1c50bb409a756d7ec0f90b47bc` is **active**. |
 
 Ownership note: the account is in the developer's name. The client asked to be
 told at renewal time. GoDaddy supports a free "move domain to another GoDaddy
@@ -152,8 +152,11 @@ deploys on 2026-11-19 succeeded and are live:
 - [x] **Clear GoDaddy Registrar Hold** — KYC finished 2026-11-20; nameserver
       editing is enabled.
 - [x] **Complete GoDaddy KYC ("Validate")** — domain no longer `Idle`.
-- [ ] **Cloudflare zone is pending delegation** — set the GoDaddy nameservers to
+- [x] **Cloudflare zone is pending delegation** — set the GoDaddy nameservers to
       `holly.ns.cloudflare.com` and `norman.ns.cloudflare.com`.
+- [x] **Cloudflare zone active** — delegation confirmed 2026-11-20.
+- [ ] **New Resend API key** — the key stored in `kaundinya-backend/.env` returns
+      401 Unauthorized; rotate it and update Vercel + local env before OTP tests.
 - [ ] **CI**: refresh git credentials with `workflow` scope (`gh auth refresh -s workflow`)
       or push workflow edits from an IDE, then switch the two deploy workflows to
       the per-service tokens.
@@ -211,6 +214,10 @@ deploys on 2026-11-19 succeeded and are live:
   zone `cbd55a1c50bb409a756d7ec0f90b47bc` assigned
   `holly.ns.cloudflare.com` / `norman.ns.cloudflare.com` (status `pending`).
   Next action: set those two at GoDaddy, wait for the zone to become `active`.
+- 2026-11-20 — GoDaddy nameservers switched; Cloudflare zone is **active** and
+  Google DNS resolves the Cloudflare pair. Automation limits found: the stored
+  Resend key returns 401 and neither Cloudflare token has DNS:Edit, so the
+  Resend records must be added in the dashboard (or with a new DNS-edit token).
 
 ---
 
