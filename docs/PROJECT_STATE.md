@@ -8,7 +8,7 @@
 
 ## 1. What this repo is
 Kaundinya Consultancy monorepo (npm workspaces):
-- `apps/marketing` — Astro marketing site → **Cloudflare Pages**
+- `apps/marketing` — Astro marketing site → **Cloudflare Workers**
 - `apps/app` — React client portal (user) → **Cloudflare Workers** (worker `app`)
 - `apps/admin` — React admin panel → **Cloudflare Workers** (worker `admin`)
 - `packages/tokens` — Tailwind v4 theme (gold `#F5B900`, charcoal `#171717`, ivory `#F7F4EC`, border `#E5DFD1`, Manrope/Inter/Playfair)
@@ -18,7 +18,7 @@ Kaundinya Consultancy monorepo (npm workspaces):
 ## 2. Live URLs
 | App | URL |
 | --- | --- |
-| Marketing (Pages) | https://kaundinya.co.in |
+| Marketing (Worker `marketing`) | https://kaundinya.co.in |
 | Client app (Workers) | https://app.kaundinya.co.in |
 | Admin (Workers) | https://admin.kaundinya.co.in |
 
@@ -31,7 +31,7 @@ All live surfaces use the custom domain kaundinya.co.in (apex/www = marketing, 
 
 ## 4. CI/CD (GitHub Actions)
 - `.github/workflows/ci.yml` — typecheck + build for **marketing, app, admin** (on PR/push to main/developer)
-- `.github/workflows/deploy.yml` — marketing → Pages project `kaundinya` (env `PUBLIC_APP_URL=https://app.kaundinya.co.in`)
+- `.github/workflows/deploy.yml` — marketing → Worker `marketing` (env `PUBLIC_APP_URL=https://app.kaundinya.co.in`)
 - `.github/workflows/deploy-app.yml` — app → Workers `app`
 - `.github/workflows/deploy-admin.yml` — admin → Workers `admin`
 - Secrets required: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`

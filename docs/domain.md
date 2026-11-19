@@ -421,3 +421,9 @@ pm run check:domain: 11/15 rows OK; the four HTTP failures are
   - Legacy Pages project kaundinyaconsultancy deleted.
   - pps/marketing/public/_worker.js 301s every *.pages.dev request to
     https://kaundinya.co.in while serving assets normally on the custom domain.
+
+- 2026-11-20 - Marketing moved off Cloudflare Pages to Worker marketing (static
+  assets). Custom domains kaundinya.co.in and www.kaundinya.co.in now point at
+  that worker; the Pages project kaundinya was deleted, so kaundinya.pages.dev
+  no longer resolves. marketing.kaundinya.workers.dev is disabled (404). CI
+  deploy.yml now deploys the marketing worker with the Workers token.

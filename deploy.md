@@ -31,10 +31,10 @@ Rules:
 
 ## 3. CD / deployment
 
-- **Marketing** (`apps/marketing`) → **Cloudflare Pages** (static Astro)
-- Pages project: `kaundinya`
+- **Marketing** (`apps/marketing`) → **Cloudflare Workers** (static assets)
+- Worker: `marketing` with custom domains `kaundinya.co.in` and `www.kaundinya.co.in`
 - Live URL: `https://kaundinya.co.in/`
-  - Deploys automatically on push to `main` via the GitHub Actions workflow `.github/workflows/deploy.yml` (`cloudflare/pages-action`).
+  - Deploys automatically on push to `main` via the GitHub Actions workflow `.github/workflows/deploy.yml` (`cloudflare/wrangler-action`, worker `marketing`).
   - Required GitHub Actions secrets (set once by a repo admin under Settings → Secrets and variables → Actions):
     - `CLOUDFLARE_API_TOKEN`
     - `CLOUDFLARE_ACCOUNT_ID`
@@ -45,4 +45,4 @@ Rules:
 
 1. Merge child branch → `developer` (CI must pass)
 2. Merge `developer` → `main` (CI must pass)
-3. `main` updated → Cloudflare Pages deploys automatically.
+3. `main` updated → Cloudflare Workers deploys automatically.
