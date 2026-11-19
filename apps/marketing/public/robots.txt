@@ -1,4 +1,4 @@
-﻿User-agent: *
+User-agent: *
 Allow: /
 
-Sitemap: https://kaundinyaconsultancy.com/sitemap-index.xml
+Sitemap: https://kaundinya.co.in/sitemap-index.xml
