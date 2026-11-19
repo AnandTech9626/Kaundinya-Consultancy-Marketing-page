@@ -16,8 +16,9 @@ import {
   CLAIM_SUPPORT_STEPS,
   INSURANCE_SUPPORT_TOPICS,
 } from "@kaundinya/config";
-import { useInsuranceRequests } from "../lib/mockRequests";
-import { STATUS_META } from "../lib/status";
+import { useAsync } from "../lib/useAsync";
+import { fetchRequests } from "../lib/mockApi";
+import { statusMeta } from "../lib/status";
 import { InsuranceRequestDialog } from "../components/InsuranceRequestDialog";
 
 const TOPIC_ICONS: Record<string, LucideIcon> = {
@@ -28,7 +29,10 @@ const TOPIC_ICONS: Record<string, LucideIcon> = {
 };
 
 export function InsuranceSupport() {
-  const requests = useInsuranceRequests();
+  const { data } = useAsync(fetchRequests);
+  const requests = (data ?? []).filter(
+    (request) => request.serviceCategory === "Insurance"
+  );
   const [dialog, setDialog] = useState<{ service: string; kind: string } | null>(
     null
   );
@@ -182,8 +186,8 @@ export function InsuranceSupport() {
                     {request.id.toUpperCase()} · {request.createdAt}
                   </p>
                 </div>
-                <Badge variant={STATUS_META[request.status].badge}>
-                  {STATUS_META[request.status].label}
+                <Badge variant={statusMeta(request.status).badge}>
+                  {statusMeta(request.status).label}
                 </Badge>
               </Link>
             ))}

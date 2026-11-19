@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertTriangle,
   ArrowRight,
   CalendarClock,
+  Calculator,
   Car,
   CheckCircle2,
   ClipboardList,
@@ -11,6 +12,7 @@ import {
   HeartPulse,
   Home,
   Phone,
+  Plus,
   ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
@@ -27,12 +29,15 @@ import {
   fetchRequests,
 } from "../lib/mockApi";
 import { formatDate, formatINR } from "../lib/formats";
-import { STATUS_META } from "../lib/status";
+import { useLiveRefetch } from "../lib/useAsync";
+import { statusMeta } from "../lib/status";
+import { isPolicyRenewalSolved } from "../lib/renewals";
 import { INSURANCE_TYPE_LABELS } from "../lib/insuranceUi";
 import { InsurerLogo } from "../components/InsurerLogo";
 import { BrochureDialog } from "../components/BrochureDialog";
 import { InsuranceRequestDialog } from "../components/InsuranceRequestDialog";
 import { LifeCoverCalculatorDialog } from "../components/LifeCoverCalculatorDialog";
+import { MotorPolicyDialog } from "../components/MotorPolicyDialog";
 
 type TabId = "life" | "health" | "motor" | "property";
 
@@ -73,10 +78,6 @@ const TAB_COPY: Record<
   },
 };
 
-function isClaimOrRenewal(service: string): boolean {
-  return /claim|renewal/i.test(service);
-}
-
 export function Insurance() {
   const [plans, setPlans] = useState<InsurancePlan[]>([]);
   const [policies, setPolicies] = useState<PolicyRecord[]>([]);
@@ -91,14 +92,12 @@ export function Insurance() {
   } | null>(null);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [brochurePlan, setBrochurePlan] = useState<InsurancePlan | null>(null);
-  const [vehicleType, setVehicleType] = useState<"2W" | "4W">("4W");
+  const [addingPolicy, setAddingPolicy] = useState(false);
+  const [createdPolicy, setCreatedPolicy] = useState<PolicyRecord | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
+  const load = useCallback(() => {
     Promise.all([fetchInsurancePlans(), fetchPolicies(), fetchRequests()])
       .then(([nextPlans, nextPolicies, nextRequests]) => {
-        if (!active) return;
         setPlans(nextPlans);
         setPolicies(nextPolicies);
         setRequests(
@@ -108,18 +107,18 @@ export function Insurance() {
         );
       })
       .catch(() => {
-        if (!active) return;
         setPlans([]);
         setPolicies([]);
         setRequests([]);
       })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+      .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useLiveRefetch(load);
 
   const openConsultation = (
     service = "",
@@ -136,28 +135,13 @@ export function Insurance() {
     });
   };
 
-  const completedRequests = requests.filter(
-    (request) => request.status === "completed"
-  );
-  const resolvedCount = completedRequests.filter((request) =>
-    isClaimOrRenewal(request.specificService)
-  ).length;
-  const completedCount = completedRequests.length - resolvedCount;
-  const openCount = requests.filter(
-    (request) => request.status === "new"
-  ).length;
-  const inProgressCount = requests.filter(
-    (request) => request.status === "in_progress"
-  ).length;
-  const cancelledCount = requests.filter(
-    (request) => request.status === "cancelled"
-  ).length;
-
   const activePolicies = policies.filter(
     (policy) => policy.status === "active"
   );
   const totalCover = policies
-    .filter((policy) => policy.status !== "lapsed")
+    .filter(
+      (policy) => policy.status !== "lapsed" && policy.status !== "pending"
+    )
     .reduce((sum, policy) => sum + policy.coverAmount, 0);
 
   const daysUntil = (date: string) =>
@@ -168,7 +152,9 @@ export function Insurance() {
   const renewalAlerts = policies
     .filter(
       (policy) =>
-        policy.status === "expiring" || daysUntil(policy.renewalDate) <= 45
+        policy.status !== "pending" &&
+        !isPolicyRenewalSolved(policy, requests) &&
+        (policy.status === "expiring" || daysUntil(policy.renewalDate) <= 45)
     )
     .sort((a, b) => a.renewalDate.localeCompare(b.renewalDate));
 
@@ -176,19 +162,11 @@ export function Insurance() {
   const tabCopy = TAB_COPY[tab];
   const recentRequests = requests.slice(0, 3);
 
-  const tracker = [
-    { label: "Open", value: openCount, dot: "bg-amber-500" },
-    { label: "In progress", value: inProgressCount, dot: "bg-blue-500" },
-    { label: "Resolved", value: resolvedCount, dot: "bg-emerald-500" },
-    { label: "Completed", value: completedCount, dot: "bg-teal-500" },
-    { label: "Cancelled", value: cancelledCount, dot: "bg-rose-500" },
-  ];
-
   return (
     <div className="space-y-8">
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
             Insurance
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -196,10 +174,6 @@ export function Insurance() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => openConsultation()}>
-            <ShieldCheck className="w-4 h-4" />
-            Talk to a consultant
-          </Button>
           <Link
             to="/insurance/policies"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface border border-border hover:border-brand/60 text-foreground text-sm font-bold transition-colors"
@@ -282,45 +256,6 @@ export function Insurance() {
         </div>
       )}
 
-      <Card className="p-4 sm:p-5">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h2 className="text-sm font-extrabold tracking-tight text-foreground">
-              Request tracker
-            </h2>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Resolved covers completed claims/renewals; Completed covers
-              consultations.
-            </p>
-          </div>
-          <Link
-            to="/insurance/support"
-            className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-hover"
-          >
-            View all requests
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
-          {tracker.map((stage) => (
-            <div
-              key={stage.label}
-              className="rounded-xl border border-border bg-surface p-3"
-            >
-              <div className="flex items-center gap-1.5">
-                <span className={`h-1.5 w-1.5 rounded-full ${stage.dot}`} />
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {stage.label}
-                </p>
-              </div>
-              <p className="mt-1 text-xl font-extrabold tracking-tight text-foreground">
-                {stage.value}
-              </p>
-            </div>
-          ))}
-        </div>
-      </Card>
-
       <div className="flex flex-wrap gap-2">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
@@ -329,7 +264,7 @@ export function Insurance() {
             onClick={() => setTab(id)}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-colors cursor-pointer ${
               tab === id
-                ? "bg-charcoal text-white"
+                ? "bg-inverse text-white shadow-sm"
                 : "border border-border bg-surface text-foreground hover:border-brand/60"
             }`}
           >
@@ -339,8 +274,8 @@ export function Insurance() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 space-y-4">
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-lg font-extrabold tracking-tight text-foreground">
               {tabCopy.title}
@@ -358,8 +293,45 @@ export function Insurance() {
               </Link>
             )}
           </div>
+          {tab === "life" && (
+            <Button
+              variant="secondary"
+              onClick={() => setCalculatorOpen(true)}
+            >
+              <Calculator className="w-4 h-4" />
+              Life cover calculator
+            </Button>
+          )}
+          {tab === "motor" && (
+            <Button onClick={() => setAddingPolicy(true)}>
+              <Plus className="w-4 h-4" />
+              Add motor policy
+            </Button>
+          )}
+        </div>
 
-          {loading ? (
+        {tab === "motor" && createdPolicy && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-success-fg/20 bg-success-soft px-4 py-3 text-xs text-success-fg">
+            <div>
+              <p className="font-bold">Policy submitted for verification</p>
+              <p className="mt-0.5">
+                {createdPolicy.serialNo
+                  ? `Serial #${createdPolicy.serialNo} · `
+                  : ""}
+                {createdPolicy.policyNumber} is pending review.
+              </p>
+            </div>
+            <Link
+              to="/insurance/policies"
+              className="inline-flex items-center gap-1 font-bold underline underline-offset-2"
+            >
+              View in Policy Vault
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        )}
+
+        {loading ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Skeleton className="h-64 rounded-2xl" />
               <Skeleton className="h-64 rounded-2xl" />
@@ -369,50 +341,56 @@ export function Insurance() {
               Plans for this category will appear here.
             </Card>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
               {tabPlans.map((plan) => (
-                <Card key={plan.id} className="p-4 flex flex-col gap-3">
+                <Card
+                  key={plan.id}
+                  hoverable
+                  className="p-4 flex flex-col gap-3"
+                >
                   <div className="flex items-start gap-3">
-                    {plan.insurerLogoUrl ? (
-                      <img
-                        src={plan.insurerLogoUrl}
-                        alt={plan.insurer}
-                        className="h-9 w-9 shrink-0 rounded-lg border border-border bg-white object-contain p-1"
-                      />
-                    ) : (
-                      <InsurerLogo insurer={plan.insurer} size={36} />
-                    )}
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-white p-1">
+                      {plan.insurerLogoUrl ? (
+                        <img
+                          src={plan.insurerLogoUrl}
+                          alt={plan.insurer}
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <InsurerLogo insurer={plan.insurer} size={30} />
+                      )}
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                         {plan.insurer}
                       </p>
-                      <h3 className="text-sm font-extrabold text-foreground">
+                      <h3 className="mt-0.5 text-sm font-extrabold leading-snug text-foreground line-clamp-2">
                         {plan.name}
                       </h3>
                     </div>
-                    <Badge variant="neutral">
+                    <Badge variant="gold" className="shrink-0">
                       {INSURANCE_TYPE_LABELS[plan.type] ?? plan.type}
                     </Badge>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 rounded-lg bg-surface-muted px-3 py-2">
+                  <div className="flex items-end justify-between gap-3 rounded-xl border border-border/70 bg-surface-muted px-3 py-2.5">
                     <div>
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
+                        Premium
+                      </p>
+                      <p className="text-base font-extrabold tracking-tight text-foreground">
+                        {formatINR(plan.premium)}
+                        <span className="ml-1 text-[10px] font-bold text-muted-foreground">
+                          / {plan.tenureYears > 1 ? `${plan.tenureYears}y` : "yr"}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="text-right">
                       <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
                         Cover
                       </p>
                       <p className="text-xs font-bold text-foreground">
                         {formatINR(plan.sumInsured)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
-                        Premium
-                      </p>
-                      <p className="text-xs font-bold text-foreground">
-                        {formatINR(plan.premium)}
-                        {plan.tenureYears > 1
-                          ? ` / ${plan.tenureYears}y`
-                          : " / yr"}
                       </p>
                     </div>
                   </div>
@@ -427,6 +405,11 @@ export function Insurance() {
                         {feature}
                       </li>
                     ))}
+                    {plan.features.length > 3 && (
+                      <li className="pl-5 text-[10px] font-bold text-muted-foreground">
+                        +{plan.features.length - 3} more benefits
+                      </li>
+                    )}
                   </ul>
 
                   <div className="mt-auto flex gap-2 pt-1">
@@ -454,156 +437,6 @@ export function Insurance() {
               ))}
             </div>
           )}
-        </div>
-
-        <div className="space-y-3">
-          {tab === "life" && (
-            <Card className="p-5 space-y-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-soft text-brand-strong">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-extrabold text-foreground">
-                  Life cover estimator
-                </h3>
-                <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                  A starting point based on income, dependents and liabilities —
-                  reviewed with you before any recommendation.
-                </p>
-              </div>
-              <Button className="w-full" onClick={() => setCalculatorOpen(true)}>
-                Calculate cover
-              </Button>
-              <button
-                type="button"
-                onClick={() => openConsultation("Life & Term review")}
-                className="w-full text-center text-[11px] font-bold text-brand hover:text-brand-hover cursor-pointer"
-              >
-                Talk to a consultant
-              </button>
-            </Card>
-          )}
-
-          {tab === "health" && (
-            <Card className="p-5 space-y-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-soft text-brand-strong">
-                <HeartPulse className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-extrabold text-foreground">
-                  Schedule a consultation
-                </h3>
-                <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                  No online application. Our team reviews waiting periods,
-                  room-rent limits and network hospitals with you.
-                </p>
-              </div>
-              <Button
-                className="w-full"
-                onClick={() => openConsultation("Health & Family review")}
-              >
-                <Phone className="w-4 h-4" />
-                Schedule consultation
-              </Button>
-              <Button
-                variant="secondary"
-                className="w-full"
-                onClick={() => openConsultation("Health claim assistance", "Claim assistance")}
-              >
-                Claim assistance
-              </Button>
-            </Card>
-          )}
-
-          {tab === "motor" && (
-            <Card className="p-5 space-y-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-soft text-brand-strong">
-                <Car className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-extrabold text-foreground">
-                  Vehicle type
-                </h3>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {(
-                    [
-                      ["2W", "Two-wheeler"],
-                      ["4W", "Four-wheeler"],
-                    ] as const
-                  ).map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setVehicleType(value)}
-                      className={`rounded-lg border px-2 py-2 text-xs font-bold transition-colors cursor-pointer ${
-                        vehicleType === value
-                          ? "border-brand bg-brand-soft/60 text-foreground"
-                          : "border-border bg-surface text-muted-foreground hover:border-brand/60"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                  {vehicleType === "2W"
-                    ? "Two-wheeler renewals and claims."
-                    : "Car renewals and claims."}{" "}
-                  IDV, add-ons and no-claim bonus are checked before renewal.
-                </p>
-              </div>
-              <Button
-                className="w-full"
-                onClick={() =>
-                  openConsultation("Motor renewal help", "Renewal help")
-                }
-              >
-                Get renewal help
-              </Button>
-              <Link
-                to="/insurance/motor"
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-xs font-bold text-foreground hover:border-brand/60 transition-colors"
-              >
-                Motor guide
-                <ArrowRight className="w-3.5 h-3.5 text-brand" />
-              </Link>
-            </Card>
-          )}
-
-          {tab === "property" && (
-            <Card className="p-5 space-y-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-soft text-brand-strong">
-                <Home className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-extrabold text-foreground">
-                  Property review
-                </h3>
-                <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                  Structure and contents are valued separately, then matched to
-                  fire, flood and burglary cover.
-                </p>
-              </div>
-              <Button
-                className="w-full"
-                onClick={() => openConsultation("Property insurance review")}
-              >
-                <Phone className="w-4 h-4" />
-                Schedule consultation
-              </Button>
-            </Card>
-          )}
-
-          <Card className="p-4 bg-surface-muted/60">
-            <p className="text-[11px] leading-relaxed text-muted-foreground">
-              <span className="font-bold text-foreground">
-                No online application.
-              </span>{" "}
-              Final terms, premium and claim decisions rest with the insurer. Our
-              team coordinates the paperwork with you.
-            </p>
-          </Card>
-        </div>
       </div>
 
       <Card className="overflow-hidden">
@@ -657,8 +490,8 @@ export function Insurance() {
                     {request.id.toUpperCase()} · {request.createdAt}
                   </p>
                 </div>
-                <Badge variant={STATUS_META[request.status].badge}>
-                  {STATUS_META[request.status].label}
+                <Badge variant={statusMeta(request.status).badge}>
+                  {statusMeta(request.status).label}
                 </Badge>
               </Link>
             ))}
@@ -696,6 +529,15 @@ export function Insurance() {
         open={calculatorOpen}
         onClose={() => setCalculatorOpen(false)}
         onRequestReview={handleCalculatorReview}
+      />
+
+      <MotorPolicyDialog
+        open={addingPolicy}
+        onClose={() => setAddingPolicy(false)}
+        onCreated={(policy) => {
+          setCreatedPolicy(policy);
+          setPolicies((prev) => [policy, ...prev]);
+        }}
       />
 
       <BrochureDialog plan={brochurePlan} onClose={() => setBrochurePlan(null)} />

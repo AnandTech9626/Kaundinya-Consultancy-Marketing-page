@@ -319,13 +319,14 @@ export interface VehicleQuote {
 
 export interface PolicyRecord {
   id: string;
+  serialNo?: number;
   type: "Life & Term" | "Health" | "Motor" | "Property";
   provider: string;
   policyNumber: string;
   coverAmount: number;
   premium: number;
   renewalDate: string;
-  status: "active" | "expiring" | "lapsed";
+  status: "pending" | "active" | "expiring" | "lapsed";
   holder?: string;
   validFrom?: string;
   vehicleType?: "2W" | "4W";

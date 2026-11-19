@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Download, FileText, X } from "lucide-react";
 import { Button } from "@kaundinya/ui";
 import type { InsurancePlan } from "@kaundinya/config";
@@ -114,23 +115,34 @@ export function BrochureDialog({
           <div className="rounded-xl border border-border bg-surface-muted/60 p-3 text-[11px] leading-relaxed text-muted-foreground">
             {plan.brochureUrl
               ? "Official insurer brochure provided by our team."
-              : "This is a sample brochure for preview. The official insurer PDF will be uploaded by our team and shown here."}
+              : "The official insurer brochure will be uploaded by our team shortly. Request it and we will email the PDF to you."}
           </div>
 
           <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
             <Button variant="secondary" onClick={onClose}>
               Close
             </Button>
-            <a
-              href={plan.brochureUrl ?? "/brochures/sample-policy-brochure.pdf"}
-              download={`${plan.insurer}-${plan.name}-brochure.pdf`}
-              target={plan.brochureUrl ? "_blank" : undefined}
-              rel={plan.brochureUrl ? "noreferrer" : undefined}
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-brand bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand hover:bg-brand-hover"
-            >
-              <Download className="h-4 w-4" />
-              {plan.brochureUrl ? "Open brochure" : "Download sample"}
-            </a>
+            {plan.brochureUrl ? (
+              <a
+                href={plan.brochureUrl}
+                download={`${plan.insurer}-${plan.name}-brochure.pdf`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-brand bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand hover:bg-brand-hover"
+              >
+                <Download className="h-4 w-4" />
+                Open brochure
+              </a>
+            ) : (
+              <Link
+                to="/insurance/support"
+                onClick={onClose}
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-brand bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand hover:bg-brand-hover"
+              >
+                <Download className="h-4 w-4" />
+                Request brochure
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -18,22 +18,13 @@ import {
   StatusTimeline,
   Textarea,
 } from "@kaundinya/ui";
-import type { BadgeVariant } from "@kaundinya/ui";
 import { MODULE_STAGES } from "@kaundinya/config";
 import { fetchJob, rateJob, requestJobStartOtp } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { formatDate, formatINR } from "../lib/formats";
+import { statusBadge } from "../lib/status";
 
 const STAGES = MODULE_STAGES["property-home-services"];
-
-const JOB_BADGE: Record<string, BadgeVariant> = {
-  requested: "gold",
-  assigned: "info",
-  en_route: "warning",
-  in_progress: "info",
-  completed: "success",
-  cancelled: "danger",
-};
 
 export function JobDetail() {
   const { id } = useParams();
@@ -153,7 +144,7 @@ export function JobDetail() {
               </p>
             </div>
           </div>
-          <Badge variant={JOB_BADGE[job.status] ?? "neutral"}>{stageLabel}</Badge>
+          <Badge variant={statusBadge(job.status)}>{stageLabel}</Badge>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-border pt-4">
