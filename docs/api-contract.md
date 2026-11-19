@@ -15,7 +15,7 @@
 
 | Thing | Value |
 | --- | --- |
-| Marketing site (Pages) | `https://kaundinya.co.in` |
+| Marketing site (Worker `marketing`) | `https://kaundinya.co.in` |
 | Client app (Workers) | `https://app.kaundinya.co.in` |
 | Admin panel (Workers) | `https://admin.kaundinya.co.in` |
 | Backend base URL | `PUBLIC_API_BASE_URL` (env) — e.g. `https://api.kaundinya.co.in` |
