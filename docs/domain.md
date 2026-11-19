@@ -406,3 +406,18 @@ pm run check:domain: 11/15 rows OK; the four HTTP failures are
 - 2026-11-20 - Login: arriving with ?email=...&step=otp now stays on the OTP
   screen with an inline error if sending fails, instead of dropping back to the
   email form.
+
+- 2026-11-20 - Domain-only cleanup done. Removed workers.dev / pages.dev /
+  vercel.app references from workflows, Astro site, SITE_INFO.url (marketing +
+  shared config), env examples and docs. Deployed marketing and app again; live
+  canonical and og:url are https://kaundinya.co.in/.
+- 2026-11-20 - CI fixed for real: workflow scope granted, deploy workflows now use
+  CLOUDFLARE_API_TOKEN_PAGES / CLOUDFLARE_API_TOKEN_WORKERS, repo variable
+  VITE_API_BASE_URL=https://api.kaundinya.co.in. Both Deploy jobs pass on main.
+
+- 2026-11-20 - Removed the legacy hostnames for real:
+  - *.workers.dev disabled for the pp and dmin workers (now 404).
+  - Ghost worker kaundinya-consultancy-marketing-page deleted.
+  - Legacy Pages project kaundinyaconsultancy deleted.
+  - pps/marketing/public/_worker.js 301s every *.pages.dev request to
+    https://kaundinya.co.in while serving assets normally on the custom domain.
