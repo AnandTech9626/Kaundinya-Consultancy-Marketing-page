@@ -38,5 +38,9 @@ cloudflare.local.env
 preview.log
 app-dev.log
 
+# stray local dev logs
+*.out.log
+app*.log
+
 # local Neon usage tracker (not committed)
 neon-tracker.md
