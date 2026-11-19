@@ -152,6 +152,8 @@ deploys on 2026-11-19 succeeded and are live:
 - [ ] **Clear GoDaddy Registrar Hold** on `kaundinya.co.in` (support ticket;
       usually contact/email verification or payment review). Nameservers cannot
       be edited until the hold is lifted.
+- [ ] **Complete GoDaddy KYC ("Validate")** — domain status is `Idle` and the
+      "Change Nameservers" action is disabled until KYC passes.
 - [ ] **CI**: refresh git credentials with `workflow` scope (`gh auth refresh -s workflow`)
       or push workflow edits from an IDE, then switch the two deploy workflows to
       the per-service tokens.
@@ -192,6 +194,9 @@ deploys on 2026-11-19 succeeded and are live:
 - 2026-11-19 — Registry-policy **KYC/contact validation** step reached: the
   registrant name/phone on the domain must match the Aadhaar identity exactly
   before clicking Verify. Contact data is not stored in this repo.
+- 2026-11-19 — GoDaddy domain page shows status **Idle** with a KYC banner and a
+  **Validate** button; nameserver changes stay disabled until KYC completes.
+  Current nameservers are GoDaddy defaults (`NS47/NS48.DOMAINCONTROL.COM`).
 
 ---
 
