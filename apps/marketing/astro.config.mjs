@@ -16,7 +16,18 @@ export default defineConfig({
   site: 'https://kaundinya.co.in',
   integrations: [
     react(),
-    sitemap()
+    sitemap({
+      filter: (page) => !page.includes("/404"),
+      serialize(item) {
+        const isHome = item.url === "https://kaundinya.co.in/";
+        const isService = item.url.includes("/services");
+        return {
+          ...item,
+          changefreq: "monthly",
+          priority: isHome ? 1.0 : isService ? 0.8 : 0.6,
+        };
+      },
+    })
   ],
   vite: {
     plugins: [tailwindcss()],
