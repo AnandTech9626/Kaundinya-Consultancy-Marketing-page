@@ -299,4 +299,38 @@ domains and Resend verification are all dashboard actions, and the KYC gate is
 manual. The script is the "run once and see everything" step for the next
 session.
 
+---
+
+## 10. Next-session checklist (2026-11-20)
+
+Ordered. Steps 1-2 are hard gates; nothing below works until they pass.
+
+- [ ] 1. **KYC wait ends.** GoDaddy -> `kaundinya.co.in`: status must be
+      **Active** (not `Idle`) and the KYC banner gone. Still `Idle` after 24h ->
+      support chat: "KYC for kaundinya.co.in pending 24h, registrant name must
+      match Aadhaar, please escalate."
+- [ ] 2. **Nameservers.** GoDaddy -> Nameservers -> Change -> "I'll use my own" ->
+      paste the two `*.ns.cloudflare.com` values -> Save. Then Cloudflare
+      Overview -> **Check nameservers now** -> wait for **Active**.
+- [ ] 3. **Resend.** Add `kaundinya.co.in` (Mumbai) if not already added; publish
+      `send` MX, `send` SPF TXT, `resend._domainkey` TXT, `_dmarc` TXT in
+      Cloudflare DNS; click **Verify**.
+- [ ] 4. **Vercel env.** Set `EMAIL_FROM`, `EMAIL_REPLY_TO`, `PUBLIC_BASE_URL`,
+      `CORS_ORIGINS`; **clear `EMAIL_TEST_REDIRECT`**; redeploy.
+- [ ] 5. **Custom domains.** Pages apex + `www`; Worker `app`; Worker `admin`
+      (after resolving the duplicate `admin` name); Vercel `api` with
+      **proxy OFF** in Cloudflare.
+- [ ] 6. **Code PR.** `apps/marketing/astro.config.mjs` `site` -> new domain;
+      workflow build envs -> new URLs; merge `sagar/dev` (docs, script, CI
+      token fix) -> `developer` -> `main`.
+- [ ] 7. **Run** `npm run check:domain`; all rows `OK`; send one real OTP from
+      the marketing form and confirm SPF/DKIM/DMARC pass.
+- [ ] 8. **Cleanup.** Disconnect repo from Cloudflare account `8d7d5b47...`;
+      retire Pages `kaundinyaconsultancy`; confirm only one `admin` worker.
+- [ ] 9. **Renewal reminder** (parked from 2026-11-19): calendar event ~30 days
+      before expiry + confirm GoDaddy renewal emails are enabled.
+- [ ] 10. **CI unblock.** Run `gh auth refresh -h github.com -s workflow`, then
+      push the pending two-line workflow change (currently unstaged locally).
+
+
 
