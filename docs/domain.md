@@ -204,6 +204,9 @@ deploys on 2026-11-19 succeeded and are live:
 - 2026-11-19 — GoDaddy states KYC can take **up to 24 hours**; the domain is not
   functional until verification completes. Re-check on 2026-11-20; if the status
   is still `Idle`, open GoDaddy support chat.
+- 2026-11-19 — Added `scripts/check-domain.mjs` (`npm run check:domain`) so the
+  next session can verify NS, DNS, Resend and HTTPS in one command; ignored
+  stray local log files.
 
 ---
 
@@ -276,4 +279,24 @@ Use the account that owns the domain and the Cloudflare projects
     and `.../settings/variables/actions`.
 21. Update `apps/marketing/astro.config.mjs` `site` to `https://kaundinya.co.in`,
     then PR → `developer` → `main`.
+
+---
+
+## 9. One-command verification
+
+```bash
+npm run check:domain
+```
+
+Runs `scripts/check-domain.mjs`: resolves NS, apex/www/app/admin/api records,
+Resend MX + SPF + DKIM + DMARC, and hits the five HTTPS endpoints. Prints
+`OK` / `PENDING` / `MISSING` per row and exits non-zero while anything is still
+missing. Pass a different domain with
+`node scripts/check-domain.mjs example.com`.
+
+There is no unattended automation: GoDaddy nameserver edits, Cloudflare custom
+domains and Resend verification are all dashboard actions, and the KYC gate is
+manual. The script is the "run once and see everything" step for the next
+session.
+
 

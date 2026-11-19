@@ -18,7 +18,8 @@
     "astro": "npm run astro --workspace @kaundinya/marketing",
     "check": "npm run check --workspace @kaundinya/marketing",
     "typecheck:app": "npm run typecheck --workspace @kaundinya/app",
-    "typecheck:admin": "npm run typecheck --workspace @kaundinya/admin"
+    "typecheck:admin": "npm run typecheck --workspace @kaundinya/admin",
+    "check:domain": "node scripts/check-domain.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.111.0"
