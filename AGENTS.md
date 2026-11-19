@@ -53,7 +53,7 @@ npm run build:app
 
 ## Deployment
 
-- Marketing: Cloudflare Pages, output `apps/marketing/dist`
+- Marketing: Cloudflare Workers (`marketing`), assets `apps/marketing/dist`
 - Client app: Cloudflare Workers
 - Admin console: separate deployment
 - Backend: Vercel/Node, database stays on Neon

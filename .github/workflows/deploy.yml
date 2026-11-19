@@ -1,4 +1,4 @@
-name: Deploy to Cloudflare Pages
+name: Deploy Marketing to Cloudflare Workers
 
 on:
   push:
@@ -30,9 +30,10 @@ jobs:
           PUBLIC_APP_URL: https://app.kaundinya.co.in
           PUBLIC_API_BASE_URL: https://api.kaundinya.co.in
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy Marketing to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN_PAGES }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN_WORKERS }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/marketing/dist --project-name=kaundinya
+          workingDirectory: apps/marketing
+          command: deploy
