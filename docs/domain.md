@@ -201,6 +201,9 @@ deploys on 2026-11-19 succeeded and are live:
   GoDaddy's QR prompt is only the optional mobile app (sensitive-change
   approvals / 2FA); it is not required for KYC. Await registry sync, then
   re-run Validate.
+- 2026-11-19 — GoDaddy states KYC can take **up to 24 hours**; the domain is not
+  functional until verification completes. Re-check on 2026-11-20; if the status
+  is still `Idle`, open GoDaddy support chat.
 
 ---
 
