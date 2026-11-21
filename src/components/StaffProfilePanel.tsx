@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
+  Camera,
   Eye,
   EyeOff,
   KeyRound,
   Loader2,
   LogOut,
   Pencil,
+  User,
   UserPlus,
   Users,
   X,
@@ -13,9 +15,11 @@ import {
 import {
   createAdminPartner,
   fetchAdminStaff,
+  fetchStaffAvatar,
   staffChangePin,
   staffUpdateProfile,
   updateAdminStaff,
+  uploadStaffAvatar,
 } from "../lib/api";
 import { useStaffAuth } from "../lib/staff-auth";
 import type { StaffUser } from "../lib/staff-session";
@@ -46,6 +50,20 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
   const [profileEmail, setProfileEmail] = useState(staff?.email ?? "");
   const [profileBusy, setProfileBusy] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchStaffAvatar()
+      .then((result) => {
+        if (!cancelled) setAvatarUrl(result.url);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [team, setTeam] = useState<StaffUser[]>([]);
   const [teamLoading, setTeamLoading] = useState(false);
@@ -55,6 +73,7 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
   const [partnerEmail, setPartnerEmail] = useState("");
   const [partnerPin, setPartnerPin] = useState("");
   const [partnerBusy, setPartnerBusy] = useState(false);
+  const [partnerFormOpen, setPartnerFormOpen] = useState(false);
   const [resetPins, setResetPins] = useState<Record<string, string>>({});
 
   const loadTeam = useCallback(async () => {
@@ -114,7 +133,7 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
       setConfirmPin("");
       setEditingPin(false);
       setShowPin(false);
-      showToast("PIN updated.");
+      showToast("PIN changed.");
     } catch (err) {
       setPinError(
         err instanceof Error ? err.message : "Could not update your PIN.",
@@ -165,6 +184,33 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
     }
   };
 
+  const handleAvatarChange = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      showToast("Upload a JPG, PNG or WEBP image.", "error");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Profile photo must be under 5 MB.", "error");
+      return;
+    }
+    setAvatarBusy(true);
+    try {
+      const result = await uploadStaffAvatar(file);
+      setAvatarUrl(result.url);
+      window.dispatchEvent(new Event("staff-avatar-updated"));
+      showToast("Profile photo updated.");
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Could not upload the photo.",
+        "error",
+      );
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
   const createPartner = async (event: FormEvent) => {
     event.preventDefault();
     setTeamError(null);
@@ -195,6 +241,7 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
       setPartnerMobile("");
       setPartnerEmail("");
       setPartnerPin("");
+      setPartnerFormOpen(false);
       await loadTeam();
     } catch (err) {
       setTeamError(
@@ -280,20 +327,60 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
+          {/* Profile hub */}
+          <div className="flex flex-col items-center text-center">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-charcoal text-2xl font-extrabold text-gold ring-4 ring-gold/30">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={staff?.name ? `${staff.name} profile photo` : "Profile"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                (staff?.name || "S").charAt(0).toUpperCase()
+              )}
+            </div>
+            <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle bg-white px-2.5 py-1 text-[10px] font-bold text-charcoal hover:border-gold/60">
+              {avatarBusy ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Camera className="h-3 w-3" />
+              )}
+              {avatarBusy
+                ? "Uploading..."
+                : avatarUrl
+                  ? "Change photo"
+                  : "Add photo"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(event) => {
+                  void handleAvatarChange(event.target.files);
+                  event.target.value = "";
+                }}
+              />
+            </label>
+            <p className="mt-3 text-lg font-extrabold text-charcoal break-words">
+              {staff?.name}
+            </p>
+            <p className="mt-0.5 text-[11px] capitalize text-muted">
+              {staff?.role} <span className="mx-1">·</span> {staff?.staffCode}
+            </p>
+            <div className="mt-3">
+              <StatusBadge status={staff?.active ? "active" : "lapsed"} />
+            </div>
+          </div>
+
           <section className="rounded-2xl border border-border-subtle bg-white p-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-charcoal text-lg font-extrabold text-gold">
-                {(staff?.name || "S").charAt(0).toUpperCase()}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-gold" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-charcoal">
+                  Account details
+                </h3>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-extrabold text-charcoal">
-                  {staff?.name}
-                </p>
-                <p className="text-[11px] capitalize text-muted">
-                  {staff?.role} · {staff?.staffCode}
-                </p>
-              </div>
-              {!editingProfile && (
+              {!editingProfile ? (
                 <button
                   type="button"
                   onClick={startEditProfile}
@@ -302,13 +389,22 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
                   <Pencil className="h-3.5 w-3.5" />
                   Edit
                 </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingProfile(false);
+                    setProfileError(null);
+                  }}
+                  className="rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-muted hover:text-charcoal cursor-pointer"
+                >
+                  Cancel
+                </button>
               )}
             </div>
+
             {editingProfile ? (
-              <form
-                onSubmit={saveProfile}
-                className="mt-4 space-y-3 border-t border-border-subtle pt-4"
-              >
+              <form onSubmit={saveProfile} className="mt-3 space-y-3">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className={labelClass} htmlFor="profile-name">
@@ -339,92 +435,69 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
                 {profileError && (
                   <p className="text-[11px] text-rose-600">{profileError}</p>
                 )}
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="submit"
-                    disabled={profileBusy}
-                    className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-xs font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
-                  >
-                    {profileBusy ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      "Save changes"
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingProfile(false);
-                      setProfileError(null);
-                    }}
-                    className="rounded-lg border border-border-subtle bg-white px-4 py-2 text-xs font-bold text-charcoal hover:border-gold/60"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  disabled={profileBusy}
+                  className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-xs font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
+                >
+                  {profileBusy ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save changes"
+                  )}
+                </button>
               </form>
             ) : (
-              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border-subtle pt-4 text-xs">
-                <div>
+              <div className="mt-3 overflow-hidden rounded-xl border border-border-subtle bg-ivory/60 text-xs">
+                <div className="flex items-center justify-between gap-4 border-b border-border-subtle px-4 py-2.5">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
                     Mobile
                   </p>
-                  <p className="mt-0.5 font-semibold text-charcoal">
-                    +91 {staff?.mobile}
-                  </p>
+                  <p className="font-semibold text-charcoal">+91 {staff?.mobile}</p>
                 </div>
-                <div>
+                <div className="flex items-center justify-between gap-4 border-b border-border-subtle px-4 py-2.5">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
                     Email
                   </p>
-                  <p className="mt-0.5 truncate font-semibold text-charcoal">
+                  <p className="truncate font-semibold text-charcoal">
                     {staff?.email || "—"}
                   </p>
                 </div>
-                <div>
+                <div className="flex items-center justify-between gap-4 border-b border-border-subtle px-4 py-2.5">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
                     Last login
                   </p>
-                  <p className="mt-0.5 font-semibold text-charcoal">
+                  <p className="font-semibold text-charcoal">
                     {staff?.lastLoginAt
                       ? formatDateTime(staff.lastLoginAt)
                       : "—"}
                   </p>
                 </div>
-                <div>
+                <div className="flex items-center justify-between gap-4 px-4 py-2.5">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
                     Status
                   </p>
-                  <div className="mt-1">
-                    <StatusBadge status={staff?.active ? "active" : "lapsed"} />
-                  </div>
+                  <StatusBadge status={staff?.active ? "active" : "lapsed"} />
                 </div>
               </div>
             )}
-            <button
-              type="button"
-              onClick={logout}
-              className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 cursor-pointer"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Sign out
-            </button>
-          </section>
 
-          <section className="rounded-2xl border border-border-subtle bg-white p-5">
-            <div className="mb-3 flex items-center gap-2">
-              <KeyRound className="h-4 w-4 text-gold" />
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-charcoal">
-                Change PIN
-              </h3>
-            </div>
+            {/* Security PIN */}
+            <div className="mt-4 border-t border-border-subtle pt-4">
+              <div className="mb-3 flex items-center gap-2">
+                <KeyRound className="h-4 w-4 text-gold" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-charcoal">
+                  Security PIN
+                </h3>
+              </div>
             {!editingPin ? (
               <div className="space-y-3">
                 <p className="text-[11px] leading-relaxed text-muted">
-                  Click Show to reveal your PIN, or Update PIN to set a new one.
+                  For security the saved PIN can't be displayed. Show confirms a
+                  PIN is set; use Change PIN to replace it.
                 </p>
                 <div className="flex flex-wrap items-end gap-3">
                   <div className="min-w-[12rem] flex-1">
@@ -463,7 +536,7 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
                     }}
                     className="rounded-lg border border-border-subtle bg-white px-4 py-2 text-xs font-bold text-charcoal hover:border-gold/60 cursor-pointer"
                   >
-                    Update PIN
+                    Change PIN
                   </button>
                 </div>
               </div>
@@ -563,7 +636,7 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
                         Updating...
                       </>
                     ) : (
-                      "Update PIN"
+                      "Change PIN"
                     )}
                   </button>
                   <button
@@ -583,22 +656,49 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
                 </div>
               </form>
             )}
+            </div>
           </section>
+
+          <button
+            type="button"
+            onClick={logout}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 cursor-pointer"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out
+          </button>
 
           {isAdmin && (
             <section className="rounded-2xl border border-border-subtle bg-white p-5">
-              <div className="mb-3 flex items-center gap-2">
-                <Users className="h-4 w-4 text-gold" />
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-charcoal">
-                  Partner access
-                </h3>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-gold" />
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-charcoal">
+                    Partner access
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPartnerFormOpen((open) => !open);
+                    setTeamError(null);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border-subtle bg-white px-2.5 py-1.5 text-[11px] font-bold text-charcoal hover:border-gold/60 cursor-pointer"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  {partnerFormOpen ? "Close" : "Add partner"}
+                </button>
               </div>
               <p className="mb-3 text-[11px] leading-relaxed text-muted">
                 Partners get the same access as you. Create their account with a
                 PIN and share that mobile + PIN with them.
               </p>
 
-              <form onSubmit={createPartner} className="space-y-3">
+              {partnerFormOpen && (
+                <form
+                  onSubmit={createPartner}
+                  className="mb-4 space-y-3 rounded-xl border border-border-subtle bg-ivory/50 p-3"
+                >
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className={labelClass} htmlFor="partner-name">
@@ -684,8 +784,9 @@ export function StaffProfilePanel({ open, onClose }: StaffProfilePanelProps) {
                   )}
                 </button>
               </form>
+              )}
 
-              <div className="mt-4 space-y-2 border-t border-border-subtle pt-4">
+              <div className="space-y-2">
                 {teamLoading ? (
                   <SkeletonRows rows={3} itemClass="h-14" />
                 ) : partners.length === 0 ? (

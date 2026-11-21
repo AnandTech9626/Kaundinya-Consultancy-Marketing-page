@@ -742,19 +742,19 @@ export function LoansAdmin() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1 rounded-2xl border border-border-subtle bg-white p-2">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => setTab(id)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-colors ${
+            className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
               tab === id
-                ? "bg-charcoal text-white"
-                : "border border-border-subtle bg-white text-charcoal hover:border-gold/60"
+                ? "bg-gold text-charcoal"
+                : "text-charcoal hover:bg-ivory"
             }`}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-3.5 w-3.5" />
             {label}
           </button>
         ))}

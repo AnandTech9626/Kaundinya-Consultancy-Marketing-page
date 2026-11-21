@@ -90,7 +90,8 @@ function FileThumb({
 }
 
 export function Storage() {
-  const [bucket, setBucket] = useState<AdminStorageBucket>("public");
+  const [view, setView] = useState<"public" | "private" | "profiles">("public");
+  const bucket: AdminStorageBucket = view === "private" ? "private" : "public";
   const [objects, setObjects] = useState<AdminStorageObject[]>([]);
   const [configured, setConfigured] = useState(true);
   const [usage, setUsage] = useState<{
@@ -129,7 +130,7 @@ export function Storage() {
     setError(null);
     try {
       const data = await fetchAdminStorageFiles(which, {
-        prefix: appliedQuery,
+        prefix: view === "profiles" ? "client-profiles/" : appliedQuery,
         cursor,
         limit: 10,
       });
@@ -155,7 +156,7 @@ export function Storage() {
     setCursorStack([]);
     void load(bucket, null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bucket, appliedQuery]);
+  }, [bucket, appliedQuery, view]);
 
   useEffect(() => {
     void refreshUsage();
@@ -364,19 +365,20 @@ export function Storage() {
 
       <section className="flex min-h-0 flex-col rounded-2xl border border-border-subtle bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="grid grid-cols-2 gap-1 rounded-lg border border-border-subtle bg-ivory p-1">
+          <div className="grid grid-cols-3 gap-1 rounded-lg border border-border-subtle bg-ivory p-1">
             {(
               [
                 { value: "public", label: "Public" },
                 { value: "private", label: "Private" },
+                { value: "profiles", label: "Client profiles" },
               ] as const
             ).map((tab) => (
               <button
                 key={tab.value}
                 type="button"
-                onClick={() => setBucket(tab.value)}
-                className={`rounded-md px-4 py-1.5 text-xs font-bold transition-colors ${
-                  bucket === tab.value
+                onClick={() => setView(tab.value)}
+                className={`rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${
+                  view === tab.value
                     ? "bg-charcoal text-white"
                     : "text-charcoal hover:bg-white"
                 }`}
@@ -409,7 +411,7 @@ export function Storage() {
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              disabled={uploading}
+              disabled={uploading || view === "profiles"}
               className="inline-flex items-center gap-1.5 rounded-lg bg-gold px-3 py-2 text-xs font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
             >
               {uploading ? (

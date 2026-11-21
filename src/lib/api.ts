@@ -1496,6 +1496,30 @@ export function staffChangePin(
   });
 }
 
+export function fetchStaffAvatar(): Promise<{ url: string | null }> {
+  return jsonRequest<{ url: string | null }>("/api/admin/me/avatar", "GET");
+}
+
+export async function uploadStaffAvatar(file: File): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await apiFetch(`${API_BASE}/api/admin/me/avatar`, {
+    method: "POST",
+    body: form,
+  });
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: { url: string } }
+    | null;
+
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(
+      payload?.message || `Could not upload the photo (${response.status}).`,
+    );
+  }
+
+  return payload.data;
+}
+
 export function staffLogout(): Promise<void> {
   return jsonRequest<void>("/api/staff/logout", "POST", {});
 }
@@ -1627,6 +1651,17 @@ export function fetchDailyTasks(
 
 export function fetchDailyTaskStats(): Promise<AdminDailyTaskStats> {
   return jsonRequest<AdminDailyTaskStats>("/api/admin/daily-tasks/stats", "GET");
+}
+
+export function fetchDailyTasksExport(
+  from: string,
+  to: string,
+): Promise<AdminDailyTask[]> {
+  const params = new URLSearchParams({ from, to });
+  return jsonRequest<AdminDailyTask[]>(
+    `/api/admin/daily-tasks/export?${params.toString()}`,
+    "GET",
+  );
 }
 
 export function fetchDailyTaskAssignees(): Promise<AdminDailyTaskAssignee[]> {
