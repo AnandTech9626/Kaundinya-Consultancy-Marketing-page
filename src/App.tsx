@@ -19,6 +19,7 @@ import { RealEstateProperties } from "./pages/RealEstateProperties";
 import { RequestsAdmin } from "./pages/RequestsAdmin";
 import { StaffLogin } from "./pages/StaffLogin";
 import { StaffSetup } from "./pages/StaffSetup";
+import { Storage } from "./pages/Storage";
 
 function HomeRedirect() {
   const { staff } = useStaffAuth();
@@ -77,6 +78,7 @@ function AppRoutes() {
               }
             />
             <Route path="/loans" element={<LoansAdmin />} />
+            <Route path="/storage" element={<Storage />} />
             <Route
               path="/digital-services"
               element={<DigitalServicesAdmin />}
