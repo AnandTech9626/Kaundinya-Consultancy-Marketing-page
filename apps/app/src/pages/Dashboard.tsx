@@ -1,8 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  ArrowUpRight,
   CalendarClock,
   CheckCircle2,
   ClipboardList,
@@ -10,47 +9,24 @@ import {
   Search,
 } from "lucide-react";
 import { Badge, Card, Skeleton } from "@kaundinya/ui";
-import {
-  MODULE_META,
-  type ServiceCategoryId,
-} from "@kaundinya/config";
 import { useAuth } from "../lib/auth";
 import { fetchMyRequests, fetchPolicies, type MyRequestItem } from "../lib/mockApi";
 import { useAsync } from "../lib/useAsync";
 import { formatDate } from "../lib/formats";
-import { getServiceIcon } from "../lib/icons";
 import { statusMeta, statusVariant } from "../lib/status";
 import { isPolicyRenewalSolved } from "../lib/renewals";
 import { BRAND_MARK_URL } from "../lib/brand";
 import { InfoTip } from "../components/InfoTip";
-import { SocialLinksCard } from "../components/SocialLinks";
-
-const QUICK_MODULES: { id: ServiceCategoryId; to: string }[] = [
-  { id: "real-estate", to: "/real-estate" },
-  { id: "property-home-services", to: "/home-services" },
-  { id: "digital-services", to: "/digital-services" },
-  { id: "insurance", to: "/insurance" },
-  { id: "loans", to: "/loans" },
-];
-
-const IN_PROGRESS = new Set([
-  "assigned",
-  "en_route",
-  "in_progress",
-  "scheduled",
-  "contacted",
-  "confirmed",
-]);
-const NEW = new Set(["requested", "draft"]);
+import { SocialLinksButtons } from "../components/SocialLinks";
 
 function DashboardSkeleton() {
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Card key={i} className="p-5 space-y-3">
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-7 w-12" />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i} className="p-4 space-y-2">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-7 w-10" />
           </Card>
         ))}
       </div>
@@ -63,27 +39,55 @@ function DashboardSkeleton() {
   );
 }
 
+const PAGE_SIZE = 10;
+
 export function Dashboard() {
   const { user } = useAuth();
-  const { data, loading, error, refetch } = useAsync(
-    () => fetchMyRequests({ limit: 50 }),
-    [],
-  );
-  const { data: policies } = useAsync(fetchPolicies);
-
   const [module, setModule] = useState<"" | MyRequestItem["module"]>("");
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [needsRenewal, setNeedsRenewal] = useState(false);
 
-  const all = data?.items ?? [];
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => setAppliedSearch(search.trim()),
+      350,
+    );
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [module, status, appliedSearch, needsRenewal]);
+
+  const { data, loading, error, refetch } = useAsync(
+    () =>
+      fetchMyRequests({
+        module: module || undefined,
+        status: status || undefined,
+        q: appliedSearch || undefined,
+        page,
+        limit: PAGE_SIZE,
+      }),
+    [module, status, appliedSearch, page]
+  );
+  const { data: policies } = useAsync(fetchPolicies);
+  const { data: renewalRequests } = useAsync(
+    () => fetchMyRequests({ q: "renewal", limit: 100 }),
+    []
+  );
+
+  const pageItems = data?.items ?? [];
+  const stats = data?.stats;
 
   const renewalItems: MyRequestItem[] = useMemo(() => {
     const policyRows: MyRequestItem[] = (policies ?? [])
       .filter(
         (policy) =>
           policy.status === "expiring" &&
-          !isPolicyRenewalSolved(policy, data?.items ?? [])
+          !isPolicyRenewalSolved(policy, renewalRequests?.items ?? [])
       )
       .slice()
       .sort((a, b) => (a.renewalDate < b.renewalDate ? -1 : 1))
@@ -98,7 +102,7 @@ export function Dashboard() {
         href: "/insurance/policies",
       }));
 
-    const requestRows: MyRequestItem[] = (data?.items ?? [])
+    const requestRows: MyRequestItem[] = (renewalRequests?.items ?? [])
       .filter(
         (request) =>
           (request.module === "Insurance" || request.module === "Loans") &&
@@ -110,9 +114,22 @@ export function Dashboard() {
       }));
 
     return [...policyRows, ...requestRows];
-  }, [policies, data]);
+  }, [policies, renewalRequests]);
 
-  const visibleBase = needsRenewal ? renewalItems : all;
+  const renewalVisible = useMemo(() => {
+    const needle = appliedSearch.toLowerCase();
+    return renewalItems.filter((item) => {
+      if (status && item.status !== status) return false;
+      if (!needle) return true;
+      return (
+        item.title.toLowerCase().includes(needle) ||
+        item.reference.toLowerCase().includes(needle) ||
+        item.statusLabel.toLowerCase().includes(needle)
+      );
+    });
+  }, [renewalItems, status, appliedSearch]);
+
+  const rows = needsRenewal ? renewalVisible : pageItems;
 
   const selectModule = (option: "" | MyRequestItem["module"]) => {
     setModule(option);
@@ -127,34 +144,23 @@ export function Dashboard() {
     setNeedsRenewal(!needsRenewal);
   };
 
-  const statuses = useMemo(
-    () => Array.from(new Set(visibleBase.map((item) => item.status))).sort(),
-    [visibleBase],
-  );
+  const statuses = useMemo(() => {
+    const set = new Set(pageItems.map((item) => item.status));
+    if (status) set.add(status);
+    return Array.from(set).sort();
+  }, [pageItems, status]);
 
-  const filtered = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    return visibleBase.filter((item) => {
-      if (!needsRenewal && module && item.module !== module) return false;
-      if (status && item.status !== status) return false;
-      if (!needle) return true;
-      return (
-        item.title.toLowerCase().includes(needle) ||
-        item.reference.toLowerCase().includes(needle) ||
-        item.statusLabel.toLowerCase().includes(needle)
-      );
-    });
-  }, [all, module, status, search]);
-
-  const total = all.length;
-  const newCount = all.filter((item) => NEW.has(item.status)).length;
-  const inProgress = all.filter((item) =>
-    IN_PROGRESS.has(item.status),
-  ).length;
-  const completed = all.filter((item) => item.status === "completed").length;
+  const total = stats?.total ?? 0;
+  const newCount = stats?.new ?? 0;
+  const inProgress = stats?.inProgress ?? 0;
+  const completed = stats?.completed ?? 0;
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / PAGE_SIZE));
+  const rangeStart =
+    (data?.total ?? 0) === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(data?.total ?? 0, page * PAGE_SIZE);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <div
         aria-hidden="true"
         className="pointer-events-none fixed right-0 top-1/2 z-0 hidden -translate-y-1/2 select-none md:block lg:right-4"
@@ -166,59 +172,24 @@ export function Dashboard() {
           className="w-[420px] opacity-[0.08] grayscale [mask-image:radial-gradient(circle_at_60%_40%,black,transparent_72%)] lg:w-[560px] xl:w-[640px] dark:opacity-[0.09] dark:brightness-0 dark:invert"
         />
       </div>
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-            Welcome back, {user?.name?.split(" ")[0] ?? "there"}
-          </h1>
-          <InfoTip
-            label="About the dashboard"
-            text="Your dashboard brings together every request across Real Estate, Home Services, Digital Services, Insurance and Loans, with current status and next actions."
-          />
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+              Welcome back, {user?.name?.split(" ")[0] ?? "there"}
+            </h1>
+            <InfoTip
+              label="About the dashboard"
+              text="Your dashboard brings together every request across Real Estate, Home Services, Digital Services, Insurance and Loans, with current status and next actions."
+            />
+          </div>
+          <p className="text-muted-foreground mt-1">
+            Track your Real Estate, Home Services, Digital Services, Insurance and
+            Loans requests in one place.
+          </p>
         </div>
-        <p className="text-muted-foreground mt-1">
-          Track your Real Estate, Home Services, Digital Services, Insurance and
-          Loans requests in one place.
-        </p>
+        <SocialLinksButtons />
       </div>
-
-      <section className="space-y-4" aria-label="Your services">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-          {QUICK_MODULES.map(({ id, to }) => {
-            const meta = MODULE_META[id];
-            const Icon = getServiceIcon(meta.icon);
-            return (
-              <Link
-                key={id}
-                to={to}
-                className="block group"
-                aria-label={`Open ${meta.shortName}`}
-              >
-                <Card className="relative h-full overflow-hidden p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-brand/60 hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none">
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-brand/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                  />
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft text-brand-strong ring-1 ring-brand/20 transition-colors duration-300 group-hover:bg-brand group-hover:text-on-brand group-hover:ring-brand motion-reduce:transition-none">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <ArrowUpRight className="h-4 w-4 shrink-0 text-subtle-foreground transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand motion-reduce:transform-none motion-reduce:transition-none" />
-                  </div>
-                  <p className="mt-3 text-sm font-extrabold text-foreground">
-                    {meta.shortName}
-                  </p>
-                  <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
-                    {meta.description}
-                  </p>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      <SocialLinksCard />
 
       <section className="space-y-3" aria-label="Totals">
       {error ? (
@@ -283,8 +254,7 @@ export function Dashboard() {
           </div>
         </Card>
 
-          {/* Roomier break before the table; overrides the tight snapshot rhythm above. */}
-          <section className="mt-8! space-y-4">
+          <section className="space-y-4">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <h2 className="mr-auto text-xl font-extrabold text-foreground tracking-tight">
                 All requests
@@ -359,7 +329,7 @@ export function Dashboard() {
               </div>
             </div>
 
-            {filtered.length === 0 ? (
+            {rows.length === 0 ? (
               needsRenewal ? (
                 <Card className="p-10 text-center space-y-3">
                   <div className="w-12 h-12 rounded-full bg-warning-soft text-warning-fg flex items-center justify-center mx-auto">
@@ -437,7 +407,7 @@ export function Dashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filtered.map((item: MyRequestItem) => (
+                      {rows.map((item: MyRequestItem) => (
                         <tr
                           key={`${item.module}-${item.id}`}
                           className="border-b border-border last:border-b-0 hover:bg-surface-muted/60"
@@ -477,6 +447,45 @@ export function Dashboard() {
                     </tbody>
                   </table>
                 </div>
+                {!needsRenewal && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3 text-[11px] text-muted-foreground">
+                    <span>
+                      10 per page · Showing {rangeStart}-{rangeEnd} of{" "}
+                      {data?.total ?? 0}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPage((value) => Math.max(1, value - 1))
+                        }
+                        disabled={page <= 1}
+                        className="cursor-pointer rounded border border-border px-2 py-1 font-bold text-foreground transition-colors hover:border-brand/60 disabled:opacity-40"
+                      >
+                        Prev
+                      </button>
+                      <span>
+                        Page {page} of {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPage((value) => Math.min(totalPages, value + 1))
+                        }
+                        disabled={page >= totalPages}
+                        className="cursor-pointer rounded border border-border px-2 py-1 font-bold text-foreground transition-colors hover:border-brand/60 disabled:opacity-40"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {needsRenewal && (
+                  <div className="border-t border-border px-4 py-3 text-[11px] text-muted-foreground">
+                    Showing {renewalVisible.length} renewal
+                    {renewalVisible.length === 1 ? "" : "s"}
+                  </div>
+                )}
               </Card>
             )}
           </section>

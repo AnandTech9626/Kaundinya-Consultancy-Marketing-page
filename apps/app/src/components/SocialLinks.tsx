@@ -72,6 +72,29 @@ export function SocialLinks({ collapsed = false, onNavigate }: SocialLinksProps)
   );
 }
 
+export function SocialLinksButtons({ className = "" }: { className?: string }) {
+  return (
+    <div className={`flex flex-wrap gap-2 ${className}`}>
+      {SOCIAL_LINKS.map(({ id, label, shortLabel, href }) => {
+        const Icon = ICONS[id];
+        return (
+          <a
+            key={id}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${label} (opens in a new tab)`}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-bold text-foreground transition-colors hover:border-brand/60 hover:text-brand"
+          >
+            <Icon className="h-4 w-4" />
+            {shortLabel}
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
 export function SocialLinksCard() {
   return (
     <Card className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -81,24 +104,7 @@ export function SocialLinksCard() {
           Get service updates, offers and announcements from Kaundinya.
         </p>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {SOCIAL_LINKS.map(({ id, label, shortLabel, href }) => {
-          const Icon = ICONS[id];
-          return (
-            <a
-              key={id}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${label} (opens in a new tab)`}
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-bold text-foreground transition-colors hover:border-brand/60 hover:text-brand"
-            >
-              <Icon className="h-4 w-4" />
-              {shortLabel}
-            </a>
-          );
-        })}
-      </div>
+      <SocialLinksButtons />
     </Card>
   );
 }

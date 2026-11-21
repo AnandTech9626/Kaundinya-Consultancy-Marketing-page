@@ -43,18 +43,9 @@ export function BrandLockup({
           KAUNDINYA
         </span>
         <span
-          className={`mt-1 flex w-full justify-between font-bold leading-none text-brand ${SUBTITLE_SIZE[size]}`}
-          aria-label="Integrated Services"
+          className={`mt-1 whitespace-nowrap font-bold uppercase leading-none tracking-[0.22em] text-brand ${SUBTITLE_SIZE[size]}`}
         >
-          {"INTEGRATED SERVICES".split("").map((character, index) =>
-            character === " " ? (
-              <span key={index} className="w-[0.6em]" aria-hidden="true" />
-            ) : (
-              <span key={index} aria-hidden="true">
-                {character}
-              </span>
-            ),
-          )}
+          Integrated Services
         </span>
       </div>
     </div>

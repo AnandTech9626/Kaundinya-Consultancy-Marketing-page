@@ -2,6 +2,8 @@ import { Bell, Menu, Moon, Sun } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { useNotifications } from "../lib/notifications";
 import { useTheme } from "../lib/theme";
+import { fetchMyAvatar } from "../lib/mockApi";
+import { useAsync } from "../lib/useAsync";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -12,6 +14,7 @@ export function Topbar({ onMenuClick, onProfileClick }: TopbarProps) {
   const { user } = useAuth();
   const { unreadCount, openPanel } = useNotifications();
   const { theme, toggleTheme } = useTheme();
+  const { data: avatar } = useAsync(fetchMyAvatar);
   const isDark = theme === "dark";
   const initial = user?.name?.trim().charAt(0).toUpperCase() || "K";
 
@@ -58,9 +61,17 @@ export function Topbar({ onMenuClick, onProfileClick }: TopbarProps) {
           type="button"
           onClick={onProfileClick}
           aria-label="Open profile"
-          className="w-9 h-9 rounded-full bg-brand text-on-brand font-bold flex items-center justify-center transition-shadow hover:ring-2 hover:ring-brand/50 cursor-pointer"
+          className="w-9 h-9 overflow-hidden rounded-full bg-brand text-on-brand font-bold flex items-center justify-center transition-shadow hover:ring-2 hover:ring-brand/50 cursor-pointer"
         >
-          {initial}
+          {avatar?.url ? (
+            <img
+              src={avatar.url}
+              alt={user?.name ? `${user.name} profile photo` : "Profile photo"}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            initial
+          )}
         </button>
       </div>
     </header>
