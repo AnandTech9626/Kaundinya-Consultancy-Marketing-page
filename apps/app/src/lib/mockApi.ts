@@ -703,6 +703,21 @@ export async function lookupGstin(gstin: string): Promise<GstinInfo | null> {
 
 /* --------------------------------- Auth --------------------------------- */
 
+export interface EnquiryPayload {
+  fullName: string;
+  email: string;
+  mobile: string;
+  serviceCategory: string;
+  specificService?: string;
+  pinCode?: string;
+  comments?: string;
+  consent: boolean;
+}
+
+export function submitEnquiry(input: EnquiryPayload): Promise<{ id: string }> {
+  return api.post<{ id: string }>("/enquiries", input);
+}
+
 export interface OtpVerifyResult {
   token: string;
   user: User;
@@ -724,6 +739,16 @@ export interface UpdateProfileInput {
 
 export function updateProfile(input: UpdateProfileInput): Promise<User> {
   return api.patch<User>("/me", input);
+}
+
+export function fetchMyAvatar(): Promise<{ url: string | null }> {
+  return api.get<{ url: string | null }>("/me/avatar");
+}
+
+export function uploadMyAvatar(file: File): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  return api.postForm<{ url: string }>("/me/avatar", form);
 }
 
 export interface LoginMethod {
@@ -774,6 +799,12 @@ export interface MyRequestsPage {
   total: number;
   page: number;
   limit: number;
+  stats: {
+    total: number;
+    new: number;
+    inProgress: number;
+    completed: number;
+  };
 }
 
 export function fetchMyRequests(
