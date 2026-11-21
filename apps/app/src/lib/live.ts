@@ -10,7 +10,7 @@ export function bumpLiveData() {
   timer = window.setTimeout(() => {
     timer = null;
     for (const listener of listeners) listener();
-  }, 150);
+  }, 500);
 }
 
 export function subscribeLiveData(listener: LiveListener) {

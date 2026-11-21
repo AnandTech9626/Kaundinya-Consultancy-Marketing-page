@@ -376,7 +376,7 @@ export function Dashboard() {
                     to="/insurance/policies"
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold"
                   >
-                    Open Policy Vault
+                    View active policies
                   </Link>
                 </Card>
               ) : (

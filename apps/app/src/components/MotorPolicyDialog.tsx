@@ -131,7 +131,7 @@ export function MotorPolicyDialog({
         <div className="flex items-start justify-between gap-3 border-b border-border p-5">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-brand">
-              Policy Vault
+              Active policies
             </p>
             <h2 className="mt-0.5 text-lg font-extrabold tracking-tight text-foreground">
               Add a motor policy
