@@ -3,6 +3,7 @@ import type { AdminServiceRequestStatus } from "./api";
 export type ServiceCategory =
   | "Real Estate"
   | "Property Management & Home Services"
+  | "Digital Services"
   | "Insurance"
   | "Loans";
 
@@ -24,6 +25,7 @@ export const SERVICE_CATEGORY_STYLES: Record<string, string> = {
   "Real Estate": "border-blue-200 bg-blue-50 text-blue-700",
   "Property Management & Home Services":
     "border-amber-200 bg-amber-50 text-amber-700",
+  "Digital Services": "border-cyan-200 bg-cyan-50 text-cyan-700",
   Insurance: "border-emerald-200 bg-emerald-50 text-emerald-700",
   Loans: "border-violet-200 bg-violet-50 text-violet-700",
 };
@@ -35,6 +37,7 @@ export const REQUEST_TABS: Array<{
   { id: "all", label: "All" },
   { id: "Real Estate", label: "Real Estate" },
   { id: "Property Management & Home Services", label: "Home Services" },
+  { id: "Digital Services", label: "Digital Services" },
   { id: "Insurance", label: "Insurance" },
   { id: "Loans", label: "Loans" },
 ];

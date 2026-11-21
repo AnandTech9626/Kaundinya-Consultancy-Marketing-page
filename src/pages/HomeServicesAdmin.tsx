@@ -1149,7 +1149,7 @@ export function HomeServicesAdmin() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-1 rounded-xl border border-border-subtle bg-ivory p-1">
+        <div className="flex flex-wrap gap-1 rounded-2xl border border-border-subtle bg-white p-2">
           {TAB_META.map((item) => {
             const Icon = item.icon;
             return (
@@ -1157,19 +1157,19 @@ export function HomeServicesAdmin() {
                 key={item.id}
                 type="button"
                 onClick={() => handleTab(item.id)}
-                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
                   tab === item.id
-                    ? "bg-charcoal text-white"
-                    : "text-charcoal hover:bg-white"
+                    ? "bg-gold text-charcoal"
+                    : "text-charcoal hover:bg-ivory"
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-3.5 w-3.5" />
                 {item.label}
                 <span
                   className={`rounded-full px-1.5 py-0.5 text-[10px] ${
                     tab === item.id
-                      ? "bg-white/15 text-white"
-                      : "bg-white text-muted"
+                      ? "bg-charcoal/10 text-charcoal"
+                      : "bg-ivory text-muted"
                   }`}
                 >
                   {counts[item.id]}

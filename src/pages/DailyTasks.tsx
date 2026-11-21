@@ -7,7 +7,7 @@ import {
 } from "react";
 import {
   CalendarDays,
-  Download,
+  FileSpreadsheet,
   Pencil,
   Plus,
   RefreshCw,
@@ -19,6 +19,7 @@ import {
   fetchDailyTaskAssignees,
   fetchDailyTaskStats,
   fetchDailyTasks,
+  fetchDailyTasksExport,
   updateDailyTask,
   type AdminDailyTask,
   type AdminDailyTaskAssignee,
@@ -66,6 +67,13 @@ function todayIso(): string {
   const now = new Date();
   const offset = now.getTimezoneOffset() * 60000;
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function daysAgoIso(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
 }
 
 function formatDateLabel(value: string): string {
@@ -132,7 +140,11 @@ export function DailyTasks() {
   const [editTask, setEditTask] = useState<AdminDailyTask | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminDailyTask | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [pdfBusy, setPdfBusy] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportFrom, setExportFrom] = useState(() => daysAgoIso(9));
+  const [exportTo, setExportTo] = useState(() => todayIso());
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const load = useCallback(
     async (silent = false) => {
@@ -232,72 +244,80 @@ export function DailyTasks() {
     }
   };
 
-  const downloadDayPdf = async (date: string, rows: AdminDailyTask[]) => {
-    setPdfBusy(date);
-    try {
-      const { jsPDF } = await import("jspdf");
-      const { default: autoTable } = await import("jspdf-autotable");
-      const doc = new jsPDF({
-        orientation: "landscape",
-        unit: "pt",
-        format: "a4",
-      });
+  const exportExcel = async () => {
+    if (!exportFrom || !exportTo) {
+      setExportError("Choose both dates.");
+      return;
+    }
+    if (exportFrom > exportTo) {
+      setExportError("From date must be on or before the To date.");
+      return;
+    }
 
-      doc.setFontSize(14);
-      doc.text(`Daily Tasks - ${formatDateLabel(date)}`, 40, 40);
-      doc.setFontSize(9);
-      doc.text(
-        `Generated ${new Date().toLocaleString("en-IN")} · ${
-          rows.length
-        } row(s)`,
-        40,
-        56,
+    setExporting(true);
+    setExportError(null);
+    try {
+      const rows = await fetchDailyTasksExport(exportFrom, exportTo);
+      if (rows.length === 0) {
+        setExportError("No records in this date range.");
+        return;
+      }
+
+      const XLSX = await import("xlsx");
+      const data = rows.map((task, index) => ({
+        "S.No": index + 1,
+        Date: task.taskDate,
+        "Mobile 1": task.mobilePrimary,
+        "Mobile 2": task.mobileSecondary || "",
+        Name: task.customerName || "",
+        Email: task.email || "",
+        "Call time": task.calledAt ? formatTime(task.calledAt) : "",
+        "Duration (min)": task.durationMinutes ?? "",
+        Status: STATUS_LABELS[task.displayStatus],
+        Interested:
+          task.interested == null ? "" : task.interested ? "Yes" : "No",
+        Reason: task.reasonNotInterested || "",
+        "Next step": task.nextStep || "",
+        Comments: task.comments || "",
+        Agent: task.assignedByName || task.assignedByCode || "",
+      }));
+
+      const sheet = XLSX.utils.json_to_sheet(data);
+      sheet["!cols"] = [
+        { wch: 6 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 22 },
+        { wch: 26 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 24 },
+        { wch: 10 },
+        { wch: 24 },
+        { wch: 24 },
+        { wch: 36 },
+        { wch: 18 },
+      ];
+
+      const book = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(book, sheet, "Daily Tasks");
+      XLSX.writeFile(
+        book,
+        `daily-tasks-${exportFrom}_to_${exportTo}.xlsx`,
+        { compression: true },
       );
 
-      autoTable(doc, {
-        startY: 70,
-        head: [
-          [
-            "S.No",
-            "Mobile 1",
-            "Mobile 2",
-            "Name",
-            "Email",
-            "Call time",
-            "Duration (min)",
-            "Status",
-            "Interested",
-            "Reason",
-            "Next step",
-            "Comments",
-          ],
-        ],
-        body: rows.map((task, index) => [
-          String(index + 1),
-          task.mobilePrimary,
-          task.mobileSecondary || "",
-          task.customerName || "",
-          task.email || "",
-          formatTime(task.calledAt),
-          task.durationMinutes == null ? "" : String(task.durationMinutes),
-          STATUS_LABELS[task.displayStatus],
-          task.interested == null ? "" : task.interested ? "Yes" : "No",
-          task.reasonNotInterested || "",
-          task.nextStep || "",
-          task.comments || "",
-        ]),
-        styles: { fontSize: 7, cellPadding: 3, overflow: "linebreak" },
-        headStyles: { fillColor: [30, 30, 32], textColor: 255 },
-      });
-
-      doc.save(`daily-tasks-${date}.pdf`);
-    } catch (err) {
       showToast(
-        err instanceof Error ? err.message : "Could not build the PDF.",
-        "error",
+        `Exported ${rows.length} row${rows.length === 1 ? "" : "s"} to Excel.`,
+      );
+      setExportOpen(false);
+    } catch (err) {
+      setExportError(
+        err instanceof Error ? err.message : "Could not build the Excel file.",
       );
     } finally {
-      setPdfBusy(null);
+      setExporting(false);
     }
   };
 
@@ -322,6 +342,19 @@ export function DailyTasks() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => {
+                setExportError(null);
+                setExportOpen(true);
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs font-bold text-charcoal hover:border-gold/60"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5" />
+              Export Excel
+            </button>
+          )}
           <button
             type="button"
             onClick={() => void refresh()}
@@ -340,7 +373,7 @@ export function DailyTasks() {
               className="inline-flex items-center gap-2 rounded-lg bg-gold px-3 py-2 text-xs font-bold text-charcoal hover:bg-gold-hover"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add row
+              Assign call
             </button>
           )}
         </div>
@@ -430,7 +463,8 @@ export function DailyTasks() {
           </button>
         )}
         <p className="ml-auto text-[11px] text-muted">
-          Last 10 days are kept automatically.
+          This list shows the last 10 days. Older records are kept — use Export
+          Excel for any date range.
         </p>
       </div>
 
@@ -452,7 +486,7 @@ export function DailyTasks() {
           </p>
           <p className="mt-1 text-xs text-muted">
             {isAdmin
-              ? "Add a row to start today's call list."
+              ? "Assign a call to start today's call list."
               : "Your assigned calls will appear here."}
           </p>
         </div>
@@ -463,127 +497,97 @@ export function DailyTasks() {
               key={date}
               className="overflow-hidden rounded-2xl border border-border-subtle bg-white"
             >
-              <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle px-4 py-3">
-                <div>
-                  <h2 className="text-sm font-extrabold tracking-tight text-charcoal">
-                    {formatDateLabel(date)}
-                  </h2>
-                  <p className="text-[11px] text-muted">
-                    {rows.length} row{rows.length === 1 ? "" : "s"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void downloadDayPdf(date, rows)}
-                  disabled={pdfBusy === date}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-1.5 text-xs font-bold text-charcoal hover:border-gold/60 disabled:opacity-50"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  {pdfBusy === date ? "Preparing..." : "Download PDF"}
-                </button>
+              <header className="border-b border-border-subtle px-4 py-3">
+                <h2 className="text-sm font-extrabold tracking-tight text-charcoal">
+                  {formatDateLabel(date)}
+                </h2>
+                <p className="text-[11px] text-muted">
+                  {rows.length} row{rows.length === 1 ? "" : "s"}
+                </p>
               </header>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[2300px] table-auto text-left text-xs">
+                <table className="w-full min-w-[980px] text-left text-xs">
                   <thead className="bg-ivory text-[10px] font-bold uppercase tracking-wider text-muted">
                     <tr>
-                      <th className="min-w-[56px] whitespace-nowrap px-3 py-2">
-                        S.No
-                      </th>
-                      <th className="min-w-[130px] whitespace-nowrap px-3 py-2">
-                        Mobile 1
-                      </th>
-                      <th className="min-w-[130px] whitespace-nowrap px-3 py-2">
-                        Mobile 2
-                      </th>
-                      <th className="min-w-[180px] whitespace-nowrap px-3 py-2">
-                        Name
-                      </th>
-                      <th className="min-w-[240px] whitespace-nowrap px-3 py-2">
-                        Email
-                      </th>
-                      <th className="min-w-[120px] whitespace-nowrap px-3 py-2">
-                        Call time
-                      </th>
-                      <th className="min-w-[110px] whitespace-nowrap px-3 py-2">
-                        Duration
-                      </th>
-                      <th className="min-w-[180px] whitespace-nowrap px-3 py-2">
-                        Status
-                      </th>
-                      <th className="min-w-[110px] whitespace-nowrap px-3 py-2">
-                        Interested
-                      </th>
-                      <th className="min-w-[230px] whitespace-nowrap px-3 py-2">
-                        Reason
-                      </th>
-                      <th className="min-w-[230px] whitespace-nowrap px-3 py-2">
-                        Next step
-                      </th>
-                      <th className="min-w-[300px] whitespace-nowrap px-3 py-2">
-                        Comments
-                      </th>
-                      {isAdmin && (
-                        <th className="min-w-[150px] whitespace-nowrap px-3 py-2">
-                          Agent
-                        </th>
-                      )}
-                      <th className="min-w-[160px] whitespace-nowrap px-3 py-2 text-right">
-                        Actions
-                      </th>
+                      <th className="w-12 px-3 py-2">S.No</th>
+                      <th className="px-3 py-2">Contact</th>
+                      <th className="px-3 py-2">Call</th>
+                      <th className="px-3 py-2">Status</th>
+                      <th className="px-3 py-2">Outcome</th>
+                      <th className="px-3 py-2">Notes</th>
+                      {isAdmin && <th className="px-3 py-2">Agent</th>}
+                      <th className="px-3 py-2 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-subtle">
                     {rows.map((task, index) => (
                       <tr key={task.id} className="align-top">
-                        <td className="px-3 py-2.5 font-semibold text-muted">
+                        <td className="px-3 py-3 font-semibold text-muted">
                           {index + 1}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-2.5 font-bold text-charcoal">
-                          {task.mobilePrimary}
+                        <td className="px-3 py-3">
+                          <p className="font-semibold text-charcoal">
+                            {task.customerName || "—"}
+                          </p>
+                          <p className="text-[11px] text-muted">
+                            {task.mobilePrimary}
+                            {task.mobileSecondary
+                              ? ` · ${task.mobileSecondary}`
+                              : ""}
+                          </p>
+                          {task.email && (
+                            <p className="max-w-[220px] truncate text-[10px] text-muted-light">
+                              {task.email}
+                            </p>
+                          )}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-2.5 text-muted">
-                          {task.mobileSecondary || "—"}
+                        <td className="whitespace-nowrap px-3 py-3">
+                          <p className="font-semibold text-charcoal">
+                            {formatTime(task.calledAt)}
+                          </p>
+                          <p className="text-[10px] text-muted">
+                            {task.durationMinutes == null
+                              ? "—"
+                              : `${task.durationMinutes} min`}
+                          </p>
                         </td>
-                        <td className="min-w-[180px] break-words px-3 py-2.5 font-semibold text-charcoal">
-                          {task.customerName || "—"}
-                        </td>
-                        <td className="min-w-[240px] break-words px-3 py-2.5 text-muted">
-                          {task.email || "—"}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-2.5 text-muted">
-                          {formatTime(task.calledAt)}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-2.5 text-muted">
-                          {task.durationMinutes == null
-                            ? "—"
-                            : `${task.durationMinutes} min`}
-                        </td>
-                        <td className="px-3 py-2.5">
+                        <td className="px-3 py-3">
                           <TaskStatusBadge status={task.displayStatus} />
                         </td>
-                        <td className="whitespace-nowrap px-3 py-2.5 text-muted">
-                          {task.interested == null
-                            ? "—"
-                            : task.interested
-                              ? "Yes"
-                              : "No"}
+                        <td className="px-3 py-3">
+                          <p className="text-charcoal">
+                            {task.interested == null
+                              ? "—"
+                              : task.interested
+                                ? "Interested"
+                                : "Not interested"}
+                          </p>
+                          {task.reasonNotInterested && (
+                            <p className="text-[11px] text-muted">
+                              {task.reasonNotInterested}
+                            </p>
+                          )}
                         </td>
-                        <td className="min-w-[230px] break-words px-3 py-2.5 text-muted">
-                          {task.reasonNotInterested || "—"}
-                        </td>
-                        <td className="min-w-[230px] break-words px-3 py-2.5 text-muted">
-                          {task.nextStep || "—"}
-                        </td>
-                        <td className="min-w-[300px] break-words px-3 py-2.5 text-muted">
-                          {task.comments || "—"}
+                        <td className="px-3 py-3 text-muted">
+                          {task.nextStep && (
+                            <p className="text-[11px] font-semibold text-foreground-soft">
+                              Next: {task.nextStep}
+                            </p>
+                          )}
+                          {task.comments && (
+                            <p className="line-clamp-2 text-[11px]">
+                              {task.comments}
+                            </p>
+                          )}
+                          {!task.nextStep && !task.comments && <p>—</p>}
                         </td>
                         {isAdmin && (
-                          <td className="whitespace-nowrap px-3 py-2.5 text-muted">
+                          <td className="whitespace-nowrap px-3 py-3 text-muted">
                             {task.assignedByName || task.assignedByCode || "—"}
                           </td>
                         )}
-                        <td className="whitespace-nowrap px-3 py-2.5 text-right">
+                        <td className="whitespace-nowrap px-3 py-3 text-right">
                           <div className="inline-flex items-center gap-1.5">
                             <button
                               type="button"
@@ -655,6 +659,89 @@ export function DailyTasks() {
           onCancel={() => setDeleteTarget(null)}
         />
       )}
+
+      {exportOpen && (
+        <SheetShell
+          eyebrow="Daily tasks"
+          title="Export records to Excel"
+          subtitle="Download every call record in the selected date range."
+          onClose={() => setExportOpen(false)}
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass} htmlFor="export-from">
+                  From
+                </label>
+                <input
+                  id="export-from"
+                  type="date"
+                  className={inputClass}
+                  value={exportFrom}
+                  max={exportTo || todayIso()}
+                  onChange={(event) => setExportFrom(event.target.value)}
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="export-to">
+                  To
+                </label>
+                <input
+                  id="export-to"
+                  type="date"
+                  className={inputClass}
+                  value={exportTo}
+                  min={exportFrom}
+                  max={todayIso()}
+                  onChange={(event) => setExportTo(event.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: "Last 10 days", days: 9 },
+                { label: "Last 30 days", days: 29 },
+                { label: "Last 90 days", days: 89 },
+              ].map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => {
+                    setExportFrom(daysAgoIso(preset.days));
+                    setExportTo(todayIso());
+                    setExportError(null);
+                  }}
+                  className="rounded-lg border border-border-subtle bg-white px-2.5 py-1 text-[11px] font-bold text-muted hover:border-gold/60 hover:text-charcoal"
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+
+            <p className="text-[11px] leading-relaxed text-muted">
+              Records stay in the database. The Daily Tasks list above shows only
+              the last 10 days; older dates are available through this export.
+            </p>
+
+            {exportError && (
+              <p className="rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-xs font-semibold text-rose-700">
+                {exportError}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={() => void exportExcel()}
+              disabled={exporting}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gold px-4 py-2.5 text-sm font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              {exporting ? "Preparing..." : "Download Excel"}
+            </button>
+          </div>
+        </SheetShell>
+      )}
     </div>
   );
 }
@@ -720,8 +807,8 @@ function AddTaskSheet({
   return (
     <SheetShell
       eyebrow="Daily tasks"
-      title="Add a call row"
-      subtitle="Enter the client details for the daily call list."
+      title="Assign a call"
+      subtitle="Choose an agent and enter the client details for the daily call list."
       onClose={onClose}
     >
       <form onSubmit={submit} className="space-y-3">
@@ -838,7 +925,7 @@ function AddTaskSheet({
             disabled={busy}
             className="rounded-lg bg-gold px-4 py-2 text-sm font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
           >
-            {busy ? "Adding..." : "Add row"}
+            {busy ? "Assigning..." : "Assign call"}
           </button>
         </div>
       </form>
