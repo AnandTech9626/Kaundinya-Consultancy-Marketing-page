@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Link,
   Navigate,
@@ -13,6 +13,7 @@ import { Toaster } from "./Toaster";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { AdminNotificationsProvider, useAdminNotifications } from "../lib/admin-notifications";
 import { useStaffAuth } from "../lib/staff-auth";
+import { fetchStaffAvatar } from "../lib/api";
 import { BrandLockup } from "./BrandLockup";
 import {
   Bell,
@@ -20,6 +21,7 @@ import {
   Database,
   FileText,
   Inbox,
+  LogOut,
   Menu,
   PhoneCall,
   ShieldCheck,
@@ -44,9 +46,28 @@ function AppShellContent() {
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const { unreadCount, openPanel } = useAdminNotifications();
-  const { staff } = useStaffAuth();
+  const { staff, logout } = useStaffAuth();
   const isAdmin = staff?.role === "admin";
   const initial = (staff?.name || "A").charAt(0).toUpperCase();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      fetchStaffAvatar()
+        .then((result) => {
+          if (!cancelled) setAvatarUrl(result.url);
+        })
+        .catch(() => undefined);
+    };
+    load();
+    const onUpdated = () => load();
+    window.addEventListener("staff-avatar-updated", onUpdated);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("staff-avatar-updated", onUpdated);
+    };
+  }, []);
 
   // Partners (call-center agents) can only use the Daily Tasks module.
   if (!isAdmin && location.pathname !== "/daily-tasks") {
@@ -163,13 +184,15 @@ function AppShellContent() {
             </>
           )}
         </nav>
-
-        <div className="border-t border-white/10 p-4">
-          <p className="text-[11px] text-white/40">Signed in as</p>
-          <p className="text-sm font-bold">{staff?.name || "Staff"}</p>
-          <p className="text-[10px] font-semibold capitalize text-white/40">
-            {staff?.role} · {staff?.staffCode}
-          </p>
+        <div className="mt-auto border-t border-white/10 p-3">
+          <button
+            type="button"
+            onClick={logout}
+            className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
         </div>
       </aside>
 
@@ -215,8 +238,16 @@ function AppShellContent() {
               className="flex items-center gap-2 cursor-pointer"
               aria-label="Open staff profile"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gold text-xs font-extrabold text-charcoal">
-                {initial}
+              <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gold text-xs font-extrabold text-charcoal">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={staff?.name ? `${staff.name} profile photo` : "Profile"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  initial
+                )}
               </span>
               <span className="hidden text-left sm:block">
                 <span className="block text-sm font-bold text-charcoal">

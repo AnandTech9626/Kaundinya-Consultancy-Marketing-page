@@ -37,6 +37,8 @@ function moduleTarget(request: AdminServiceRequest): string | null {
       return `/insurance/requests?focus=${focus}`;
     case "Property Management & Home Services":
       return `/home-services/requests?focus=${focus}`;
+    case "Digital Services":
+      return `/digital-services`;
     case "Real Estate":
       return `/real-estate/requests?focus=${focus}`;
     default:
@@ -227,7 +229,7 @@ export function RequestsAdmin() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1 rounded-2xl border border-border-subtle bg-white p-2">
         {REQUEST_TABS.map((entry) => {
           const count =
             entry.id === "all"
@@ -241,17 +243,17 @@ export function RequestsAdmin() {
                 setTab(entry.id);
                 setPage(1);
               }}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-colors ${
+              className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
                 tab === entry.id
-                  ? "bg-charcoal text-white"
-                  : "border border-border-subtle bg-white text-charcoal hover:border-gold/60"
+                  ? "bg-gold text-charcoal"
+                  : "text-charcoal hover:bg-ivory"
               }`}
             >
               {entry.label}
               <span
                 className={`rounded-full px-1.5 py-0.5 text-[10px] ${
                   tab === entry.id
-                    ? "bg-white/15 text-white"
+                    ? "bg-charcoal/10 text-charcoal"
                     : "bg-ivory text-muted"
                 }`}
               >
