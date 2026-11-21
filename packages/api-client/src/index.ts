@@ -23,6 +23,12 @@ export interface ApiClientOptions {
   getToken?: () => string | null | undefined;
   onUnauthorized?: () => void;
   fetchImpl?: typeof fetch;
+  /**
+   * Short-lived cache for successful GET responses (milliseconds). It also
+   * de-duplicates concurrent identical GETs, which keeps StrictMode double
+   * mounts and overlapping screens from firing duplicate requests.
+   */
+  cacheTtlMs?: number;
 }
 
 interface Envelope<T> {
@@ -59,6 +65,17 @@ export function createApiClient(options: ApiClientOptions) {
   const baseUrl = options.baseUrl.replace(/\/+$/, "");
   const apiPath = options.apiPath ?? "/api";
   const fetchImpl = options.fetchImpl ?? fetch;
+  const cacheTtlMs = options.cacheTtlMs ?? 0;
+
+  const getCache = new Map<string, { expiresAt: number; data: unknown }>();
+  const inflight = new Map<string, Promise<unknown>>();
+  let cacheGeneration = 0;
+
+  function invalidateCache() {
+    cacheGeneration += 1;
+    getCache.clear();
+    inflight.clear();
+  }
 
   async function request<T>(
     method: string,
@@ -73,47 +90,83 @@ export function createApiClient(options: ApiClientOptions) {
     if (token) headers.Authorization = `Bearer ${token}`;
     if (body !== undefined) headers["Content-Type"] = "application/json";
 
-    let response: Response;
-    try {
-      response = await fetchImpl(url, {
-        method,
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-        signal: requestOptions.signal,
-      });
-    } catch {
-      throw new ApiError(
-        0,
-        "Unable to reach the server. Check your connection and try again."
-      );
-    }
-
-    if (response.status === 401) options.onUnauthorized?.();
-
-    if (response.status === 204) return undefined as T;
-
-    const text = await response.text();
-    let payload: Envelope<T> | null = null;
-    if (text) {
+    const execute = async (): Promise<T> => {
+      let response: Response;
       try {
-        payload = JSON.parse(text) as Envelope<T>;
+        response = await fetchImpl(url, {
+          method,
+          headers,
+          body: body === undefined ? undefined : JSON.stringify(body),
+          signal: requestOptions.signal,
+        });
       } catch {
-        payload = null;
+        throw new ApiError(
+          0,
+          "Unable to reach the server. Check your connection and try again."
+        );
       }
+
+      if (response.status === 401) options.onUnauthorized?.();
+
+      if (response.status === 204) return undefined as T;
+
+      const text = await response.text();
+      let payload: Envelope<T> | null = null;
+      if (text) {
+        try {
+          payload = JSON.parse(text) as Envelope<T>;
+        } catch {
+          payload = null;
+        }
+      }
+
+      if (!response.ok || payload?.success === false) {
+        throw new ApiError(
+          response.status,
+          payload?.message || `Request failed (${response.status})`,
+          payload?.errors
+        );
+      }
+
+      return (payload ? payload.data : undefined) as T;
+    };
+
+    if (method !== "GET") {
+      invalidateCache();
+    } else if (cacheTtlMs > 0) {
+      const cacheKey = `${token ?? "anon"} ${url}`;
+      const cached = getCache.get(cacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        return cached.data as T;
+      }
+
+      const pending = inflight.get(cacheKey);
+      if (pending) return pending as Promise<T>;
+
+      const generation = cacheGeneration;
+      const promise = execute()
+        .then((data) => {
+          if (generation === cacheGeneration) {
+            getCache.set(cacheKey, {
+              expiresAt: Date.now() + cacheTtlMs,
+              data,
+            });
+          }
+          return data;
+        })
+        .finally(() => {
+          inflight.delete(cacheKey);
+        });
+
+      inflight.set(cacheKey, promise);
+      return promise;
     }
 
-    if (!response.ok || payload?.success === false) {
-      throw new ApiError(
-        response.status,
-        payload?.message || `Request failed (${response.status})`,
-        payload?.errors
-      );
-    }
-
-    return (payload ? payload.data : undefined) as T;
+    return execute();
   }
 
   async function requestForm<T>(path: string, formData: FormData): Promise<T> {
+    invalidateCache();
     const url = buildUrl(baseUrl, apiPath, path);
     const headers: Record<string, string> = { Accept: "application/json" };
     const token = options.getToken?.();
