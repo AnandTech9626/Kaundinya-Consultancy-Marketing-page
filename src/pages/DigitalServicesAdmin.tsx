@@ -136,7 +136,7 @@ export function DigitalServicesAdmin() {
     void load();
     const interval = window.setInterval(() => {
       void load(true);
-    }, 30_000);
+    }, 60_000);
     return () => window.clearInterval(interval);
   }, [load]);
 
