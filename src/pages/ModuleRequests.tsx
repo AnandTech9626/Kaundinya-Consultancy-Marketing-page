@@ -116,7 +116,7 @@ export function ModuleRequests({
     const interval = window.setInterval(() => {
       void load(true);
       void loadStats();
-    }, 30000);
+    }, 60000);
     return () => window.clearInterval(interval);
   }, [load, loadStats]);
 

@@ -242,8 +242,7 @@ export type AdminAuditLog = {
 export type AdminRealEstateRequests = {
   enquiries: AdminEnquiry[];
   valuations: AdminValuation[];
-  siteVisits: AdminSiteVisit[];
-  listings: AdminProperty[];
+  siteVisits: AdminSiteVisit[];
 };
 
 export type AdminRequestKind = "enquiry" | "valuation" | "site-visit";
@@ -264,6 +263,7 @@ export type AdminPropertyPatch = {
   reraAgentNumber?: string | null;
   status?: AdminPropertyStatus;
   featured?: boolean;
+  images?: string[];
 };
 
 const API_BASE = (
@@ -760,13 +760,14 @@ export type InsuranceStats = {
 
 export type AdminPolicy = {
   id: string;
+  serialNo: number;
   type: "Life & Term" | "Health" | "Motor" | "Property";
   provider: string;
   policyNumber: string;
   coverAmount: number;
   premium: number;
   renewalDate: string;
-  status: "active" | "expiring" | "lapsed";
+  status: "pending" | "active" | "expiring" | "lapsed";
   holder?: string;
   validFrom?: string;
   vehicleType?: "2W" | "4W" | null;
@@ -881,7 +882,7 @@ export function fetchAdminPolicies(q = ""): Promise<AdminPolicy[]> {
 export function updateAdminPolicy(
   id: string,
   patch: {
-    status?: "active" | "expiring" | "lapsed";
+    status?: "pending" | "active" | "expiring" | "lapsed";
     provider?: string;
     policyNumber?: string;
     type?: AdminPolicy["type"];
@@ -911,7 +912,7 @@ export type CreateAdminPolicyInput = {
   premium: number;
   validFrom?: string | null;
   renewalDate: string;
-  status?: "active" | "expiring" | "lapsed";
+  status?: "pending" | "active" | "expiring" | "lapsed";
 };
 
 export function createAdminPolicy(
@@ -1654,4 +1655,157 @@ export function updateDailyTask(
 
 export function deleteDailyTask(id: string): Promise<void> {
   return jsonRequest<void>(`/api/admin/daily-tasks/${id}`, "DELETE");
+}
+export async function uploadAdminPropertyPhotos(
+  id: string,
+  files: File[],
+): Promise<AdminProperty> {
+  const form = new FormData();
+  for (const file of files) {
+    form.append("photos", file);
+  }
+
+  const response = await apiFetch(
+    `${API_BASE}/api/admin/properties/${id}/photos`,
+    {
+      method: "POST",
+      body: form,
+    },
+  );
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: AdminProperty }
+    | null;
+
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(
+      payload?.message || `Could not upload photos (${response.status}).`,
+    );
+  }
+
+  return payload.data;
+}
+export type AdminStorageBucket = "public" | "private";
+
+export type AdminStorageObject = {
+  key: string;
+  url: string;
+  size: number;
+  lastModified: string | null;
+  etag: string | null;
+};
+
+export type AdminStorageList = {
+  bucket: AdminStorageBucket;
+  configured: boolean;
+  objects: AdminStorageObject[];
+  truncated: boolean;
+  cursor: string | null;
+};
+
+export async function fetchAdminStorageFiles(
+  bucket: AdminStorageBucket,
+  options: { prefix?: string; cursor?: string | null; limit?: number } = {},
+): Promise<AdminStorageList> {
+  const url = new URL(`${API_BASE}/api/admin/storage/files`);
+  url.searchParams.set("bucket", bucket);
+  if (options.prefix) url.searchParams.set("prefix", options.prefix);
+  if (options.cursor) url.searchParams.set("cursor", options.cursor);
+  url.searchParams.set("limit", String(options.limit ?? 10));
+
+  const response = await apiFetch(url.toString());
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: AdminStorageList }
+    | null;
+
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(
+      payload?.message || `Could not load storage (${response.status}).`,
+    );
+  }
+
+  return payload.data;
+}
+
+export async function uploadAdminStorageFiles(
+  bucket: AdminStorageBucket,
+  files: File[],
+): Promise<void> {
+  const form = new FormData();
+  for (const file of files) {
+    form.append("files", file);
+  }
+
+  const response = await apiFetch(
+    `${API_BASE}/api/admin/storage/upload?bucket=${bucket}`,
+    { method: "POST", body: form },
+  );
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string }
+    | null;
+
+  if (!response.ok || !payload?.success) {
+    throw new Error(
+      payload?.message || `Upload failed (${response.status}).`,
+    );
+  }
+}
+
+export async function deleteAdminStorageFile(
+  bucket: AdminStorageBucket,
+  key: string,
+): Promise<void> {
+  const url = new URL(`${API_BASE}/api/admin/storage/files`);
+  url.searchParams.set("bucket", bucket);
+  url.searchParams.set("key", key);
+
+  const response = await apiFetch(url.toString(), { method: "DELETE" });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as
+      | { message?: string }
+      | null;
+    throw new Error(
+      payload?.message || `Delete failed (${response.status}).`,
+    );
+  }
+}
+
+export async function getAdminStorageSignedUrl(
+  bucket: AdminStorageBucket,
+  key: string,
+): Promise<string> {
+  const url = new URL(`${API_BASE}/api/admin/storage/signed-url`);
+  url.searchParams.set("bucket", bucket);
+  url.searchParams.set("key", key);
+
+  const response = await apiFetch(url.toString());
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: { url?: string } }
+    | null;
+
+  if (!response.ok || !payload?.success || !payload.data?.url) {
+    throw new Error(
+      payload?.message || `Could not sign file URL (${response.status}).`,
+    );
+  }
+
+  return payload.data.url;
+}
+export type AdminStorageUsage = {
+  public: { count: number; size: number };
+  private: { count: number; size: number };
+};
+
+export async function fetchAdminStorageUsage(): Promise<AdminStorageUsage> {
+  const response = await apiFetch(`${API_BASE}/api/admin/storage/usage`);
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: AdminStorageUsage }
+    | null;
+
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(
+      payload?.message || `Could not load storage usage (${response.status}).`,
+    );
+  }
+
+  return payload.data;
 }
