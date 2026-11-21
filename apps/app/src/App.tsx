@@ -25,6 +25,11 @@ const Onboarding = lazy(() =>
 const RealEstate = lazy(() =>
   import("./pages/RealEstate").then((module) => ({ default: module.RealEstate }))
 );
+const MyProperties = lazy(() =>
+  import("./pages/MyProperties").then((module) => ({
+    default: module.MyProperties,
+  }))
+);
 const PropertyDetail = lazy(() =>
   import("./pages/PropertyDetail").then((module) => ({
     default: module.PropertyDetail,
@@ -152,7 +157,8 @@ function AppRoutes() {
                 />
                 <Route path="/real-estate/buy" element={<RealEstate mode="buy" />} />
                 <Route path="/real-estate/rent" element={<RealEstate mode="rent" />} />
-                <Route path="/real-estate/sell" element={<RealEstate mode="sell" />} />
+                <Route path="/real-estate/sell" element={<Navigate to="/real-estate/my" replace />} />
+                <Route path="/real-estate/my" element={<MyProperties />} />
                 <Route path="/real-estate/list" element={<PropertyListing />} />
                 <Route path="/real-estate/valuation" element={<PropertyValuation />} />
                 <Route path="/real-estate/:id" element={<PropertyDetail />} />

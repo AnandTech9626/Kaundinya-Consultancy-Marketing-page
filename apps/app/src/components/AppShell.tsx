@@ -25,7 +25,7 @@ export function AppShell() {
               onMenuClick={() => setMobileNavOpen(true)}
               onProfileClick={() => setProfileOpen(true)}
             />
-            <main className="flex-1 p-4 sm:p-6 lg:p-8">
+            <main className="flex-1 p-3 sm:p-5 lg:p-6">
               <ErrorBoundary resetKey={location.pathname}>
                 <Outlet />
               </ErrorBoundary>
