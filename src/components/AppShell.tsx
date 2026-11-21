@@ -17,6 +17,7 @@ import { BrandLockup } from "./BrandLockup";
 import {
   Bell,
   Building2,
+  Database,
   FileText,
   Inbox,
   Menu,
@@ -150,6 +151,14 @@ function AppShellContent() {
               >
                 <Wallet className="h-4 w-4" />
                 Loans
+              </NavLink>
+              <NavLink
+                to="/storage"
+                onClick={() => setOpen(false)}
+                className={navClass}
+              >
+                <Database className="h-4 w-4" />
+                Storage
               </NavLink>
             </>
           )}

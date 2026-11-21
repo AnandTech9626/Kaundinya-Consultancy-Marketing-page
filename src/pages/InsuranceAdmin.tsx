@@ -9,8 +9,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import {
   BellRing,
   CalendarClock,
-  Download,
-  FileSpreadsheet,
   Inbox,
   Pencil,
   Plus,
@@ -25,12 +23,10 @@ import {
   createAdminPolicy,
   deleteAdminInsurancePlan,
   deleteAdminPolicy,
-  downloadPolicyImportTemplate,
   fetchAdminInsurancePlans,
   fetchAdminPolicies,
   fetchAdminRenewals,
   fetchInsuranceStats,
-  importAdminPoliciesCsv,
   runAdminRenewalEngine,
   sendAdminRenewalReminder,
   updateAdminInsurancePlan,
@@ -42,7 +38,6 @@ import {
   type AdminPolicy,
   type AdminRenewal,
   type InsuranceStats,
-  type PolicyImportResult,
 } from "../lib/api";
 import { formatINR } from "../lib/format";
 import { showToast } from "../lib/toast";
@@ -53,15 +48,14 @@ import {
   inputClass,
   labelClass,
 } from "../components/AdminUi";
-import { SkeletonKpis, SkeletonList } from "../components/Skeleton";
+import { SkeletonList } from "../components/Skeleton";
 
-type Tab = "plans" | "policies" | "renewals" | "import";
+type Tab = "plans" | "policies" | "renewals";
 
 const TAB_META: Array<{ id: Tab; label: string; icon: typeof ShieldCheck }> = [
   { id: "plans", label: "Plans", icon: ShieldCheck },
   { id: "policies", label: "Policies", icon: ShieldCheck },
   { id: "renewals", label: "Renewals", icon: CalendarClock },
-  { id: "import", label: "Import", icon: FileSpreadsheet },
 ];
 
 const TYPES: AdminInsuranceType[] = ["life", "health", "motor", "property"];
@@ -80,6 +74,35 @@ const FAMILY_OPTIONS: Array<{ value: AdminFamilyOption | ""; label: string }> = 
   { value: "parents", label: "Parents" },
   { value: "family", label: "Family" },
 ];
+
+function insurerInitials(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "?";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+function InsurerAvatar({ plan }: { plan: AdminInsurancePlan }) {
+  const [failed, setFailed] = useState(false);
+  const url = plan.insurerLogoUrl?.trim();
+  if (url && !failed) {
+    return (
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border-subtle bg-white p-1.5">
+        <img
+          src={url}
+          alt={plan.insurer}
+          className="h-full w-full object-contain"
+          onError={() => setFailed(true)}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-ivory text-xs font-extrabold tracking-wide text-charcoal">
+      {insurerInitials(plan.insurer)}
+    </div>
+  );
+}
 
 function PlanSheet({
   plan,
@@ -487,6 +510,7 @@ function PolicySheet({
                 setStatus(event.target.value as AdminPolicy["status"])
               }
             >
+              <option value="pending">Pending</option>
               <option value="active">Active</option>
               <option value="expiring">Expiring</option>
               <option value="lapsed">Lapsed</option>
@@ -494,7 +518,7 @@ function PolicySheet({
           </div>
           <div>
             <label className={labelClass} htmlFor="policy-renewal">
-              Renewal date
+              End date
             </label>
             <input
               id="policy-renewal"
@@ -508,7 +532,7 @@ function PolicySheet({
         </div>
         <div>
           <label className={labelClass} htmlFor="policy-provider">
-            Provider
+            Company
           </label>
           <input
             id="policy-provider"
@@ -611,7 +635,7 @@ function PolicySheet({
         </div>
         <div>
           <label className={labelClass} htmlFor="policy-holder">
-            Policy holder
+            Client name
           </label>
           <input
             id="policy-holder"
@@ -692,7 +716,7 @@ function PolicyCreateSheet({
     <SheetShell
       eyebrow="Client policy"
       title="Add a policy"
-      subtitle="The client is matched by their registered mobile number."
+      subtitle="The serial number is generated automatically. The client is matched by their registered mobile number."
       onClose={onClose}
     >
       <form onSubmit={save} className="space-y-3">
@@ -800,7 +824,8 @@ function PolicyCreateSheet({
                   setStatus(event.target.value as AdminPolicy["status"])
                 }
               >
-                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+              <option value="active">Active</option>
                 <option value="expiring">Expiring</option>
                 <option value="lapsed">Lapsed</option>
               </select>
@@ -850,7 +875,7 @@ function PolicyCreateSheet({
           </div>
           <div>
             <label className={labelClass} htmlFor="new-end">
-              End / renewal date
+              End date
             </label>
             <input
               id="new-end"
@@ -875,6 +900,7 @@ function PolicyCreateSheet({
                 setStatus(event.target.value as AdminPolicy["status"])
               }
             >
+              <option value="pending">Pending</option>
               <option value="active">Active</option>
               <option value="expiring">Expiring</option>
               <option value="lapsed">Lapsed</option>
@@ -919,12 +945,6 @@ export function InsuranceAdmin() {
   const [busy, setBusy] = useState(false);
   const [reminding, setReminding] = useState<string | null>(null);
   const [addingPolicy, setAddingPolicy] = useState(false);
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<PolicyImportResult | null>(
-    null,
-  );
-  const [importError, setImportError] = useState<string | null>(null);
   const [runningRenewals, setRunningRenewals] = useState(false);
 
   const refreshStats = useCallback(async () => {
@@ -965,8 +985,7 @@ export function InsuranceAdmin() {
     if (
       requestedTab === "plans" ||
       requestedTab === "policies" ||
-      requestedTab === "renewals" ||
-      requestedTab === "import"
+      requestedTab === "renewals"
     ) {
       setTab(requestedTab);
     }
@@ -991,8 +1010,7 @@ export function InsuranceAdmin() {
   }, [focusId, policies]);
 
   const reloadAll = async () => {
-    await load();
-    await refreshStats();
+    await Promise.all([load(), refreshStats()]);
   };
 
   const togglePlan = async (plan: AdminInsurancePlan) => {
@@ -1060,37 +1078,6 @@ export function InsuranceAdmin() {
     }
   };
 
-  const onDownloadTemplate = async () => {
-    try {
-      await downloadPolicyImportTemplate();
-    } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : "Could not download template.",
-        "error",
-      );
-    }
-  };
-
-  const onImport = async () => {
-    if (!importFile) return;
-    setImporting(true);
-    setImportError(null);
-    setImportResult(null);
-    try {
-      const result = await importAdminPoliciesCsv(importFile);
-      setImportResult(result);
-      showToast(
-        `Import done: ${result.created} created, ${result.updated} updated, ${result.failed} failed.`,
-      );
-      setImportFile(null);
-      await reloadAll();
-    } catch (err) {
-      setImportError(err instanceof Error ? err.message : "Import failed.");
-    } finally {
-      setImporting(false);
-    }
-  };
-
   const onRunRenewals = async () => {
     setRunningRenewals(true);
     try {
@@ -1126,14 +1113,6 @@ export function InsuranceAdmin() {
             { label: "Renewals due", value: stats?.renewalsDue ?? 0 },
             { label: "Active policies", value: stats?.activePolicies ?? 0 },
           ];
-
-  const importKpis = [
-    { label: "Policies", value: stats?.policiesTotal ?? 0 },
-    { label: "Active", value: stats?.activePolicies ?? 0 },
-    { label: "Renewals due", value: stats?.renewalsDue ?? 0 },
-  ];
-
-  const activeKpis = tab === "import" ? importKpis : kpis;
 
   return (
     <div className="space-y-5">
@@ -1190,45 +1169,52 @@ export function InsuranceAdmin() {
         </div>
       </div>
 
-      {stats === null ? (
-        <SkeletonKpis count={4} />
-      ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {activeKpis.map((kpi) => (
-            <div
-              key={kpi.label}
-              className="rounded-2xl border border-border-subtle bg-white p-4"
+      <div className="flex flex-col gap-2 rounded-2xl border border-border-subtle bg-white p-2 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-wrap gap-1">
+          {TAB_META.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                tab === id
+                  ? "bg-charcoal text-white"
+                  : "text-charcoal hover:bg-ivory"
+              }`}
             >
-              <p className="text-xl font-extrabold tracking-tight text-charcoal">
-                {kpi.value}
-              </p>
-              <p className="mt-1 text-[11px] font-semibold text-muted">
-                {kpi.label}
-              </p>
-            </div>
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </button>
           ))}
         </div>
-      )}
-
-      <div className="flex flex-wrap gap-2">
-        {TAB_META.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-colors ${
-              tab === id
-                ? "bg-charcoal text-white"
-                : "border border-border-subtle bg-white text-charcoal hover:border-gold/60"
-            }`}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </button>
-        ))}
+        {stats === null ? (
+          <div className="flex items-center gap-2 px-2 py-1">
+            <div className="h-4 w-24 animate-pulse rounded bg-ivory" />
+            <div className="h-4 w-24 animate-pulse rounded bg-ivory" />
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-2">
+            {kpis.map((kpi, index) => (
+              <div key={kpi.label} className="flex items-baseline gap-1.5">
+                <span className="text-sm font-extrabold tracking-tight text-charcoal">
+                  {kpi.value}
+                </span>
+                <span className="text-[11px] font-semibold text-muted">
+                  {kpi.label}
+                </span>
+                {index < kpis.length - 1 && (
+                  <span
+                    className="ml-2 h-3 w-px bg-border-subtle"
+                    aria-hidden="true"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {tab !== "renewals" && tab !== "import" && (
+      {tab !== "renewals" && (
         <div className="flex flex-wrap gap-2">
           <form
             onSubmit={(event) => {
@@ -1286,8 +1272,9 @@ export function InsuranceAdmin() {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className="flex flex-wrap items-center gap-3 rounded-2xl border border-border-subtle bg-white p-4"
+                className="flex items-center gap-3 rounded-2xl border border-border-subtle bg-white p-4 transition-colors hover:border-gold/50"
               >
+                <InsurerAvatar plan={plan} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-ivory px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted">
@@ -1295,21 +1282,33 @@ export function InsuranceAdmin() {
                     </span>
                     <StatusBadge status={plan.active ? "active" : "lapsed"} />
                     {plan.familyOption && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
+                      <span className="rounded-full border border-border-subtle px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-light">
                         {plan.familyOption}
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm font-extrabold text-charcoal">
-                    {plan.insurer} · {plan.name}
+                  <p className="mt-1 truncate text-sm font-extrabold text-charcoal">
+                    {plan.insurer}
+                    <span className="font-semibold text-muted"> · {plan.name}</span>
                   </p>
-                  <p className="text-[11px] text-muted">
-                    Cover {formatINR(plan.sumInsured)} · Premium{" "}
-                    {formatINR(plan.premium)} /{" "}
-                    {plan.tenureYears === 1 ? "yr" : `${plan.tenureYears}y`}
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[11px] text-muted">
+                    <span>
+                      Cover{" "}
+                      <span className="font-bold text-charcoal">
+                        {formatINR(plan.sumInsured)}
+                      </span>
+                    </span>
+                    <span className="h-3 w-px bg-border-subtle" aria-hidden="true" />
+                    <span>
+                      Premium{" "}
+                      <span className="font-bold text-charcoal">
+                        {formatINR(plan.premium)}
+                      </span>{" "}
+                      / {plan.tenureYears === 1 ? "yr" : `${plan.tenureYears}y`}
+                    </span>
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                   <button
                     type="button"
                     onClick={() => togglePlan(plan)}
@@ -1342,171 +1341,116 @@ export function InsuranceAdmin() {
         policies.length === 0 ? (
           <p className="text-sm text-muted">No policies yet.</p>
         ) : (
-          <div className="space-y-2">
-            {policies.map((policy) => (
-              <div
-                key={policy.id}
-                className="flex flex-wrap items-center gap-3 rounded-2xl border border-border-subtle bg-white p-4"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={policy.status} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                      {policy.type}
-                      {policy.type === "Motor" && policy.vehicleType
-                        ? ` · ${
-                            policy.vehicleType === "2W"
-                              ? "Two-wheeler"
-                              : "Four-wheeler"
-                          }`
-                        : ""}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm font-extrabold text-charcoal">
-                    {policy.provider} · {policy.policyNumber}
-                  </p>
-                  <p className="text-[11px] text-muted">
-                    {policy.clientName || policy.holder || "—"} ·{" "}
-                    {policy.mobile} · Cover {formatINR(policy.coverAmount)} ·
-                    Premium {formatINR(policy.premium)}
-                  </p>
-                  <p className="text-[10px] text-muted-light">
-                    Renewal {policy.renewalDate}
-                    {policy.reminderSent ? " · reminder sent" : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditingPolicy(policy)}
-                    aria-label="Edit policy"
-                    className="rounded-lg border border-border-subtle p-2 text-charcoal hover:border-gold/60"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeletePolicy(policy)}
-                    aria-label="Delete policy"
-                    className="rounded-lg border border-border-subtle p-2 text-rose-600 hover:border-rose-300"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+          <div className="overflow-hidden rounded-2xl border border-border-subtle bg-white">
+            <div className="flex items-center justify-between gap-2 border-b border-border-subtle p-4">
+              <div>
+                <h2 className="text-sm font-extrabold tracking-tight text-charcoal">
+                  Client policies
+                </h2>
+                <p className="text-[11px] text-muted">
+                  Every policy held by clients, with serial, vehicle, dates and
+                  amount.
+                </p>
               </div>
-            ))}
+              <span className="rounded-full bg-gold-light px-2.5 py-1 text-[10px] font-extrabold text-[#8a6b1a]">
+                {policies.length}
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1040px] text-left text-xs">
+                <thead className="bg-[#faf8f2] text-[10px] uppercase tracking-wider text-muted">
+                  <tr>
+                    <th className="px-4 py-2.5 font-bold">Serial No</th>
+                    <th className="px-4 py-2.5 font-bold">Client</th>
+                    <th className="px-4 py-2.5 font-bold">Type</th>
+                    <th className="px-4 py-2.5 font-bold">Provider / Policy no.</th>
+                    <th className="px-4 py-2.5 font-bold">Start</th>
+                    <th className="px-4 py-2.5 font-bold">End</th>
+                    <th className="px-4 py-2.5 font-bold">Cover</th>
+                    <th className="px-4 py-2.5 text-right font-bold">Premium</th>
+                    <th className="px-4 py-2.5 font-bold">Status</th>
+                    <th className="px-4 py-2.5 text-right font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {policies.map((policy) => (
+                    <tr key={policy.id} className="align-top hover:bg-ivory/40">
+                      <td className="px-4 py-3 font-mono font-bold text-charcoal">
+                        #{policy.serialNo}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-bold text-charcoal">
+                          {policy.clientName || policy.holder || "—"}
+                        </p>
+                        <p className="text-[10px] text-muted">
+                          {policy.mobile || "—"}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        {policy.type}
+                        {policy.type === "Motor" && policy.vehicleType && (
+                          <span className="block text-[10px] text-muted-light">
+                            {policy.vehicleType === "2W"
+                              ? "Two-wheeler"
+                              : "Four-wheeler"}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-bold text-charcoal">
+                          {policy.provider}
+                        </p>
+                        <p className="text-[10px] text-muted">
+                          {policy.policyNumber}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        {policy.validFrom || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        {policy.renewalDate}
+                        {policy.reminderSent && (
+                          <span className="block text-[10px] text-muted-light">
+                            reminder sent
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        {formatINR(policy.coverAmount)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-extrabold text-charcoal">
+                        {formatINR(policy.premium)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={policy.status} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setEditingPolicy(policy)}
+                            aria-label="Edit policy"
+                            className="rounded-lg border border-border-subtle p-2 text-charcoal hover:border-gold/60"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletePolicy(policy)}
+                            aria-label="Delete policy"
+                            className="rounded-lg border border-border-subtle p-2 text-rose-600 hover:border-rose-300"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )
-      ) : tab === "import" ? (
-        <div className="space-y-4">
-          <div className="space-y-3 rounded-2xl border border-border-subtle bg-white p-5">
-            <div>
-              <h2 className="text-base font-extrabold tracking-tight text-charcoal">
-                Bulk import policies
-              </h2>
-              <p className="mt-1 text-xs text-muted">
-                Upload a CSV exported from Excel. Existing policy numbers are
-                updated; new ones are created.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => void onDownloadTemplate()}
-                className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-bold text-charcoal hover:border-gold/60"
-              >
-                <Download className="h-4 w-4" />
-                Download CSV template
-              </button>
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-bold text-charcoal hover:border-gold/60">
-                <Upload className="h-4 w-4" />
-                Choose CSV
-                <input
-                  type="file"
-                  accept=".csv,text/csv"
-                  className="hidden"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0] ?? null;
-                    setImportFile(file);
-                    setImportResult(null);
-                    setImportError(null);
-                    event.target.value = "";
-                  }}
-                />
-              </label>
-              <button
-                type="button"
-                onClick={() => void onImport()}
-                disabled={!importFile || importing}
-                className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
-              >
-                {importing ? "Importing..." : "Import file"}
-              </button>
-            </div>
-            {importFile && (
-              <p className="text-[11px] text-muted">
-                Selected:{" "}
-                <span className="font-bold text-charcoal">
-                  {importFile.name}
-                </span>
-              </p>
-            )}
-            {importError && (
-              <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700">
-                {importError}
-              </p>
-            )}
-            {importResult && (
-              <div className="space-y-2 rounded-xl border border-border-subtle bg-ivory/50 p-3">
-                <p className="text-xs font-bold text-charcoal">Import result</p>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div>
-                    <p className="text-lg font-extrabold text-emerald-700">
-                      {importResult.created}
-                    </p>
-                    <p className="text-[10px] text-muted">Created</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-extrabold text-blue-700">
-                      {importResult.updated}
-                    </p>
-                    <p className="text-[10px] text-muted">Updated</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-extrabold text-rose-700">
-                      {importResult.failed}
-                    </p>
-                    <p className="text-[10px] text-muted">Failed</p>
-                  </div>
-                </div>
-                {importResult.errors.length > 0 && (
-                  <ul className="space-y-1">
-                    {importResult.errors.slice(0, 20).map((error, index) => (
-                      <li
-                        key={`${error.row}-${index}`}
-                        className="text-[11px] text-rose-700"
-                      >
-                        Row {error.row}: {error.message}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="rounded-2xl border border-border-subtle bg-white p-4 text-[11px] text-muted">
-            <p className="font-bold text-charcoal">Expected columns</p>
-            <p className="mt-1">
-              policy_number, client_name, client_mobile, company_name,
-              insurance_type, vehicle_type, start_date, end_date,
-              payment_amount, cover_amount
-            </p>
-            <p className="mt-2">
-              Dates accept YYYY-MM-DD or DD-MM-YYYY. Vehicle type is 2W / 4W
-              for motor policies.
-            </p>
-          </div>
-        </div>
       ) : renewals.length === 0 ? (
         <p className="text-sm text-muted">
           No renewals due in the next 120 days.
