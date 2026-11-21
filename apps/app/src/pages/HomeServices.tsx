@@ -286,7 +286,7 @@ export function HomeServices() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
         <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-brand">
           Home Services
@@ -305,42 +305,34 @@ export function HomeServices() {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {HOME_SERVICES.map((item) => {
-            const ServiceIcon = SERVICE_ICONS[item.id] ?? Wrench;
-            const selected = serviceId === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => chooseService(item.id)}
-                className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-bold transition-colors cursor-pointer ${
-                  selected
-                    ? "border-brand bg-brand-soft/60 text-foreground"
-                    : "border-border bg-surface text-foreground hover:border-brand/60"
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+        {HOME_SERVICES.map((item) => {
+          const ServiceIcon = SERVICE_ICONS[item.id] ?? Wrench;
+          const selected = serviceId === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => chooseService(item.id)}
+              aria-pressed={selected}
+              className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-bold transition-all cursor-pointer ${
+                selected
+                  ? "border-brand bg-brand text-on-brand shadow-sm"
+                  : "border-border bg-surface text-foreground hover:border-brand/60 hover:bg-brand-soft/40"
+              }`}
+            >
+              <ServiceIcon
+                className={`h-4 w-4 shrink-0 ${
+                  selected ? "text-on-brand" : "text-brand-strong"
                 }`}
-              >
-                <ServiceIcon
-                  className={`w-3.5 h-3.5 ${selected ? "text-brand-strong" : "text-muted-foreground"}`}
-                />
+              />
+              <span className="truncate">
                 {SHORT_NAMES[item.id] ?? item.name}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/home-services/interiors"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface border border-border hover:border-brand/60 text-foreground text-sm font-bold transition-colors"
-          >
-            <Sofa className="w-4 h-4" />
-            Interiors
-          </Link>
-        </div>
+              </span>
+            </button>
+          );
+        })}
       </div>
-
       {activeJob && (
         <Link to={`/jobs/${activeJob.id}`} className="block">
           <Card hoverable className="p-4 sm:p-5 border-brand/40 bg-brand-soft/40">
@@ -408,7 +400,7 @@ export function HomeServices() {
         </Link>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-3">
         <Card
           id="request-form"
           className="lg:col-span-2 p-5 sm:p-6 space-y-5"
@@ -626,7 +618,7 @@ export function HomeServices() {
         </Card>
 
         <div className="space-y-4 lg:sticky lg:top-20">
-          <Card className="h-fit p-5 space-y-4" style={{ borderRadius: 2 }}>
+          <Card className="h-fit p-5 space-y-4">
           {service ? (
             <>
               <div className="flex items-start gap-3">

@@ -11,6 +11,7 @@ export const apiBaseUrl = baseUrl;
 export const api = createApiClient({
   baseUrl,
   getToken: readToken,
+  cacheTtlMs: 10_000,
   onUnauthorized: () => {
     clearSession();
     if (typeof window !== "undefined" && window.location.pathname !== "/login") {

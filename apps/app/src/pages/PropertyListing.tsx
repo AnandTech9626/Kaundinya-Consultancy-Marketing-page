@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Circle, Info } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  Eye,
+  Info,
+  LayoutGrid,
+  MessageSquare,
+  Shield,
+  Snowflake,
+} from "lucide-react";
 import {
   Card,
   FileDropzone,
@@ -17,6 +28,7 @@ import {
   PROPERTY_CONFIGURATIONS,
   REAL_ESTATE_AMENITIES,
 } from "@kaundinya/config";
+import { compressImages } from "../lib/images";
 import { submitListing } from "../lib/mockApi";
 import { formatINR, formatPropertyPrice } from "../lib/formats";
 
@@ -53,6 +65,13 @@ export function PropertyListing() {
 
   const numericArea = Number(area) || 0;
   const numericPrice = Number(price) || 0;
+  const suggestedTitle = [
+    bhk,
+    propertyType,
+    locality.trim() ? `in ${locality.trim()}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const reset = () => {
     setIntent("sale");
@@ -89,7 +108,7 @@ export function PropertyListing() {
         furnishing,
         amenities,
         images: [],
-        files,
+        files: await compressImages(files),
       });
       setCreated(listing);
     } catch {
@@ -110,62 +129,172 @@ export function PropertyListing() {
   );
 
   if (created) {
+    const nextSteps = [
+      {
+        icon: Clock,
+        title: "Team review within 24 hours",
+        description: "We verify the details and photos before anything goes live.",
+      },
+      {
+        icon: Eye,
+        title: "Published to the Buy tab",
+        description: "Once approved, buyers can find it and book a site visit.",
+      },
+      {
+        icon: MessageSquare,
+        title: "Screened enquiries",
+        description: "We filter enquiries so only serious buyers reach you.",
+      },
+    ];
+
+    const moveInServices = [
+      {
+        id: "hs-nets",
+        icon: Shield,
+        title: "Safety nets",
+        description: "Pigeon & balcony nets",
+      },
+      {
+        id: "hs-grills",
+        icon: LayoutGrid,
+        title: "Invisible grills",
+        description: "Child-safe balcony grills",
+      },
+      {
+        id: "hs-ac",
+        icon: Snowflake,
+        title: "AC & fridge",
+        description: "Service, repair, gas refill",
+      },
+    ];
+
     return (
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-6">
         {backLink}
-        <Card className="p-8 text-center space-y-4">
-          <div className="w-14 h-14 rounded-full bg-success-soft text-success-fg flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-7 h-7" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
-              Listing submitted
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-              Our team will review your listing and publish it within 24 hours. Enquiries
-              are screened before they reach you.
-            </p>
-          </div>
 
-          <div className="rounded-xl bg-surface-muted p-4 text-left space-y-1">
-            <p className="text-sm font-bold text-foreground">{created.title}</p>
-            <p className="text-xs text-muted-foreground">
-              {created.bhk} · {created.location}, {created.pincode}
-            </p>
-            <p className="text-sm font-extrabold text-foreground">
-              {formatPropertyPrice(created.price, created.priceUnit)}
-            </p>
-          </div>
+        <Card className="overflow-hidden p-0">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr]">
+            <div className="space-y-5 p-6 sm:p-8">
+              <div className="flex items-start gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-success-soft text-success-fg">
+                  <CheckCircle2 className="h-7 w-7" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+                    Listing submitted
+                  </h1>
+                  <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
+                    Our team will review your listing and publish it within 24 hours.
+                    Enquiries are screened before they reach you.
+                  </p>
+                </div>
+              </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link
-              to={`/real-estate/${created.id}`}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold"
-            >
-              Preview listing
-            </Link>
-            <button
-              type="button"
-              onClick={reset}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-surface text-foreground text-sm font-bold hover:border-brand/60 transition-colors cursor-pointer"
-            >
-              Create another listing
-            </button>
-          </div>
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-surface-muted p-4">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-foreground">
+                    {created.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {created.bhk} · {created.location}, {created.pincode}
+                  </p>
+                </div>
+                <p className="whitespace-nowrap text-lg font-extrabold tracking-tight text-foreground">
+                  {formatPropertyPrice(created.price, created.priceUnit)}
+                </p>
+              </div>
 
-          <div className="border-t border-border pt-4">
-            <Link
-              to="/home-services"
-              className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-hover"
-            >
-              Book cleaning, nets or AC service before move-in →
-            </Link>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  to={`/real-estate/${created.id}`}
+                  className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-bold text-on-brand transition-colors hover:bg-brand-hover"
+                >
+                  Preview listing
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-bold text-foreground transition-colors hover:border-brand/60 cursor-pointer"
+                >
+                  Create another listing
+                </button>
+              </div>
+            </div>
+
+            <aside className="border-t border-border bg-surface-raised p-6 sm:p-8 lg:border-l lg:border-t-0">
+              <h2 className="text-sm font-extrabold text-foreground">
+                What happens next
+              </h2>
+              <ol className="mt-4 space-y-4">
+                {nextSteps.map((step) => (
+                  <li key={step.title} className="flex gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-strong">
+                      <step.icon className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{step.title}</p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                        {step.description}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </aside>
           </div>
         </Card>
+
+        <section className="overflow-hidden rounded-2xl border border-brand/25 bg-gradient-to-br from-brand-soft via-white to-[#fdf6e3] p-6 sm:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">
+                Before you move in
+              </span>
+              <h2 className="mt-1 text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
+                Make the new place move-in ready
+              </h2>
+              <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
+                Pigeon nets, invisible grills or AC servicing — book trusted help from
+                the same app, with verified technicians.
+              </p>
+            </div>
+            <Link
+              to="/home-services"
+              className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-charcoal-light"
+            >
+              Explore home services
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {moveInServices.map((service) => (
+              <Link
+                key={service.id}
+                to={`/home-services/${service.id}`}
+                className="group rounded-xl border border-border bg-white/85 p-4 transition-all hover:-translate-y-0.5 hover:border-brand/60 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-soft text-brand-strong">
+                    <service.icon className="h-5 w-5" />
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-subtle-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-brand" />
+                </div>
+                <p className="mt-3 text-sm font-extrabold text-foreground">
+                  {service.title}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {service.description}
+                </p>
+                <p className="mt-2 text-[11px] font-bold text-brand">Book now</p>
+              </Link>
+            ))}
+          </div>
+        </section>
       </div>
     );
   }
-
   return (
     <div className="space-y-6 max-w-3xl">
       {backLink}
@@ -186,14 +315,15 @@ export function PropertyListing() {
         <Wizard
           steps={[
             {
-              id: "basics",
-              title: "Property basics",
-              description: "Where is it, how big is it and what are you listing?",
+              id: "details",
+              title: "Property details",
+              description: "The essentials first. Photos and publishing are next.",
               validate: () =>
                 title.trim().length >= 6 &&
                 locality.trim().length >= 2 &&
                 /^\d{6}$/.test(pincode) &&
-                numericArea > 0,
+                numericArea > 0 &&
+                numericPrice > 0,
               content: (
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-2">
@@ -222,7 +352,7 @@ export function PropertyListing() {
                     required
                     error={
                       title.length > 0 && title.trim().length < 6
-                        ? "Use at least 6 characters, e.g. “3 BHK in Gachibowli”."
+                        ? "Use at least 6 characters."
                         : undefined
                     }
                   >
@@ -233,6 +363,15 @@ export function PropertyListing() {
                       placeholder="e.g. Spacious 3 BHK with park view"
                       invalid={title.length > 0 && title.trim().length < 6}
                     />
+                    {suggestedTitle.length >= 6 && suggestedTitle !== title && (
+                      <button
+                        type="button"
+                        onClick={() => setTitle(suggestedTitle)}
+                        className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:text-brand-hover"
+                      >
+                        Use "{suggestedTitle}"
+                      </button>
+                    )}
                   </FormField>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -291,6 +430,54 @@ export function PropertyListing() {
                     />
                   </FormField>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <FormField
+                      label={intent === "rent" ? "Expected monthly rent (₹)" : "Expected price (₹)"}
+                      htmlFor="listing-price"
+                      required
+                      error={
+                        price.length > 0 && numericPrice === 0
+                          ? "Enter a valid amount."
+                          : undefined
+                      }
+                    >
+                      <Input
+                        id="listing-price"
+                        inputMode="numeric"
+                        value={price}
+                        onChange={(event) =>
+                          setPrice(event.target.value.replace(/\D/g, "").slice(0, 9))
+                        }
+                        placeholder={intent === "rent" ? "28000" : "9500000"}
+                        invalid={price.length > 0 && numericPrice === 0}
+                      />
+                    </FormField>
+
+                    <FormField label="Furnishing" htmlFor="listing-furnishing">
+                      <Select
+                        id="listing-furnishing"
+                        value={furnishing}
+                        onChange={(event) => setFurnishing(event.target.value)}
+                      >
+                        {FURNISHING.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormField>
+                  </div>
+
+                  {numericPrice > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Shown as{" "}
+                      <span className="font-bold text-foreground">
+                        {formatINR(numericPrice)}
+                        {intent === "rent" ? "/mo" : ""}
+                      </span>
+                    </p>
+                  )}
+
                   <PincodeInput
                     value={pincode}
                     onChange={setPincode}
@@ -303,139 +490,36 @@ export function PropertyListing() {
                     }
                   />
 
-                  <div className="rounded-lg border border-border bg-surface-muted/60 p-3">
-                    <p className="text-[11px] font-bold text-foreground mb-1.5">
-                      To continue, complete:
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                      {[
-                        {
-                          label: "Listing title (min 6 characters)",
-                          done: title.trim().length >= 6,
-                        },
-                        {
-                          label: "Area / locality",
-                          done: locality.trim().length >= 2,
-                        },
-                        {
-                          label: "6-digit pincode",
-                          done: /^\d{6}$/.test(pincode),
-                        },
-                        {
-                          label: "Built-up area",
-                          done: numericArea > 0,
-                        },
-                      ].map((item) => (
-                        <li
-                          key={item.label}
-                          className={`flex items-center gap-1.5 text-[11px] ${
-                            item.done ? "text-success-fg" : "text-muted-foreground"
-                          }`}
-                        >
-                          {item.done ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                          ) : (
-                            <Circle className="w-3.5 h-3.5 shrink-0" />
-                          )}
-                          {item.label}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ),
-            },
-            {
-              id: "pricing",
-              title: "Pricing & description",
-              description: "Set expectations and help buyers picture the home.",
-              validate: () => numericPrice > 0 && description.trim().length >= 20,
-              content: (
-                <div className="space-y-4">
-                  <FormField
-                    label={intent === "rent" ? "Expected monthly rent (₹)" : "Expected price (₹)"}
-                    htmlFor="listing-price"
-                    required
-                  >
-                    <Input
-                      id="listing-price"
-                      inputMode="numeric"
-                      value={price}
-                      onChange={(event) =>
-                        setPrice(event.target.value.replace(/\D/g, "").slice(0, 9))
-                      }
-                      placeholder={intent === "rent" ? "28000" : "9500000"}
-                    />
-                  </FormField>
-                  {numericPrice > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Displayed as{" "}
-                      <span className="font-bold text-foreground">
-                        {formatINR(numericPrice)}
-                        {intent === "rent" ? "/mo" : ""}
-                      </span>
-                    </p>
-                  )}
-
-                  <FormField label="Furnishing" htmlFor="listing-furnishing">
-                    <Select
-                      id="listing-furnishing"
-                      value={furnishing}
-                      onChange={(event) => setFurnishing(event.target.value)}
-                    >
-                      {FURNISHING.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormField>
-
-                  <FormField
-                    label="Description"
-                    htmlFor="listing-description"
-                    required
-                    error={
-                      description.length > 0 && description.trim().length < 20
-                        ? "Add at least 20 characters"
-                        : undefined
-                    }
-                  >
+                  <FormField label="Description (optional)" htmlFor="listing-description">
                     <Textarea
                       id="listing-description"
-                      rows={4}
+                      rows={3}
                       value={description}
                       onChange={(event) => setDescription(event.target.value)}
                       placeholder="Layout, natural light, nearby schools, commute, recent repairs..."
                     />
                   </FormField>
-                </div>
-              ),
-            },
-            {
-              id: "features",
-              title: "Features & amenities",
-              description: "Select everything the property offers.",
-              content: (
-                <div className="space-y-4">
-                  <PillSelect
-                    label="Amenities"
-                    options={REAL_ESTATE_AMENITIES}
-                    value={amenities}
-                    onChange={setAmenities}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {amenities.length === 0
-                      ? "Optional, but listings with amenities get more enquiries."
-                      : `${amenities.length} selected`}
-                  </p>
+
+                  <details className="rounded-xl border border-border bg-surface-raised p-4">
+                    <summary className="cursor-pointer text-sm font-bold text-foreground">
+                      Amenities (optional)
+                    </summary>
+                    <div className="pt-3">
+                      <PillSelect
+                        label="Amenities"
+                        options={REAL_ESTATE_AMENITIES}
+                        value={amenities}
+                        onChange={setAmenities}
+                      />
+                    </div>
+                  </details>
                 </div>
               ),
             },
             {
               id: "photos",
-              title: "Photos & review",
-              description: "Add photos and check the details before submitting.",
+              title: "Photos & publish",
+              description: "Add photos if you have them, then send the listing for review.",
               content: (
                 <div className="space-y-5">
                   <FileDropzone
@@ -443,14 +527,16 @@ export function PropertyListing() {
                     onChange={setFiles}
                     accept="image/*,.pdf"
                     label="Property photos"
-                    hint="JPG, PNG or PDF up to 10 MB. Images are compressed automatically."
+                    hint="JPG, PNG or PDF up to 10 MB. Large images are compressed before upload."
                   />
 
                   <div className="rounded-xl border border-border bg-surface-muted p-4 space-y-2">
                     <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Review
                     </p>
-                    <p className="text-sm font-bold text-foreground">{title}</p>
+                    <p className="text-sm font-bold text-foreground">
+                      {title || "Untitled listing"}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {intent === "rent" ? "For Rent" : "For Sale"} · {propertyType} ·{" "}
                       {bhk} · {numericArea.toLocaleString("en-IN")} sq.ft
@@ -462,9 +548,11 @@ export function PropertyListing() {
                       {formatINR(numericPrice)}
                       {intent === "rent" ? "/mo" : ""}
                     </p>
-                    <p className="text-xs text-foreground-soft leading-relaxed">
-                      {description}
-                    </p>
+                    {description && (
+                      <p className="text-xs text-foreground-soft leading-relaxed">
+                        {description}
+                      </p>
+                    )}
                     {amenities.length > 0 && (
                       <p className="text-[11px] text-muted-foreground">
                         Amenities: {amenities.join(", ")}
@@ -475,8 +563,8 @@ export function PropertyListing() {
                   <div className="flex items-start gap-2 rounded-xl border border-brand/30 bg-brand-soft/60 p-3">
                     <Info className="w-4 h-4 text-brand-strong shrink-0 mt-0.5" />
                     <p className="text-[11px] text-[#6b5413] leading-relaxed">
-                      Only list properties you own or are authorised to market. Listings
-                      are reviewed and may be edited for accuracy.
+                      Only list properties you own or are authorised to market. Our
+                      team reviews every listing before it goes live.
                     </p>
                   </div>
 
@@ -486,8 +574,7 @@ export function PropertyListing() {
                 </div>
               ),
             },
-          ]}
-          onComplete={handleComplete}
+          ]}          onComplete={handleComplete}
           submitting={submitting}
           completeLabel="Submit listing"
         />

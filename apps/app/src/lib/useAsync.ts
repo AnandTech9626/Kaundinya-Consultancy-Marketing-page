@@ -52,16 +52,16 @@ export function useAsync<T>(
 
   useEffect(() => {
     const unsubscribe = subscribeLiveData(run);
-    const interval = window.setInterval(run, 45000);
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") run();
+    }, 120_000);
     const onVisible = () => {
       if (document.visibilityState === "visible") run();
     };
-    window.addEventListener("focus", run);
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       unsubscribe();
       window.clearInterval(interval);
-      window.removeEventListener("focus", run);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [run]);
@@ -73,16 +73,16 @@ export function useAsync<T>(
 export function useLiveRefetch(refetch: () => void) {
   useEffect(() => {
     const unsubscribe = subscribeLiveData(refetch);
-    const interval = window.setInterval(refetch, 45000);
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") refetch();
+    }, 120_000);
     const onVisible = () => {
       if (document.visibilityState === "visible") refetch();
     };
-    window.addEventListener("focus", refetch);
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       unsubscribe();
       window.clearInterval(interval);
-      window.removeEventListener("focus", refetch);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [refetch]);

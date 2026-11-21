@@ -12,7 +12,8 @@ import {
 import { Badge, Button, Card, Skeleton, StatCard } from "@kaundinya/ui";
 import type { BadgeVariant } from "@kaundinya/ui";
 import type { PolicyRecord, ServiceRequest } from "@kaundinya/config";
-import { downloadPolicy, fetchPolicies, fetchRequests } from "../lib/mockApi";
+import { fetchPolicies, fetchRequests } from "../lib/mockApi";
+import { downloadPolicyPdf } from "../lib/policyPdf";
 import { useAuth } from "../lib/auth";
 import { useLiveRefetch } from "../lib/useAsync";
 import { formatDate, formatINR } from "../lib/formats";
@@ -59,7 +60,6 @@ export function PolicyVault() {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
-  const [downloaded, setDownloaded] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<{ service: string; kind: string } | null>(
     null
@@ -92,9 +92,12 @@ export function PolicyVault() {
   const pending = policies.filter((policy) => policy.status === "pending");
   const expiring = policies.filter(
     (policy) =>
-      policy.status === "expiring" && !isPolicyRenewalSolved(policy, requests)
+      policy.status !== "pending" &&
+      !isPolicyRenewalSolved(policy, requests) &&
+      (policy.status === "expiring" ||
+        policy.status === "lapsed" ||
+        daysUntil(policy.renewalDate) <= 45)
   );
-  const motorPolicies = policies.filter((policy) => policy.type === "Motor");
   const totalCover = policies
     .filter(
       (policy) => policy.status !== "lapsed" && policy.status !== "pending"
@@ -107,19 +110,17 @@ export function PolicyVault() {
 
   const handleDownload = async (policy: PolicyRecord) => {
     setDownloading(policy.id);
-    setDownloaded(null);
     setError(null);
     try {
-      const result = await downloadPolicy(policy.id);
-      if (result.url) {
-        window.open(result.url, "_blank", "noopener,noreferrer");
-      }
-      setDownloaded(policy.policyNumber);
+      await downloadPolicyPdf(policy, {
+        name: user?.name,
+        mobile: user?.mobile,
+      });
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Could not request the policy document."
+          : "Could not prepare the policy document."
       );
     } finally {
       setDownloading(null);
@@ -130,7 +131,7 @@ export function PolicyVault() {
     setDialog({ service, kind });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <Link
         to="/insurance"
         className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:text-brand-hover"
@@ -145,12 +146,11 @@ export function PolicyVault() {
             Insurance
           </span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-            Policy Vault
+            Active policies
           </h1>
-          <p className="text-muted-foreground mt-1 max-w-2xl">
-            Policies recorded for you, with renewal dates and documents in one
-            place. Add a motor policy and our team will verify it before it
-            becomes active.
+          <p className="text-muted-foreground mt-1">
+            Every policy recorded for you, with cover, renewal dates and
+            documents in one place.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -161,10 +161,7 @@ export function PolicyVault() {
           <Button
             variant="secondary"
             onClick={() =>
-              openRequest(
-                "Policy review · Policy Vault",
-                "Insurance consultation"
-              )
+              openRequest("Policy review", "Insurance consultation")
             }
           >
             Request a policy review
@@ -235,102 +232,6 @@ export function PolicyVault() {
         />
       </div>
 
-      {!loading && (
-        <Card className="overflow-hidden">
-          <div className="flex items-center justify-between gap-2 p-5 border-b border-border">
-            <div>
-              <h2 className="text-base font-extrabold text-foreground tracking-tight">
-                Motor vehicle register
-              </h2>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Serial, client mobile, client name, company, vehicle, start and
-                end dates, and the amount paid for every motor policy.
-              </p>
-            </div>
-            <Badge variant="warning">
-              {motorPolicies.length}{" "}
-              {motorPolicies.length === 1 ? "policy" : "policies"}
-            </Badge>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[960px] text-left text-xs">
-              <thead className="bg-surface-muted text-[10px] uppercase tracking-wider text-subtle-foreground">
-                <tr>
-                  <th className="px-4 py-2.5 font-bold">Serial No</th>
-                  <th className="px-4 py-2.5 font-bold">Client Mobile (ID)</th>
-                  <th className="px-4 py-2.5 font-bold">Client Name</th>
-                  <th className="px-4 py-2.5 font-bold">Company</th>
-                  <th className="px-4 py-2.5 font-bold">Vehicle</th>
-                  <th className="px-4 py-2.5 font-bold">Start Date</th>
-                  <th className="px-4 py-2.5 font-bold">End Date</th>
-                  <th className="px-4 py-2.5 text-right font-bold">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {motorPolicies.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center">
-                      <p className="text-sm font-bold text-foreground">
-                        No motor policies yet
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        Add your motor policy and our team will verify it before
-                        it becomes active.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setAddingPolicy(true)}
-                        className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-xs font-bold text-on-brand hover:bg-brand-hover cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Add motor policy
-                      </button>
-                    </td>
-                  </tr>
-                ) : (
-                  motorPolicies.map((policy) => (
-                    <tr
-                      key={policy.id}
-                      className="hover:bg-surface-muted/60 transition-colors"
-                    >
-                      <td className="px-4 py-3 font-mono font-bold text-foreground">
-                        {policy.serialNo ? `#${policy.serialNo}` : "—"}
-                        {policy.status === "pending" && (
-                          <span className="block text-[9px] font-extrabold uppercase tracking-wide text-warning-fg">
-                            Pending
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-foreground-soft">
-                        {user?.mobile || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-foreground-soft">
-                        {policy.holder || user?.name || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-foreground-soft">
-                        {policy.provider}
-                      </td>
-                      <td className="px-4 py-3 text-foreground-soft">
-                        {policy.vehicleType ?? "—"}
-                      </td>
-                      <td className="px-4 py-3 text-foreground-soft">
-                        {policy.validFrom ? formatDate(policy.validFrom) : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-foreground-soft">
-                        {formatDate(policy.renewalDate)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-extrabold text-foreground">
-                        {formatINR(policy.premium)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-
       {error && (
         <p className="rounded-lg border border-danger-fg/20 bg-danger-soft px-3 py-2 text-xs font-semibold text-danger-fg">
           {error}
@@ -341,7 +242,7 @@ export function PolicyVault() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-lg font-extrabold tracking-tight text-foreground">
-              All policies
+              Your policies
             </h2>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
               Requested and active cover with official start and end dates.
@@ -386,10 +287,6 @@ export function PolicyVault() {
               Add a motor policy or ask our team to record a policy for you.
             </p>
             <div className="flex flex-wrap justify-center gap-2">
-              <Button onClick={() => setAddingPolicy(true)}>
-                <Plus className="w-4 h-4" />
-                Add motor policy
-              </Button>
               <Button
                 variant="secondary"
                 onClick={() => openRequest("Insurance consultation")}
@@ -403,148 +300,132 @@ export function PolicyVault() {
             No {typeFilter} policies yet.
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {filteredPolicies.map((policy) => (
-              <Card
-                key={policy.id}
-                hoverable
-                className="p-5 flex flex-col gap-3"
-              >
-                <div className="flex items-start gap-3">
-                  <InsurerLogo insurer={policy.provider} size={36} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge variant={TYPE_BADGE[policy.type]}>
-                        {policy.type}
-                      </Badge>
-                      <Badge variant={statusBadge(policy.status)}>
-                        {statusLabel(policy.status)}
-                      </Badge>
-                      {policy.vehicleType && (
-                        <Badge variant="neutral">{policy.vehicleType}</Badge>
-                      )}
+          <Card className="overflow-hidden">
+            <ul className="divide-y divide-border">
+              {filteredPolicies.map((policy) => (
+                <li
+                  key={policy.id}
+                  className="p-4 transition-colors hover:bg-surface-muted/40 sm:p-5"
+                >
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      <InsurerLogo insurer={policy.provider} size={36} />
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Badge variant={TYPE_BADGE[policy.type]}>
+                            {policy.type}
+                          </Badge>
+                          <Badge variant={statusBadge(policy.status)}>
+                            {statusLabel(policy.status)}
+                          </Badge>
+                          {policy.vehicleType && (
+                            <Badge variant="neutral">{policy.vehicleType}</Badge>
+                          )}
+                        </div>
+                        <p className="mt-1 truncate text-sm font-extrabold text-foreground">
+                          {policy.provider}
+                        </p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          {policy.serialNo ? `#${policy.serialNo} · ` : ""}
+                          {policy.policyNumber} ·{" "}
+                          {policy.holder || user?.name || "Client"}
+                        </p>
+                      </div>
                     </div>
-                    <p className="mt-1 truncate text-sm font-extrabold text-foreground">
-                      {policy.provider}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {policy.serialNo ? `#${policy.serialNo} · ` : ""}
-                      {policy.policyNumber}
-                    </p>
+
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4 lg:w-[440px] lg:border-l lg:border-border lg:pl-4">
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
+                          Start date
+                        </p>
+                        <p className="text-xs font-bold text-foreground">
+                          {policy.validFrom ? formatDate(policy.validFrom) : "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
+                          End date
+                        </p>
+                        <p className="text-xs font-bold text-foreground">
+                          {formatDate(policy.renewalDate)}
+                        </p>
+                        <p
+                          className={`text-[10px] font-bold ${
+                            policy.status === "pending"
+                              ? "text-info-fg"
+                              : daysUntil(policy.renewalDate) < 0
+                                ? "text-danger-fg"
+                                : daysUntil(policy.renewalDate) <= 30
+                                  ? "text-warning-fg"
+                                  : "text-muted-foreground"
+                          }`}
+                        >
+                          {policy.status === "pending"
+                            ? "Awaiting verification"
+                            : renewalLabel(policy.renewalDate)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
+                          Cover
+                        </p>
+                        <p className="text-xs font-bold text-foreground">
+                          {policy.coverAmount > 0
+                            ? formatINR(policy.coverAmount)
+                            : "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
+                          Amount paid
+                        </p>
+                        <p className="text-xs font-extrabold text-foreground">
+                          {formatINR(policy.premium)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 lg:w-[200px] lg:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(policy)}
+                        disabled={downloading === policy.id}
+                        aria-label="Download policy PDF"
+                        title="Download policy PDF"
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-foreground transition-colors hover:border-brand/60 disabled:opacity-50 cursor-pointer"
+                      >
+                        {downloading === policy.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Download className="w-4 h-4" />
+                        )}
+                      </button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="flex-1 lg:flex-none"
+                        onClick={() =>
+                          openRequest(
+                            `Renewal help · ${policy.provider} ${policy.policyNumber}`,
+                            "Renewal help"
+                          )
+                        }
+                      >
+                        Renewal help
+                      </Button>
+                    </div>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 rounded-xl border border-border/70 bg-surface-muted px-3 py-2.5">
-                  <div>
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
-                      Start date
-                    </p>
-                    <p className="text-xs font-bold text-foreground">
-                      {policy.validFrom ? formatDate(policy.validFrom) : "—"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
-                      End date
-                    </p>
-                    <p className="text-xs font-bold text-foreground">
-                      {formatDate(policy.renewalDate)}
-                    </p>
-                    <p
-                      className={`text-[10px] font-bold ${
-                        policy.status === "pending"
-                          ? "text-info-fg"
-                          : daysUntil(policy.renewalDate) < 0
-                            ? "text-danger-fg"
-                            : daysUntil(policy.renewalDate) <= 30
-                              ? "text-warning-fg"
-                              : "text-muted-foreground"
-                      }`}
-                    >
-                      {policy.status === "pending"
-                        ? "Awaiting verification"
-                        : renewalLabel(policy.renewalDate)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-end justify-between gap-2">
-                  <div>
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-subtle-foreground">
-                      Amount paid
-                    </p>
-                    <p className="text-base font-extrabold tracking-tight text-foreground">
-                      {formatINR(policy.premium)}
-                    </p>
-                  </div>
-                  {policy.coverAmount > 0 && (
-                    <p className="text-right text-[10px] font-bold text-muted-foreground">
-                      Cover
-                      <span className="block text-xs text-foreground">
-                        {formatINR(policy.coverAmount)}
-                      </span>
-                    </p>
-                  )}
-                </div>
-
-                <p className="truncate text-[10px] text-muted-foreground">
-                  {policy.holder || user?.name || "Client"} ·{" "}
-                  {user?.mobile || "—"}
-                </p>
-
-                <div className="mt-auto grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(policy)}
-                    disabled={downloading === policy.id}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-bold text-foreground hover:border-brand/60 transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    {downloading === policy.id ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Preparing...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-3.5 h-3.5" />
-                        Download PDF
-                      </>
-                    )}
-                  </button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() =>
-                      openRequest(
-                        `Renewal help · ${policy.provider} ${policy.policyNumber}`,
-                        "Renewal help"
-                      )
-                    }
-                  >
-                    Renewal help
-                  </Button>
-                </div>
-
-                {downloaded === policy.policyNumber && (
-                  <p className="text-[10px] text-success-fg text-center">
-                    {policy.policyNumber}.pdf requested.
-                  </p>
-                )}
-              </Card>
-            ))}
-          </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
         )}
       </div>
 
-      <Card className="p-4 bg-surface-muted/60 flex items-start gap-3">
-        <FileText className="w-4 h-4 text-brand-strong shrink-0 mt-0.5" />
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
-          Motor policies can be added from this page and are verified by our
-          team. Other policies are recorded by your consultant after a policy is
-          placed. If something is missing, raise a request and we will update
-          it.
-        </p>
-      </Card>
+      <p className="text-[11px] leading-relaxed text-muted-foreground">
+        Motor policies can be added here and are verified by our team. Other
+        policies are recorded by your consultant after a policy is placed.
+      </p>
 
       <MotorPolicyDialog
         open={addingPolicy}

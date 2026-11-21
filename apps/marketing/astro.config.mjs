@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
-import sitemap from '@astrojs/sitemap';
+import sitemap, { ChangeFreqEnum } from '@astrojs/sitemap';
 
 const appRoot = fileURLToPath(new URL('.', import.meta.url));
 // Dependencies are hoisted to the monorepo root, which sits outside this app's
@@ -23,7 +23,7 @@ export default defineConfig({
         const isService = item.url.includes("/services");
         return {
           ...item,
-          changefreq: "monthly",
+          changefreq: ChangeFreqEnum.MONTHLY,
           priority: isHome ? 1.0 : isService ? 0.8 : 0.6,
         };
       },

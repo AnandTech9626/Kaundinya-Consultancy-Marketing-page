@@ -5,10 +5,13 @@ import {
   ArrowRight,
   Building2,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Loader2,
   MapPin,
   ShieldCheck,
   Wrench,
+  X,
 } from "lucide-react";
 import {
   Badge,
@@ -57,6 +60,8 @@ export function PropertyDetail() {
   const [booked, setBooked] = useState<SiteVisit | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [kycFiles, setKycFiles] = useState<File[]>([]);
+  const [activePhoto, setActivePhoto] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const backLink = (
     <Link
@@ -120,7 +125,12 @@ export function PropertyDetail() {
     );
   }
 
-  const image = property.images?.[0];
+  const gallery = property.images ?? [];
+  const heroImage = gallery[activePhoto] ?? gallery[0];
+  const goPrev = () =>
+    setActivePhoto((index) => (index - 1 + gallery.length) % Math.max(1, gallery.length));
+  const goNext = () =>
+    setActivePhoto((index) => (index + 1) % Math.max(1, gallery.length));
 
   const handleBook = async (event: FormEvent) => {
     event.preventDefault();
@@ -152,46 +162,125 @@ export function PropertyDetail() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <Card className="overflow-hidden p-0">
-            <div className="relative h-56 sm:h-72 bg-gradient-to-br from-inverse via-inverse-hover to-[#3b3420] flex items-center justify-center">
-              {image ? (
+          <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+            <div className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-inverse via-inverse-hover to-[#3b3420]">
+              {heroImage ? (
                 <img
-                  src={image}
+                  src={heroImage}
                   alt={property.title}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
               ) : (
                 <>
-                  <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_20%_20%,#f5b900_0,transparent_45%),radial-gradient(circle_at_80%_70%,#f5b900_0,transparent_40%)]" />
-                  <Building2 className="w-20 h-20 text-brand/40" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,#f5b900_0,transparent_45%),radial-gradient(circle_at_80%_70%,#f5b900_0,transparent_40%)] opacity-20" />
+                  <Building2 className="relative h-16 w-16 text-brand/40" />
                 </>
               )}
-              <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+
+              <div className="absolute left-3 top-3 flex flex-wrap gap-2">
                 <Badge variant={property.listingType === "rent" ? "info" : "gold"}>
                   {property.listingType === "rent" ? "For Rent" : "For Sale"}
                 </Badge>
                 <Badge variant="neutral">{property.propertyType}</Badge>
                 {property.featured && <Badge variant="warning">Featured</Badge>}
               </div>
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-inverse/90 to-transparent p-4 sm:p-5">
+
+              {gallery.length > 1 && (
+                <>
+                  <span className="absolute right-3 top-3 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-bold text-white">
+                    {activePhoto + 1} / {gallery.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={goPrev}
+                    aria-label="Previous photo"
+                    className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white transition-colors hover:bg-black/70 cursor-pointer"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    aria-label="Next photo"
+                    className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white transition-colors hover:bg-black/70 cursor-pointer"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
+
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-inverse/90 to-transparent p-4 pb-7 sm:p-5 sm:pb-8">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div className="min-w-0">
                     <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-brand">
-                      <MapPin className="w-3 h-3" />
+                      <MapPin className="h-3 w-3" />
                       {property.location}, {property.city}
                     </p>
-                    <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight mt-1">
+                    <h1 className="mt-1 text-xl font-extrabold tracking-tight text-white sm:text-2xl">
                       {property.title}
                     </h1>
                   </div>
-                  <div className="rounded-xl bg-surface px-3 py-2 text-base sm:text-lg font-extrabold text-foreground whitespace-nowrap">
+                  <div className="whitespace-nowrap rounded-xl bg-surface px-3 py-2 text-base font-extrabold text-foreground sm:text-lg">
                     {formatPropertyPrice(property.price, property.priceUnit)}
                   </div>
                 </div>
               </div>
-            </div>
-          </Card>
 
+              {gallery.length > 1 && (
+                <div className="absolute bottom-2 left-1/2 z-10 flex max-w-[80%] -translate-x-1/2 flex-wrap items-center justify-center gap-1.5">
+                  {gallery.map((_, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setActivePhoto(index)}
+                      aria-label={`Show photo ${index + 1}`}
+                      aria-current={index === activePhoto}
+                      className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                        index === activePhoto
+                          ? "w-5 bg-brand"
+                          : "w-1.5 bg-white/60 hover:bg-white"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {gallery.length > 1 && (
+              <div className="grid grid-cols-5 gap-1.5 p-2">
+                {gallery
+                  .slice(0, gallery.length > 5 ? 4 : 5)
+                  .map((src, index) => (
+                    <button
+                      key={`${src}-${index}`}
+                      type="button"
+                      onClick={() => setActivePhoto(index)}
+                      aria-label={`Show photo ${index + 1}`}
+                      className={`relative aspect-[4/3] overflow-hidden rounded-md border-2 transition-colors cursor-pointer ${
+                        index === activePhoto
+                          ? "border-brand"
+                          : "border-transparent hover:border-border"
+                      }`}
+                    >
+                      <img
+                        src={src}
+                        alt={`${property.title} photo ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                {gallery.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => setLightboxOpen(true)}
+                    className="flex aspect-[4/3] items-center justify-center rounded-md border border-dashed border-border text-xs font-bold text-muted-foreground hover:border-brand/60 cursor-pointer"
+                  >
+                    +{gallery.length - 4}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           <Card className="p-6 space-y-5">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
@@ -469,6 +558,47 @@ export function PropertyDetail() {
           </Card>
         </div>
       </div>
+      {lightboxOpen && gallery.length > 0 && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Property photos"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close photos"
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={goPrev}
+            aria-label="Previous photo"
+            className="absolute left-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <img
+            src={gallery[activePhoto] ?? gallery[0]}
+            alt={`${property.title} photo ${activePhoto + 1}`}
+            className="max-h-[85vh] max-w-[92vw] rounded-lg object-contain"
+          />
+          <button
+            type="button"
+            onClick={goNext}
+            aria-label="Next photo"
+            className="absolute right-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+          <p className="absolute bottom-5 text-xs font-bold text-white/80">
+            {activePhoto + 1} / {gallery.length}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
