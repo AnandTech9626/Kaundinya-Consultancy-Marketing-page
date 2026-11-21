@@ -1,15 +1,26 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, KeyRound, Loader2 } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  HandCoins,
+  KeyRound,
+  Loader2,
+  ShieldCheck,
+  UserPlus,
+} from "lucide-react";
 import {
   Button,
   Card,
   FormField,
   Input,
   OtpVerification,
+  Select,
+  Textarea,
 } from "@kaundinya/ui";
 import type { User } from "@kaundinya/config";
 import { BrandLockup } from "../components/BrandLockup";
+import { BRAND_MARK_URL } from "../lib/brand";
 import { useAuth } from "../lib/auth";
 import { ApiError } from "../lib/api";
 import { savePasswordCredential } from "../lib/credentials";
@@ -19,6 +30,7 @@ import {
   otpVerify,
   pinLogin,
   setPin as setPinApi,
+  submitEnquiry,
 } from "../lib/mockApi";
 import {
   readRememberedEmail,
@@ -38,7 +50,45 @@ function describeError(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-type Step = "email" | "pin" | "otp" | "reset";
+type Step = "email" | "pin" | "otp" | "reset" | "register";
+
+const CATEGORY_OPTIONS: Record<string, string[]> = {
+  "Real Estate": [
+    "Property Rentals (Residential)",
+    "Property Rentals (Commercial)",
+    "Property Buying Assistance",
+    "Property Selling Assistance",
+    "Rental Agreement & Tenant Verification",
+  ],
+  Insurance: [
+    "Life & Term Insurance Advisory",
+    "Comprehensive Health Insurance",
+    "Two-Wheeler Motor Insurance",
+    "Four-Wheeler Motor Insurance",
+    "Property & Fire Insurance",
+  ],
+  "Property Management & Home Services": [
+    "Pigeon Safety Nets Installation",
+    "Invisible Safety Grills Installation",
+    "Air Conditioner (AC) Servicing",
+    "Refrigerator Servicing",
+    "Aadhaar & Voter ID Update Assistance Coordination",
+    "Interior Design Consultation",
+  ],
+  Loans: [
+    "Home Loan (Purchase / Construction)",
+    "Personal Loan",
+    "Business Loan",
+    "Loan Against Property (Mortgage)",
+  ],
+};
+
+const BRAND_SERVICES = [
+  { label: "Real Estate", icon: Building2 },
+  { label: "Insurance", icon: ShieldCheck },
+  { label: "Loans", icon: HandCoins },
+  { label: "Property Management", icon: KeyRound },
+] as const;
 
 function isEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -74,6 +124,15 @@ export function Login() {
   const [busy, setBusy] = useState(false);
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
+
+  const [regName, setRegName] = useState("");
+  const [regMobile, setRegMobile] = useState("");
+  const [regCategory, setRegCategory] = useState("");
+  const [regService, setRegService] = useState("");
+  const [regPinCode, setRegPinCode] = useState("");
+  const [regComments, setRegComments] = useState("");
+  const [regConsent, setRegConsent] = useState(false);
+  const [registering, setRegistering] = useState(false);
 
   const afterLogin = (user: User) => {
     navigate(user.profileComplete ? "/dashboard" : "/onboarding", {
@@ -151,6 +210,12 @@ export function Login() {
         return;
       }
 
+      if (!method.exists) {
+        setNotice(null);
+        setStep("register");
+        return;
+      }
+
       setNotice(null);
       await sendCode(clean);
     } catch (err) {
@@ -205,6 +270,60 @@ export function Login() {
       setError(describeError(err));
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handleRegister = async (event: FormEvent) => {
+    event.preventDefault();
+    setError(null);
+
+    const clean = email.trim().toLowerCase();
+    if (!isEmail(clean)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (regName.trim().length < 2) {
+      setError("Enter your full name.");
+      return;
+    }
+    const mobile = regMobile.replace(/[^0-9]/g, "");
+    if (mobile.length !== 10) {
+      setError("Enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (!regCategory) {
+      setError("Select a service category.");
+      return;
+    }
+    const pinCode = regPinCode.replace(/[^0-9]/g, "");
+    if (pinCode && !/^[1-9][0-9]{5}$/.test(pinCode)) {
+      setError("Enter a valid 6-digit PIN code.");
+      return;
+    }
+    if (!regConsent) {
+      setError("Please agree to be contacted about your enquiry.");
+      return;
+    }
+
+    setRegistering(true);
+    try {
+      await submitEnquiry({
+        fullName: regName.trim(),
+        email: clean,
+        mobile,
+        serviceCategory: regCategory,
+        specificService: regService,
+        pinCode,
+        comments: regComments.trim(),
+        consent: true,
+      });
+      writeRememberedEmail(clean);
+      await sendCode(clean);
+      setNotice(`Verification code sent to ${clean}.`);
+    } catch (err) {
+      setError(describeError(err));
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -268,13 +387,58 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-muted flex flex-col">
-      <header className="bg-surface/95 border-b border-border flex items-center justify-center px-6 py-3">
-        <BrandLockup size="lg" />
-      </header>
+    <div className="min-h-screen bg-[#FAF7F2] lg:grid lg:grid-cols-2">
+      <aside className="relative hidden overflow-hidden bg-[#1C140D] text-[#D8C49A] lg:flex lg:flex-col">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_26%,rgba(197,155,39,0.3),transparent_55%)]"
+        />
+        <div className="relative flex flex-1 flex-col items-center justify-center gap-5 px-10 pt-16">
+          <img
+            src={BRAND_MARK_URL}
+            alt="Kaundinya"
+            className="w-44 object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.5)] xl:w-52"
+          />
+          <div className="text-center">
+            <p className="text-3xl font-extrabold tracking-[0.12em] text-[#C59B27]">
+              KAUNDINYA
+            </p>
+            <p className="mt-1 text-[12px] font-bold uppercase tracking-[0.22em] text-[#B99A5B]">
+              Integrated Services
+            </p>
+          </div>
+          <div className="mt-2 h-px w-44 bg-[#C59B27]/30" />
+          <p className="max-w-[19rem] text-center text-[12px] leading-relaxed text-[#C9B58E]">
+            Unified Advisory for Real Estate, Wealth Protection &amp; Lending
+          </p>
+        </div>
 
-      <main className="flex-1 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md p-6 sm:p-8">
+        <div className="relative grid grid-cols-2 gap-3 px-8 pb-10">
+          {BRAND_SERVICES.map(({ label, icon: Icon }) => (
+            <div
+              key={label}
+              className="group flex items-center gap-3 border border-[#C59B27]/30 bg-gradient-to-br from-[#C59B27]/10 to-transparent px-3.5 py-3 transition-colors hover:border-[#C59B27]/60 hover:from-[#C59B27]/15"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#C59B27]/30 bg-[#C59B27]/10 text-[#C59B27]">
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#D8C49A]">
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      <main className="auth-paper relative flex min-h-screen flex-col items-center justify-center border-l border-[#C59B27]/25 p-6 sm:p-10">
+        <div className="mb-6 flex justify-center lg:hidden">
+          <BrandLockup size="md" />
+        </div>
+        <Card
+          className={`w-full ${
+            step === "register" ? "max-w-2xl" : "max-w-md"
+          } p-6 sm:p-8`}
+        >
           {step === "email" ? (
             <form onSubmit={handleContinue} className="space-y-5">
               <div className="text-center space-y-1.5">
@@ -303,7 +467,11 @@ export function Login() {
                 <p className="text-[11px] text-danger-fg -mt-2">{error}</p>
               )}
 
-              <Button type="submit" className="w-full" disabled={busy}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={busy}
+              >
                 {busy ? (
                   "Checking..."
                 ) : (
@@ -314,9 +482,20 @@ export function Login() {
                 )}
               </Button>
               <p className="text-[11px] text-subtle-foreground text-center leading-relaxed">
-                New clients submit the enquiry form, then verify with a
-                one-time code sent to their email and set a 6-digit PIN.
+                Returning clients can verify with an email code or their PIN.
               </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setNotice(null);
+                  setStep("register");
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-bold text-foreground transition-colors hover:border-brand/60 cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4" />
+                New here? Create an account
+              </button>
             </form>
           ) : step === "pin" ? (
             <form
@@ -500,6 +679,164 @@ export function Login() {
                 className="w-full text-center text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 Cancel and sign out
+              </button>
+            </form>
+          ) : step === "register" ? (
+            <form onSubmit={handleRegister} className="space-y-5">
+              <div className="text-center space-y-1.5">
+                <div className="mx-auto h-11 w-11 flex items-center justify-center rounded-full bg-brand-soft text-brand-strong">
+                  <UserPlus className="h-5 w-5" />
+                </div>
+                <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
+                  Create your account
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Tell us how we can help. We will email a verification code,
+                  then you can set your 6-digit PIN.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FormField label="Full name" htmlFor="reg-name" required>
+                  <Input
+                    id="reg-name"
+                    autoComplete="name"
+                    placeholder="Your full name"
+                    value={regName}
+                    onChange={(event) => setRegName(event.target.value)}
+                  />
+                </FormField>
+                <FormField label="Email address" htmlFor="reg-email" required>
+                  <Input
+                    id="reg-email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                  />
+                </FormField>
+                <FormField label="Mobile number" htmlFor="reg-mobile" required>
+                  <Input
+                    id="reg-mobile"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    maxLength={10}
+                    placeholder="10-digit mobile number"
+                    value={regMobile}
+                    onChange={(event) =>
+                      setRegMobile(
+                        event.target.value.replace(/[^0-9]/g, "").slice(0, 10),
+                      )
+                    }
+                  />
+                </FormField>
+                <FormField label="PIN code" htmlFor="reg-pincode">
+                  <Input
+                    id="reg-pincode"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    maxLength={6}
+                    placeholder="6-digit PIN code"
+                    value={regPinCode}
+                    onChange={(event) =>
+                      setRegPinCode(
+                        event.target.value.replace(/[^0-9]/g, "").slice(0, 6),
+                      )
+                    }
+                  />
+                </FormField>
+                <FormField
+                  label="Service category"
+                  htmlFor="reg-category"
+                  required
+                >
+                  <Select
+                    id="reg-category"
+                    value={regCategory}
+                    onChange={(event) => {
+                      setRegCategory(event.target.value);
+                      setRegService("");
+                    }}
+                  >
+                    <option value="">Select a category</option>
+                    {Object.keys(CATEGORY_OPTIONS).map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+                <FormField label="Specific service" htmlFor="reg-service">
+                  <Select
+                    id="reg-service"
+                    value={regService}
+                    disabled={!regCategory}
+                    onChange={(event) => setRegService(event.target.value)}
+                  >
+                    <option value="">Select a service</option>
+                    {(CATEGORY_OPTIONS[regCategory] ?? []).map((service) => (
+                      <option key={service} value={service}>
+                        {service}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+              </div>
+
+              <FormField label="Comments" htmlFor="reg-comments">
+                <Textarea
+                  id="reg-comments"
+                  rows={3}
+                  placeholder="Anything we should know?"
+                  value={regComments}
+                  onChange={(event) => setRegComments(event.target.value)}
+                />
+              </FormField>
+
+              <label className="flex cursor-pointer items-start gap-2 text-[11px] leading-relaxed text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={regConsent}
+                  onChange={(event) => setRegConsent(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-brand"
+                />
+                <span>
+                  I agree that Kaundinya Consultancy may contact me about this
+                  enquiry.
+                </span>
+              </label>
+
+              {error && <p className="text-[11px] text-danger-fg">{error}</p>}
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={registering}
+              >
+                {registering ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4" />
+                    Continue with email code
+                  </>
+                )}
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setStep("email");
+                }}
+                className="w-full text-center text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                Already have an account? Sign in
               </button>
             </form>
           ) : (

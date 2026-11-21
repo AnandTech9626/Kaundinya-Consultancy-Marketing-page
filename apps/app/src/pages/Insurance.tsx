@@ -233,27 +233,29 @@ export function Insurance() {
 
       <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-3">
         <div className="space-y-4 xl:col-span-2">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {TABS.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTab(id)}
-                aria-pressed={tab === id}
-                className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-bold transition-all cursor-pointer ${
-                  tab === id
-                    ? "border-brand bg-brand text-on-brand shadow-sm"
-                    : "border-border bg-surface text-foreground hover:border-brand/60 hover:bg-brand-soft/40"
-                }`}
-              >
-                <Icon
-                  className={`h-4 w-4 shrink-0 ${
-                    tab === id ? "text-on-brand" : "text-brand-strong"
+          <div className="rounded-2xl border border-border bg-surface-muted/70 p-2">
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              {TABS.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setTab(id)}
+                  aria-pressed={tab === id}
+                  className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold transition-all cursor-pointer ${
+                    tab === id
+                      ? "bg-brand text-on-brand shadow-sm"
+                      : "text-foreground hover:bg-surface"
                   }`}
-                />
-                <span className="truncate">{label}</span>
-              </button>
-            ))}
+                >
+                  <Icon
+                    className={`h-4 w-4 shrink-0 ${
+                      tab === id ? "text-on-brand" : "text-brand-strong"
+                    }`}
+                  />
+                  <span className="truncate">{label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-end justify-between gap-3">
