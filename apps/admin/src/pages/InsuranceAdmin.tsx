@@ -5,27 +5,33 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   BellRing,
   CalendarClock,
+  Inbox,
   Pencil,
   Plus,
+  RefreshCw,
   Search,
   ShieldCheck,
   Trash2,
+  Upload,
 } from "lucide-react";
 import {
   createAdminInsurancePlan,
+  createAdminPolicy,
   deleteAdminInsurancePlan,
   deleteAdminPolicy,
   fetchAdminInsurancePlans,
   fetchAdminPolicies,
   fetchAdminRenewals,
   fetchInsuranceStats,
+  runAdminRenewalEngine,
   sendAdminRenewalReminder,
   updateAdminInsurancePlan,
   updateAdminPolicy,
+  uploadInsuranceMedia,
   type AdminFamilyOption,
   type AdminInsurancePlan,
   type AdminInsuranceType,
@@ -42,6 +48,7 @@ import {
   inputClass,
   labelClass,
 } from "../components/AdminUi";
+import { SkeletonList } from "../components/Skeleton";
 
 type Tab = "plans" | "policies" | "renewals";
 
@@ -67,6 +74,35 @@ const FAMILY_OPTIONS: Array<{ value: AdminFamilyOption | ""; label: string }> = 
   { value: "parents", label: "Parents" },
   { value: "family", label: "Family" },
 ];
+
+function insurerInitials(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "?";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+function InsurerAvatar({ plan }: { plan: AdminInsurancePlan }) {
+  const [failed, setFailed] = useState(false);
+  const url = plan.insurerLogoUrl?.trim();
+  if (url && !failed) {
+    return (
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border-subtle bg-white p-1.5">
+        <img
+          src={url}
+          alt={plan.insurer}
+          className="h-full w-full object-contain"
+          onError={() => setFailed(true)}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-ivory text-xs font-extrabold tracking-wide text-charcoal">
+      {insurerInitials(plan.insurer)}
+    </div>
+  );
+}
 
 function PlanSheet({
   plan,
@@ -98,12 +134,34 @@ function PlanSheet({
     current?.cashlessNetwork ? String(current.cashlessNetwork) : "",
   );
   const [pospLicense, setPospLicense] = useState(current?.pospLicense ?? "");
+  const [insurerLogoUrl, setInsurerLogoUrl] = useState(
+    current?.insurerLogoUrl ?? "",
+  );
+  const [brochureUrl, setBrochureUrl] = useState(
+    current?.brochureUrl ?? "",
+  );
+  const [uploading, setUploading] = useState<"logo" | "brochure" | null>(null);
   const [familyOption, setFamilyOption] = useState<AdminFamilyOption | "">(
     current?.familyOption ?? "",
   );
   const [active, setActive] = useState(current?.active ?? true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const uploadMedia = async (file: File, kind: "logo" | "brochure") => {
+    setUploading(kind);
+    setError(null);
+    try {
+      const saved = await uploadInsuranceMedia(file);
+      if (kind === "logo") setInsurerLogoUrl(saved.url);
+      else setBrochureUrl(saved.url);
+      showToast(kind === "logo" ? "Logo uploaded." : "Brochure uploaded.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not upload file.");
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
@@ -125,6 +183,8 @@ function PlanSheet({
           ? Number(cashlessNetwork)
           : null,
         pospLicense: pospLicense.trim() || null,
+        insurerLogoUrl: insurerLogoUrl.trim() || null,
+        brochureUrl: brochureUrl.trim() || null,
         familyOption: familyOption || null,
         active,
       };
@@ -288,6 +348,62 @@ function PlanSheet({
           </div>
         </div>
         <div>
+          <label className={labelClass} htmlFor="plan-logo">
+            Insurer logo URL
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="plan-logo"
+              className={inputClass}
+              value={insurerLogoUrl}
+              onChange={(event) => setInsurerLogoUrl(event.target.value)}
+              placeholder="https://… or upload"
+            />
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle px-3 py-2 text-xs font-bold text-charcoal hover:border-gold/60">
+              <Upload className="h-3.5 w-3.5" />
+              {uploading === "logo" ? "Uploading…" : "Upload"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void uploadMedia(file, "logo");
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+        </div>
+        <div>
+          <label className={labelClass} htmlFor="plan-brochure">
+            Brochure URL
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="plan-brochure"
+              className={inputClass}
+              value={brochureUrl}
+              onChange={(event) => setBrochureUrl(event.target.value)}
+              placeholder="https://… or upload PDF"
+            />
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle px-3 py-2 text-xs font-bold text-charcoal hover:border-gold/60">
+              <Upload className="h-3.5 w-3.5" />
+              {uploading === "brochure" ? "Uploading…" : "Upload"}
+              <input
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void uploadMedia(file, "brochure");
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+        </div>
+        <div>
           <label className={labelClass} htmlFor="plan-features">
             Features (comma separated)
           </label>
@@ -339,6 +455,11 @@ function PolicySheet({
   const [premium, setPremium] = useState(String(policy.premium));
   const [renewalDate, setRenewalDate] = useState(policy.renewalDate);
   const [holder, setHolder] = useState(policy.holder ?? "");
+  const [type, setType] = useState(policy.type);
+  const [vehicleType, setVehicleType] = useState<"2W" | "4W" | "">(
+    policy.vehicleType ?? "",
+  );
+  const [validFrom, setValidFrom] = useState(policy.validFrom ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -351,10 +472,13 @@ function PolicySheet({
         status,
         provider: provider.trim(),
         policyNumber: policyNumber.trim(),
+        type,
+        vehicleType: type === "Motor" ? vehicleType || null : null,
         coverAmount: Number(coverAmount),
         premium: Number(premium),
         renewalDate,
         holder: holder.trim() || null,
+        validFrom: validFrom || null,
       });
       showToast("Policy updated.");
       onSaved();
@@ -386,6 +510,7 @@ function PolicySheet({
                 setStatus(event.target.value as AdminPolicy["status"])
               }
             >
+              <option value="pending">Pending</option>
               <option value="active">Active</option>
               <option value="expiring">Expiring</option>
               <option value="lapsed">Lapsed</option>
@@ -393,7 +518,7 @@ function PolicySheet({
           </div>
           <div>
             <label className={labelClass} htmlFor="policy-renewal">
-              Renewal date
+              End date
             </label>
             <input
               id="policy-renewal"
@@ -407,7 +532,7 @@ function PolicySheet({
         </div>
         <div>
           <label className={labelClass} htmlFor="policy-provider">
-            Provider
+            Company
           </label>
           <input
             id="policy-provider"
@@ -417,6 +542,57 @@ function PolicySheet({
             required
           />
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="policy-type">
+              Policy type
+            </label>
+            <select
+              id="policy-type"
+              className={inputClass}
+              value={type}
+              onChange={(event) =>
+                setType(event.target.value as AdminPolicy["type"])
+              }
+            >
+              <option value="Life & Term">Life &amp; Term</option>
+              <option value="Health">Health</option>
+              <option value="Motor">Motor</option>
+              <option value="Property">Property</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="policy-start">
+              Start date
+            </label>
+            <input
+              id="policy-start"
+              type="date"
+              className={inputClass}
+              value={validFrom}
+              onChange={(event) => setValidFrom(event.target.value)}
+            />
+          </div>
+        </div>
+        {type === "Motor" && (
+          <div>
+            <label className={labelClass} htmlFor="policy-vehicle">
+              Vehicle type
+            </label>
+            <select
+              id="policy-vehicle"
+              className={inputClass}
+              value={vehicleType}
+              onChange={(event) =>
+                setVehicleType(event.target.value as "2W" | "4W" | "")
+              }
+            >
+              <option value="">Not set</option>
+              <option value="2W">Two-wheeler</option>
+              <option value="4W">Four-wheeler</option>
+            </select>
+          </div>
+        )}
         <div>
           <label className={labelClass} htmlFor="policy-number">
             Policy number
@@ -459,7 +635,7 @@ function PolicySheet({
         </div>
         <div>
           <label className={labelClass} htmlFor="policy-holder">
-            Policy holder
+            Client name
           </label>
           <input
             id="policy-holder"
@@ -477,6 +653,269 @@ function PolicySheet({
           className="w-full rounded-lg bg-gold px-4 py-2.5 text-sm font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
         >
           {busy ? "Saving..." : "Save changes"}
+        </button>
+      </form>
+    </SheetShell>
+  );
+}
+
+function PolicyCreateSheet({
+  onClose,
+  onSaved,
+}: {
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const nextYear = new Date();
+  nextYear.setFullYear(nextYear.getFullYear() + 1);
+  const [clientMobile, setClientMobile] = useState("");
+  const [policyNumber, setPolicyNumber] = useState("");
+  const [provider, setProvider] = useState("");
+  const [type, setType] = useState<AdminPolicy["type"]>("Health");
+  const [vehicleType, setVehicleType] = useState<"2W" | "4W" | "">("");
+  const [holder, setHolder] = useState("");
+  const [coverAmount, setCoverAmount] = useState("1000000");
+  const [premium, setPremium] = useState("10000");
+  const [validFrom, setValidFrom] = useState(today);
+  const [renewalDate, setRenewalDate] = useState(
+    nextYear.toISOString().slice(0, 10),
+  );
+  const [status, setStatus] = useState<AdminPolicy["status"]>("active");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const save = async (event: FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await createAdminPolicy({
+        clientMobile: clientMobile.trim(),
+        policyNumber: policyNumber.trim(),
+        provider: provider.trim(),
+        type,
+        vehicleType: type === "Motor" ? vehicleType || null : null,
+        holder: holder.trim() || null,
+        coverAmount: Number(coverAmount),
+        premium: Number(premium),
+        validFrom: validFrom || null,
+        renewalDate,
+        status,
+      });
+      showToast("Policy added.");
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add policy.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <SheetShell
+      eyebrow="Client policy"
+      title="Add a policy"
+      subtitle="The serial number is generated automatically. The client is matched by their registered mobile number."
+      onClose={onClose}
+    >
+      <form onSubmit={save} className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="new-client-mobile">
+              Client mobile
+            </label>
+            <input
+              id="new-client-mobile"
+              className={inputClass}
+              value={clientMobile}
+              onChange={(event) => setClientMobile(event.target.value)}
+              placeholder="10-digit mobile"
+              required
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="new-holder">
+              Client name
+            </label>
+            <input
+              id="new-holder"
+              className={inputClass}
+              value={holder}
+              onChange={(event) => setHolder(event.target.value)}
+              placeholder="Optional"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="new-provider">
+              Company
+            </label>
+            <input
+              id="new-provider"
+              className={inputClass}
+              value={provider}
+              onChange={(event) => setProvider(event.target.value)}
+              placeholder="e.g. Star Health"
+              required
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="new-policy-number">
+              Serial / policy number
+            </label>
+            <input
+              id="new-policy-number"
+              className={inputClass}
+              value={policyNumber}
+              onChange={(event) => setPolicyNumber(event.target.value)}
+              required
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="new-type">
+              Insurance type
+            </label>
+            <select
+              id="new-type"
+              className={inputClass}
+              value={type}
+              onChange={(event) =>
+                setType(event.target.value as AdminPolicy["type"])
+              }
+            >
+              <option value="Life & Term">Life &amp; Term</option>
+              <option value="Health">Health</option>
+              <option value="Motor">Motor</option>
+              <option value="Property">Property</option>
+            </select>
+          </div>
+          {type === "Motor" ? (
+            <div>
+              <label className={labelClass} htmlFor="new-vehicle">
+                Vehicle type
+              </label>
+              <select
+                id="new-vehicle"
+                className={inputClass}
+                value={vehicleType}
+                onChange={(event) =>
+                  setVehicleType(event.target.value as "2W" | "4W" | "")
+                }
+              >
+                <option value="">Not set</option>
+                <option value="2W">Two-wheeler</option>
+                <option value="4W">Four-wheeler</option>
+              </select>
+            </div>
+          ) : (
+            <div>
+              <label className={labelClass} htmlFor="new-status">
+                Status
+              </label>
+              <select
+                id="new-status"
+                className={inputClass}
+                value={status}
+                onChange={(event) =>
+                  setStatus(event.target.value as AdminPolicy["status"])
+                }
+              >
+                <option value="pending">Pending</option>
+              <option value="active">Active</option>
+                <option value="expiring">Expiring</option>
+                <option value="lapsed">Lapsed</option>
+              </select>
+            </div>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="new-cover">
+              Cover amount (₹)
+            </label>
+            <input
+              id="new-cover"
+              type="number"
+              min={0}
+              className={inputClass}
+              value={coverAmount}
+              onChange={(event) => setCoverAmount(event.target.value)}
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="new-premium">
+              Payment amount (₹)
+            </label>
+            <input
+              id="new-premium"
+              type="number"
+              min={0}
+              className={inputClass}
+              value={premium}
+              onChange={(event) => setPremium(event.target.value)}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="new-start">
+              Start date
+            </label>
+            <input
+              id="new-start"
+              type="date"
+              className={inputClass}
+              value={validFrom}
+              onChange={(event) => setValidFrom(event.target.value)}
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="new-end">
+              End date
+            </label>
+            <input
+              id="new-end"
+              type="date"
+              className={inputClass}
+              value={renewalDate}
+              onChange={(event) => setRenewalDate(event.target.value)}
+              required
+            />
+          </div>
+        </div>
+        {type === "Motor" && (
+          <div>
+            <label className={labelClass} htmlFor="new-status-motor">
+              Status
+            </label>
+            <select
+              id="new-status-motor"
+              className={inputClass}
+              value={status}
+              onChange={(event) =>
+                setStatus(event.target.value as AdminPolicy["status"])
+              }
+            >
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="expiring">Expiring</option>
+              <option value="lapsed">Lapsed</option>
+            </select>
+          </div>
+        )}
+
+        {error && <p className="text-xs text-rose-600">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={busy}
+          className="w-full rounded-lg bg-gold px-4 py-2.5 text-sm font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
+        >
+          {busy ? "Saving..." : "Add policy"}
         </button>
       </form>
     </SheetShell>
@@ -505,6 +944,8 @@ export function InsuranceAdmin() {
   const [deletePolicy, setDeletePolicy] = useState<AdminPolicy | null>(null);
   const [busy, setBusy] = useState(false);
   const [reminding, setReminding] = useState<string | null>(null);
+  const [addingPolicy, setAddingPolicy] = useState(false);
+  const [runningRenewals, setRunningRenewals] = useState(false);
 
   const refreshStats = useCallback(async () => {
     try {
@@ -527,7 +968,7 @@ export function InsuranceAdmin() {
         );
       } else if (tab === "policies") {
         setPolicies(await fetchAdminPolicies(appliedSearch));
-      } else {
+      } else if (tab === "renewals") {
         setRenewals(await fetchAdminRenewals());
       }
     } catch (err) {
@@ -569,8 +1010,7 @@ export function InsuranceAdmin() {
   }, [focusId, policies]);
 
   const reloadAll = async () => {
-    await load();
-    await refreshStats();
+    await Promise.all([load(), refreshStats()]);
   };
 
   const togglePlan = async (plan: AdminInsurancePlan) => {
@@ -638,6 +1078,24 @@ export function InsuranceAdmin() {
     }
   };
 
+  const onRunRenewals = async () => {
+    setRunningRenewals(true);
+    try {
+      const result = await runAdminRenewalEngine();
+      showToast(
+        `Renewal engine: ${result.reminded} of ${result.checked} policies reminded.`,
+      );
+      await reloadAll();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Could not run the renewal engine.",
+        "error",
+      );
+    } finally {
+      setRunningRenewals(false);
+    }
+  };
+
   const kpis =
     tab === "plans"
       ? [
@@ -667,50 +1125,93 @@ export function InsuranceAdmin() {
             Plans, policies & renewals
           </h1>
         </div>
-        {tab === "plans" && (
-          <button
-            type="button"
-            onClick={() => setEditingPlan("new")}
-            className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-charcoal hover:bg-gold-hover"
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/insurance/requests"
+            className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-bold text-charcoal hover:border-gold/60"
           >
-            <Plus className="h-4 w-4" />
-            Add plan
-          </button>
-        )}
+            <Inbox className="h-4 w-4" />
+            Client requests
+          </Link>
+          {tab === "plans" && (
+            <button
+              type="button"
+              onClick={() => setEditingPlan("new")}
+              className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-charcoal hover:bg-gold-hover"
+            >
+              <Plus className="h-4 w-4" />
+              Add plan
+            </button>
+          )}
+          {tab === "policies" && (
+            <button
+              type="button"
+              onClick={() => setAddingPolicy(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-charcoal hover:bg-gold-hover"
+            >
+              <Plus className="h-4 w-4" />
+              Add policy
+            </button>
+          )}
+          {tab === "renewals" && (
+            <button
+              type="button"
+              onClick={() => void onRunRenewals()}
+              disabled={runningRenewals}
+              className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-charcoal hover:bg-gold-hover disabled:opacity-50"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${runningRenewals ? "animate-spin" : ""}`}
+              />
+              {runningRenewals ? "Running..." : "Run renewal engine"}
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {kpis.map((kpi) => (
-          <div
-            key={kpi.label}
-            className="rounded-2xl border border-border-subtle bg-white p-4"
-          >
-            <p className="text-xl font-extrabold tracking-tight text-charcoal">
-              {kpi.value}
-            </p>
-            <p className="mt-1 text-[11px] font-semibold text-muted">
-              {kpi.label}
-            </p>
+      <div className="flex flex-col gap-2 rounded-2xl border border-border-subtle bg-white p-2 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-wrap gap-1">
+          {TAB_META.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                tab === id
+                  ? "bg-gold text-charcoal"
+                  : "text-charcoal hover:bg-ivory"
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </button>
+          ))}
+        </div>
+        {stats === null ? (
+          <div className="flex items-center gap-2 px-2 py-1">
+            <div className="h-4 w-24 animate-pulse rounded bg-ivory" />
+            <div className="h-4 w-24 animate-pulse rounded bg-ivory" />
           </div>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {TAB_META.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-colors ${
-              tab === id
-                ? "bg-charcoal text-white"
-                : "border border-border-subtle bg-white text-charcoal hover:border-gold/60"
-            }`}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </button>
-        ))}
+        ) : (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-2">
+            {kpis.map((kpi, index) => (
+              <div key={kpi.label} className="flex items-baseline gap-1.5">
+                <span className="text-sm font-extrabold tracking-tight text-charcoal">
+                  {kpi.value}
+                </span>
+                <span className="text-[11px] font-semibold text-muted">
+                  {kpi.label}
+                </span>
+                {index < kpis.length - 1 && (
+                  <span
+                    className="ml-2 h-3 w-px bg-border-subtle"
+                    aria-hidden="true"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {tab !== "renewals" && (
@@ -762,7 +1263,7 @@ export function InsuranceAdmin() {
       )}
 
       {loading ? (
-        <p className="text-sm text-muted">Loading...</p>
+        <SkeletonList rows={5} />
       ) : tab === "plans" ? (
         plans.length === 0 ? (
           <p className="text-sm text-muted">No plans match this filter.</p>
@@ -771,8 +1272,9 @@ export function InsuranceAdmin() {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className="flex flex-wrap items-center gap-3 rounded-2xl border border-border-subtle bg-white p-4"
+                className="flex items-center gap-3 rounded-2xl border border-border-subtle bg-white p-4 transition-colors hover:border-gold/50"
               >
+                <InsurerAvatar plan={plan} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-ivory px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted">
@@ -780,21 +1282,33 @@ export function InsuranceAdmin() {
                     </span>
                     <StatusBadge status={plan.active ? "active" : "lapsed"} />
                     {plan.familyOption && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-light">
+                      <span className="rounded-full border border-border-subtle px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-light">
                         {plan.familyOption}
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm font-extrabold text-charcoal">
-                    {plan.insurer} · {plan.name}
+                  <p className="mt-1 truncate text-sm font-extrabold text-charcoal">
+                    {plan.insurer}
+                    <span className="font-semibold text-muted"> · {plan.name}</span>
                   </p>
-                  <p className="text-[11px] text-muted">
-                    Cover {formatINR(plan.sumInsured)} · Premium{" "}
-                    {formatINR(plan.premium)} /{" "}
-                    {plan.tenureYears === 1 ? "yr" : `${plan.tenureYears}y`}
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[11px] text-muted">
+                    <span>
+                      Cover{" "}
+                      <span className="font-bold text-charcoal">
+                        {formatINR(plan.sumInsured)}
+                      </span>
+                    </span>
+                    <span className="h-3 w-px bg-border-subtle" aria-hidden="true" />
+                    <span>
+                      Premium{" "}
+                      <span className="font-bold text-charcoal">
+                        {formatINR(plan.premium)}
+                      </span>{" "}
+                      / {plan.tenureYears === 1 ? "yr" : `${plan.tenureYears}y`}
+                    </span>
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                   <button
                     type="button"
                     onClick={() => togglePlan(plan)}
@@ -827,52 +1341,114 @@ export function InsuranceAdmin() {
         policies.length === 0 ? (
           <p className="text-sm text-muted">No policies yet.</p>
         ) : (
-          <div className="space-y-2">
-            {policies.map((policy) => (
-              <div
-                key={policy.id}
-                className="flex flex-wrap items-center gap-3 rounded-2xl border border-border-subtle bg-white p-4"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={policy.status} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                      {policy.type}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm font-extrabold text-charcoal">
-                    {policy.provider} · {policy.policyNumber}
-                  </p>
-                  <p className="text-[11px] text-muted">
-                    {policy.clientName || policy.holder || "—"} ·{" "}
-                    {policy.mobile} · Cover {formatINR(policy.coverAmount)} ·
-                    Premium {formatINR(policy.premium)}
-                  </p>
-                  <p className="text-[10px] text-muted-light">
-                    Renewal {policy.renewalDate}
-                    {policy.reminderSent ? " · reminder sent" : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditingPolicy(policy)}
-                    aria-label="Edit policy"
-                    className="rounded-lg border border-border-subtle p-2 text-charcoal hover:border-gold/60"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeletePolicy(policy)}
-                    aria-label="Delete policy"
-                    className="rounded-lg border border-border-subtle p-2 text-rose-600 hover:border-rose-300"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+          <div className="overflow-hidden rounded-2xl border border-border-subtle bg-white">
+            <div className="flex items-center justify-between gap-2 border-b border-border-subtle p-4">
+              <div>
+                <h2 className="text-sm font-extrabold tracking-tight text-charcoal">
+                  Client policies
+                </h2>
+                <p className="text-[11px] text-muted">
+                  Every policy held by clients, with serial, vehicle, dates and
+                  amount.
+                </p>
               </div>
-            ))}
+              <span className="rounded-full bg-gold-light px-2.5 py-1 text-[10px] font-extrabold text-[#8a6b1a]">
+                {policies.length}
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1040px] text-left text-xs">
+                <thead className="bg-[#faf8f2] text-[10px] uppercase tracking-wider text-muted">
+                  <tr>
+                    <th className="px-4 py-2.5 font-bold">Serial No</th>
+                    <th className="px-4 py-2.5 font-bold">Client</th>
+                    <th className="px-4 py-2.5 font-bold">Type</th>
+                    <th className="px-4 py-2.5 font-bold">Provider / Policy no.</th>
+                    <th className="px-4 py-2.5 font-bold">Start</th>
+                    <th className="px-4 py-2.5 font-bold">End</th>
+                    <th className="px-4 py-2.5 font-bold">Cover</th>
+                    <th className="px-4 py-2.5 text-right font-bold">Premium</th>
+                    <th className="px-4 py-2.5 font-bold">Status</th>
+                    <th className="px-4 py-2.5 text-right font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {policies.map((policy) => (
+                    <tr key={policy.id} className="align-top hover:bg-ivory/40">
+                      <td className="px-4 py-3 font-mono font-bold text-charcoal">
+                        #{policy.serialNo}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-bold text-charcoal">
+                          {policy.clientName || policy.holder || "—"}
+                        </p>
+                        <p className="text-[10px] text-muted">
+                          {policy.mobile || "—"}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        {policy.type}
+                        {policy.type === "Motor" && policy.vehicleType && (
+                          <span className="block text-[10px] text-muted-light">
+                            {policy.vehicleType === "2W"
+                              ? "Two-wheeler"
+                              : "Four-wheeler"}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-bold text-charcoal">
+                          {policy.provider}
+                        </p>
+                        <p className="text-[10px] text-muted">
+                          {policy.policyNumber}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        {policy.validFrom || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        {policy.renewalDate}
+                        {policy.reminderSent && (
+                          <span className="block text-[10px] text-muted-light">
+                            reminder sent
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        {formatINR(policy.coverAmount)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-extrabold text-charcoal">
+                        {formatINR(policy.premium)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={policy.status} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setEditingPolicy(policy)}
+                            aria-label="Edit policy"
+                            className="rounded-lg border border-border-subtle p-2 text-charcoal hover:border-gold/60"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletePolicy(policy)}
+                            aria-label="Delete policy"
+                            className="rounded-lg border border-border-subtle p-2 text-rose-600 hover:border-rose-300"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )
       ) : renewals.length === 0 ? (
@@ -933,6 +1509,16 @@ export function InsuranceAdmin() {
           onClose={() => setEditingPlan(null)}
           onSaved={() => {
             setEditingPlan(null);
+            void reloadAll();
+          }}
+        />
+      )}
+
+      {addingPolicy && (
+        <PolicyCreateSheet
+          onClose={() => setAddingPolicy(false)}
+          onSaved={() => {
+            setAddingPolicy(false);
             void reloadAll();
           }}
         />

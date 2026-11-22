@@ -6,30 +6,25 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
-  Download,
-  FileText,
+  Inbox,
   Ruler,
   Search,
   Sofa,
-  Trash2,
   Wrench,
   X,
 } from "lucide-react";
 import {
-  deleteAdminDocument,
   deleteAdminInterior,
   deleteAdminJob,
   deleteAdminMeasurement,
-  fetchAdminDocuments,
   fetchAdminInteriors,
   fetchAdminJobs,
   fetchAdminMeasurements,
   updateAdminInterior,
   updateAdminJob,
   updateAdminMeasurement,
-  type AdminDocument,
   type AdminInterior,
   type AdminJob,
   type AdminJobStatus,
@@ -37,8 +32,9 @@ import {
 } from "../lib/api";
 import { formatDateTime, formatINR } from "../lib/format";
 import { showToast } from "../lib/toast";
+import { SkeletonList } from "../components/Skeleton";
 
-type Tab = "jobs" | "measurements" | "interiors" | "documents";
+type Tab = "jobs" | "measurements" | "interiors";
 
 const TAB_META: Array<{
   id: Tab;
@@ -48,7 +44,6 @@ const TAB_META: Array<{
   { id: "jobs", label: "Requests", icon: Wrench },
   { id: "measurements", label: "Measurements", icon: Ruler },
   { id: "interiors", label: "Interiors", icon: Sofa },
-  { id: "documents", label: "Documents", icon: FileText },
 ];
 
 const STATUS_STYLES: Record<string, string> = {
@@ -941,7 +936,6 @@ export function HomeServicesAdmin() {
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [measurements, setMeasurements] = useState<AdminMeasurement[]>([]);
   const [interiors, setInteriors] = useState<AdminInterior[]>([]);
-  const [documents, setDocuments] = useState<AdminDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -951,8 +945,6 @@ export function HomeServicesAdmin() {
     kind: "job" | "measurement" | "interior";
     id: string;
   } | null>(null);
-  const [confirmDoc, setConfirmDoc] = useState<AdminDocument | null>(null);
-  const [docBusy, setDocBusy] = useState(false);
 
   const [searchParams] = useSearchParams();
   const focusKind = searchParams.get("kind");
@@ -996,14 +988,12 @@ export function HomeServicesAdmin() {
       fetchAdminJobs(),
       fetchAdminMeasurements(),
       fetchAdminInteriors(),
-      fetchAdminDocuments(),
     ])
-      .then(([nextJobs, nextMeasurements, nextInteriors, nextDocs]) => {
+      .then(([nextJobs, nextMeasurements, nextInteriors]) => {
         if (!cancelled) {
           setJobs(nextJobs);
           setMeasurements(nextMeasurements);
           setInteriors(nextInteriors);
-          setDocuments(nextDocs);
         }
       })
       .catch((err: unknown) => {
@@ -1063,25 +1053,12 @@ export function HomeServicesAdmin() {
     [interiors, needle, statusFilter],
   );
 
-  const filteredDocuments = useMemo(
-    () =>
-      documents.filter((item) => {
-        if (!needle) return true;
-        return `${item.clientName} ${item.mobile} ${item.docType} ${item.fileName}`
-          .toLowerCase()
-          .includes(needle);
-      }),
-    [documents, needle],
-  );
-
   const statusOptions =
     tab === "jobs"
       ? ["requested", "assigned", "en_route", "in_progress", "completed"]
       : tab === "measurements"
         ? ["requested", "scheduled", "completed"]
-        : tab === "interiors"
-          ? ["requested", "contacted"]
-          : [];
+        : ["requested", "contacted"];
 
   const handleTab = (next: Tab) => {
     setTab(next);
@@ -1101,24 +1078,6 @@ export function HomeServicesAdmin() {
     selected?.kind === "interior"
       ? interiors.find((item) => item.id === selected.id) ?? null
       : null;
-
-  const handleDeleteDocument = async () => {
-    if (!confirmDoc) return;
-    setDocBusy(true);
-    try {
-      await deleteAdminDocument(confirmDoc.id);
-      showToast("Document deleted.");
-      setConfirmDoc(null);
-      refetch();
-    } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : "Could not delete document.",
-        "error",
-      );
-    } finally {
-      setDocBusy(false);
-    }
-  };
 
   const activeKpis = useMemo(() => {
     if (tab === "jobs") {
@@ -1178,46 +1137,54 @@ export function HomeServicesAdmin() {
       ];
     }
 
-    return [{ label: "Documents", value: documents.length }];
-  }, [tab, jobs, measurements, interiors, documents]);
+    return [];
+  }, [tab, jobs, measurements, interiors]);
 
   const counts: Record<Tab, number> = {
     jobs: jobs.length,
     measurements: measurements.length,
     interiors: interiors.length,
-    documents: documents.length,
   };
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap gap-1 rounded-xl border border-border-subtle bg-ivory p-1">
-        {TAB_META.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => handleTab(item.id)}
-              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
-                tab === item.id
-                  ? "bg-charcoal text-white"
-                  : "text-charcoal hover:bg-white"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-              <span
-                className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-1 rounded-2xl border border-border-subtle bg-white p-2">
+          {TAB_META.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleTab(item.id)}
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
                   tab === item.id
-                    ? "bg-white/15 text-white"
-                    : "bg-white text-muted"
+                    ? "bg-gold text-charcoal"
+                    : "text-charcoal hover:bg-ivory"
                 }`}
               >
-                {counts[item.id]}
-              </span>
-            </button>
-          );
-        })}
+                <Icon className="h-3.5 w-3.5" />
+                {item.label}
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+                    tab === item.id
+                      ? "bg-charcoal/10 text-charcoal"
+                      : "bg-ivory text-muted"
+                  }`}
+                >
+                  {counts[item.id]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <Link
+          to="/home-services/requests"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-bold text-charcoal hover:border-gold/60"
+        >
+          <Inbox className="h-4 w-4" />
+          Client requests
+        </Link>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -1267,14 +1234,7 @@ export function HomeServicesAdmin() {
 
         <div className="mt-4 space-y-2">
           {loading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="h-16 animate-pulse rounded-lg bg-ivory"
-                />
-              ))}
-            </div>
+            <SkeletonList rows={5} />
           ) : error ? (
             <div className="rounded-xl border border-dashed border-border-subtle p-6 text-center">
               <p className="text-sm text-muted">{error}</p>
@@ -1394,54 +1354,7 @@ export function HomeServicesAdmin() {
                 </button>
               ))
             )
-          ) : filteredDocuments.length === 0 ? (
-            <EmptyState text="No documents uploaded yet." />
-          ) : (
-            filteredDocuments.map((document) => (
-              <div
-                key={document.id}
-                className="flex items-start justify-between gap-3 rounded-lg border border-border-subtle p-3"
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-bold text-charcoal">
-                      {document.docType}
-                    </p>
-                    <span className="rounded-full bg-ivory px-2 py-0.5 text-[10px] font-bold text-muted">
-                      {document.watermark}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-xs text-muted">
-                    {document.clientName} · {document.mobile}
-                  </p>
-                  <p className="truncate text-[11px] text-muted">
-                    {document.fileName} · {formatDateTime(document.createdAt)}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  {document.url && (
-                    <a
-                      href={document.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-md border border-border-subtle p-2 text-charcoal hover:border-gold/60"
-                      aria-label="Download document"
-                    >
-                      <Download className="h-4 w-4" />
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDoc(document)}
-                    className="rounded-md border border-rose-200 bg-rose-50 p-2 text-rose-700 hover:bg-rose-100"
-                    aria-label="Delete document"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -1475,16 +1388,6 @@ export function HomeServicesAdmin() {
             setSelected(null);
             refetch();
           }}
-        />
-      )}
-
-      {confirmDoc && (
-        <ConfirmDialog
-          title="Delete this document?"
-          message={`Delete "${confirmDoc.fileName}" permanently? The client will be notified.`}
-          busy={docBusy}
-          onConfirm={handleDeleteDocument}
-          onCancel={() => setConfirmDoc(null)}
         />
       )}
     </div>

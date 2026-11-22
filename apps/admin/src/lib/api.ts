@@ -145,7 +145,13 @@ export type AdminInterior = {
   createdAt: string;
 };
 
-export type AdminDocument = {
+export type AdminDigitalDocumentStatus =
+  | "submitted"
+  | "documents_received"
+  | "processing"
+  | "completed";
+
+export type AdminDigitalDocument = {
   id: string;
   userId: string;
   clientName: string;
@@ -155,7 +161,42 @@ export type AdminDocument = {
   fileName: string;
   url: string | null;
   watermark: string;
+  status: AdminDigitalDocumentStatus;
   createdAt: string;
+};
+
+export type AdminPrintStatus =
+  | "queued"
+  | "printing"
+  | "ready_for_pickup"
+  | "completed";
+
+export type AdminPrintJob = {
+  id: string;
+  userId: string;
+  clientName: string;
+  mobile: string;
+  clientCode: string | null;
+  fileName: string;
+  url: string | null;
+  pages: number;
+  copies: number;
+  paperSize: "A4" | "A3";
+  colorMode: "bw" | "color";
+  sides: "single" | "double";
+  binding: "none" | "staple" | "spiral";
+  price: number;
+  status: AdminPrintStatus;
+  autoDeletedAt: string | null;
+  createdAt: string;
+};
+
+export type DigitalServicesStats = {
+  documentsTotal: number;
+  documentsPending: number;
+  printJobsTotal: number;
+  printJobsQueued: number;
+  printJobsReady: number;
 };
 
 export type HomeServicesStats = {
@@ -165,7 +206,6 @@ export type HomeServicesStats = {
   jobsCompleted: number;
   measurementsPending: number;
   interiorsPending: number;
-  documentsTotal: number;
 };
 
 export type AdminPropertyFilters = {
@@ -202,8 +242,7 @@ export type AdminAuditLog = {
 export type AdminRealEstateRequests = {
   enquiries: AdminEnquiry[];
   valuations: AdminValuation[];
-  siteVisits: AdminSiteVisit[];
-  listings: AdminProperty[];
+  siteVisits: AdminSiteVisit[];
 };
 
 export type AdminRequestKind = "enquiry" | "valuation" | "site-visit";
@@ -224,6 +263,7 @@ export type AdminPropertyPatch = {
   reraAgentNumber?: string | null;
   status?: AdminPropertyStatus;
   featured?: boolean;
+  images?: string[];
 };
 
 const API_BASE = (
@@ -592,12 +632,28 @@ export async function deleteAdminInterior(id: string): Promise<void> {
   await deleteAdminResource(`/api/admin/home-services/interiors/${id}`);
 }
 
-export async function fetchAdminDocuments(): Promise<AdminDocument[]> {
+export async function fetchDigitalServicesStats(): Promise<DigitalServicesStats> {
+  const response = await apiFetch(`${API_BASE}/api/admin/digital-services/stats`);
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: DigitalServicesStats }
+    | null;
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(
+      payload?.message ||
+        `Could not load Digital Services stats (${response.status}).`,
+    );
+  }
+  return payload.data;
+}
+
+export async function fetchAdminDigitalDocuments(): Promise<
+  AdminDigitalDocument[]
+> {
   const response = await apiFetch(
-    `${API_BASE}/api/admin/home-services/documents`,
+    `${API_BASE}/api/admin/digital-services/documents`,
   );
   const payload = (await response.json().catch(() => null)) as
-    | { success?: boolean; message?: string; data?: AdminDocument[] }
+    | { success?: boolean; message?: string; data?: AdminDigitalDocument[] }
     | null;
   if (!response.ok || !payload?.success) {
     throw new Error(
@@ -607,19 +663,41 @@ export async function fetchAdminDocuments(): Promise<AdminDocument[]> {
   return payload.data ?? [];
 }
 
-export async function deleteAdminDocument(id: string): Promise<void> {
+export function updateAdminDigitalDocument(
+  id: string,
+  patch: { status?: AdminDigitalDocumentStatus },
+): Promise<void> {
+  return patchAdmin(`/api/admin/digital-services/documents/${id}`, patch);
+}
+
+export async function deleteAdminDigitalDocument(id: string): Promise<void> {
+  await deleteAdminResource(`/api/admin/digital-services/documents/${id}`);
+}
+
+export async function fetchAdminPrintJobs(): Promise<AdminPrintJob[]> {
   const response = await apiFetch(
-    `${API_BASE}/api/admin/home-services/documents/${id}`,
-    { method: "DELETE" },
+    `${API_BASE}/api/admin/digital-services/printouts`,
   );
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as
-      | { message?: string }
-      | null;
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: AdminPrintJob[] }
+    | null;
+  if (!response.ok || !payload?.success) {
     throw new Error(
-      payload?.message || `Could not delete document (${response.status}).`,
+      payload?.message || `Could not load print jobs (${response.status}).`,
     );
   }
+  return payload.data ?? [];
+}
+
+export function updateAdminPrintJob(
+  id: string,
+  patch: { status?: AdminPrintStatus },
+): Promise<void> {
+  return patchAdmin(`/api/admin/digital-services/printouts/${id}`, patch);
+}
+
+export async function deleteAdminPrintJob(id: string): Promise<void> {
+  await deleteAdminResource(`/api/admin/digital-services/printouts/${id}`);
 }
 
 export async function fetchAdminProperties(
@@ -665,6 +743,8 @@ export type AdminInsurancePlan = {
   features: string[];
   cashlessNetwork?: number;
   pospLicense?: string;
+  insurerLogoUrl?: string | null;
+  brochureUrl?: string | null;
   familyOption?: AdminFamilyOption;
   active: boolean;
 };
@@ -680,15 +760,17 @@ export type InsuranceStats = {
 
 export type AdminPolicy = {
   id: string;
+  serialNo: number;
   type: "Life & Term" | "Health" | "Motor" | "Property";
   provider: string;
   policyNumber: string;
   coverAmount: number;
   premium: number;
   renewalDate: string;
-  status: "active" | "expiring" | "lapsed";
+  status: "pending" | "active" | "expiring" | "lapsed";
   holder?: string;
   validFrom?: string;
+  vehicleType?: "2W" | "4W" | null;
   pdfUrl?: string;
   userId: string;
   clientName: string;
@@ -722,6 +804,8 @@ export type AdminInsurancePlanInput = {
   features?: string[];
   cashlessNetwork?: number | null;
   pospLicense?: string | null;
+  insurerLogoUrl?: string | null;
+  brochureUrl?: string | null;
   familyOption?: AdminFamilyOption | null;
   active?: boolean;
 };
@@ -798,9 +882,11 @@ export function fetchAdminPolicies(q = ""): Promise<AdminPolicy[]> {
 export function updateAdminPolicy(
   id: string,
   patch: {
-    status?: "active" | "expiring" | "lapsed";
+    status?: "pending" | "active" | "expiring" | "lapsed";
     provider?: string;
     policyNumber?: string;
+    type?: AdminPolicy["type"];
+    vehicleType?: "2W" | "4W" | null;
     coverAmount?: number;
     premium?: number;
     renewalDate?: string;
@@ -813,6 +899,105 @@ export function updateAdminPolicy(
 
 export function deleteAdminPolicy(id: string): Promise<void> {
   return jsonRequest<void>(`/api/admin/policies/${id}`, "DELETE");
+}
+
+export type CreateAdminPolicyInput = {
+  clientMobile: string;
+  policyNumber: string;
+  provider: string;
+  type: AdminPolicy["type"];
+  vehicleType?: "2W" | "4W" | null;
+  holder?: string | null;
+  coverAmount: number;
+  premium: number;
+  validFrom?: string | null;
+  renewalDate: string;
+  status?: "pending" | "active" | "expiring" | "lapsed";
+};
+
+export function createAdminPolicy(
+  input: CreateAdminPolicyInput,
+): Promise<AdminPolicy> {
+  return jsonRequest<AdminPolicy>("/api/admin/policies", "POST", input);
+}
+
+export type PolicyImportResult = {
+  created: number;
+  updated: number;
+  failed: number;
+  errors: Array<{ row: number; message: string }>;
+};
+
+export async function importAdminPoliciesCsv(
+  file: File,
+): Promise<PolicyImportResult> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await apiFetch(`${API_BASE}/api/admin/policies/import`, {
+    method: "POST",
+    body: form,
+  });
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: PolicyImportResult }
+    | null;
+  if (!response.ok || !payload?.success) {
+    throw new Error(
+      payload?.message || `Import failed (${response.status}).`,
+    );
+  }
+  return payload.data as PolicyImportResult;
+}
+
+export async function downloadPolicyImportTemplate(): Promise<void> {
+  const response = await apiFetch(
+    `${API_BASE}/api/admin/policies/import/template`,
+  );
+  if (!response.ok) {
+    throw new Error(`Could not download the template (${response.status}).`);
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "insurance-policies-template.csv";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+export async function uploadInsuranceMedia(
+  file: File,
+): Promise<{ url: string; name: string; mimeType: string; size: number }> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await apiFetch(`${API_BASE}/api/admin/insurance/media`, {
+    method: "POST",
+    body: form,
+  });
+  const payload = (await response.json().catch(() => null)) as
+    | {
+        success?: boolean;
+        message?: string;
+        data?: { url: string; name: string; mimeType: string; size: number };
+      }
+    | null;
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(
+      payload?.message || `Upload failed (${response.status}).`,
+    );
+  }
+  return payload.data;
+}
+
+export function runAdminRenewalEngine(): Promise<{
+  checked: number;
+  reminded: number;
+}> {
+  return jsonRequest<{ checked: number; reminded: number }>(
+    "/api/admin/renewals/run",
+    "POST",
+  );
 }
 
 export function fetchAdminRenewals(): Promise<AdminRenewal[]> {
@@ -898,6 +1083,165 @@ export function deleteAdminLoan(id: string): Promise<void> {
   return jsonRequest<void>(`/api/admin/loans/applications/${id}`, "DELETE");
 }
 
+/* --------------------- Bank plans & client requirements ------------------ */
+
+export type LoanType = "Home" | "Personal" | "Business" | "Mortgage";
+export type IncomeSource = "salaried" | "business";
+
+export type AdminLoanPlan = {
+  id: string;
+  bank: string;
+  product: string;
+  loanType: LoanType;
+  employmentTypes: IncomeSource[];
+  minMonthlyIncome: number;
+  annualRate: number;
+  maxTenureMonths: number;
+  minAmount: number;
+  maxAmount: number;
+  active: boolean;
+  updatedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminLoanPlanInput = {
+  bank: string;
+  product: string;
+  loanType: LoanType;
+  employmentTypes: IncomeSource[];
+  minMonthlyIncome: number;
+  annualRate: number;
+  maxTenureMonths: number;
+  minAmount: number;
+  maxAmount: number;
+  active?: boolean;
+};
+
+export type AdminLoanRequirement = {
+  id: string;
+  userId: string;
+  clientName: string;
+  mobile: string;
+  sourceOfIncome: IncomeSource;
+  monthlyIncome: number;
+  monthlyEmis: number;
+  eligibleAmount: number;
+  indicativeEmi: number;
+  recommendedPlanIds: string[];
+  topBank: string | null;
+  topRateBps: number | null;
+  createdAt: string;
+};
+
+export type LoanRequirementFilters = {
+  q?: string;
+  from?: string;
+  to?: string;
+  bank?: string;
+};
+
+function loanRequirementQuery(filters: LoanRequirementFilters): string {
+  const url = new URL(`${API_BASE}/api/admin/loan-requirements`);
+  if (filters.q?.trim()) url.searchParams.set("q", filters.q.trim());
+  if (filters.from) url.searchParams.set("from", filters.from);
+  if (filters.to) url.searchParams.set("to", filters.to);
+  if (filters.bank) url.searchParams.set("bank", filters.bank);
+  return url.toString();
+}
+
+export function fetchAdminLoanPlans(
+  filters: { q?: string; active?: boolean } = {},
+): Promise<AdminLoanPlan[]> {
+  const url = new URL(`${API_BASE}/api/admin/loan-plans`);
+  if (filters.q?.trim()) url.searchParams.set("q", filters.q.trim());
+  if (filters.active !== undefined) {
+    url.searchParams.set("active", String(filters.active));
+  }
+  return jsonRequest<AdminLoanPlan[]>(url.toString(), "GET");
+}
+
+export function createAdminLoanPlan(
+  input: AdminLoanPlanInput,
+): Promise<AdminLoanPlan> {
+  return jsonRequest<AdminLoanPlan>("/api/admin/loan-plans", "POST", input);
+}
+
+export function updateAdminLoanPlan(
+  id: string,
+  patch: Partial<AdminLoanPlanInput>,
+): Promise<AdminLoanPlan> {
+  return jsonRequest<AdminLoanPlan>(
+    `/api/admin/loan-plans/${id}`,
+    "PATCH",
+    patch,
+  );
+}
+
+export function deleteAdminLoanPlan(id: string): Promise<void> {
+  return jsonRequest<void>(`/api/admin/loan-plans/${id}`, "DELETE");
+}
+
+export function convertAdminLoanRequirement(
+  id: string,
+): Promise<AdminServiceRequest> {
+  return jsonRequest<AdminServiceRequest>(
+    `/api/admin/loan-requirements/${id}/convert`,
+    "POST",
+  );
+}
+
+export function fetchAdminLoanRequirements(
+  filters: LoanRequirementFilters = {},
+): Promise<AdminLoanRequirement[]> {
+  return jsonRequest<AdminLoanRequirement[]>(
+    loanRequirementQuery(filters),
+    "GET",
+  );
+}
+
+export function fetchLoanRequirementBanks(): Promise<string[]> {
+  return jsonRequest<string[]>(
+    "/api/admin/loan-requirements/banks",
+    "GET",
+  );
+}
+
+export async function downloadLoanRequirementsCsv(
+  filters: LoanRequirementFilters = {},
+): Promise<void> {
+  const exportUrl = new URL(loanRequirementQuery(filters));
+  exportUrl.pathname = "/api/admin/loan-requirements/export";
+  exportUrl.searchParams.set("format", "csv");
+
+  const response = await apiFetch(exportUrl.toString(), { method: "GET" });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as
+      | { message?: string }
+      | null;
+    throw new Error(
+      payload?.message || `Export failed (${response.status}).`,
+    );
+  }
+
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const matched = /filename="?([^";]+)"?/i.exec(disposition);
+  const fileName =
+    matched?.[1] ??
+    `loan-requirements-${new Date().toISOString().slice(0, 10)}.csv`;
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
+
 /* --------------------------- Service requests --------------------------- */
 
 export type AdminServiceRequestStatus =
@@ -916,14 +1260,52 @@ export type AdminServiceRequest = {
   specificService: string;
   status: AdminServiceRequestStatus;
   comments: string;
+  loanBank?: string | null;
+  loanType?: "Home" | "Personal" | "Business" | "Mortgage" | null;
+  requirementSource?: "salaried" | "business" | null;
+  requirementMonthlyIncome?: number | null;
+  requirementMonthlyEmis?: number | null;
   createdAt: string;
 };
+
+export type AdminLoanConsultationPage = {
+  items: AdminServiceRequest[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export function fetchAdminLoanConsultations(
+  filters: {
+    page?: number;
+    pageSize?: number;
+    q?: string;
+    status?: string;
+  } = {},
+): Promise<AdminLoanConsultationPage> {
+  const url = new URL(`${API_BASE}/api/admin/loan-consultations`);
+  url.searchParams.set("page", String(filters.page ?? 1));
+  url.searchParams.set("pageSize", String(filters.pageSize ?? 10));
+  if (filters.q?.trim()) url.searchParams.set("q", filters.q.trim());
+  if (filters.status) url.searchParams.set("status", filters.status);
+  return jsonRequest<AdminLoanConsultationPage>(url.toString(), "GET");
+}
 
 export type ServiceRequestStats = {
   total: number;
   new: number;
   inProgress: number;
   completed: number;
+  cancelled: number;
+  categories: Array<{
+    category: string;
+    total: number;
+    new: number;
+    inProgress: number;
+    completed: number;
+    cancelled: number;
+  }>;
 };
 
 export function fetchServiceRequestStats(): Promise<ServiceRequestStats> {
@@ -933,14 +1315,32 @@ export function fetchServiceRequestStats(): Promise<ServiceRequestStats> {
   );
 }
 
+export type AdminServiceRequestPage = {
+  items: AdminServiceRequest[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 export function fetchAdminServiceRequests(
-  filters: { q?: string; category?: string; status?: string } = {},
-): Promise<AdminServiceRequest[]> {
+  filters: {
+    q?: string;
+    category?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+    focus?: string;
+  } = {},
+): Promise<AdminServiceRequestPage> {
   const url = new URL(`${API_BASE}/api/admin/requests`);
   if (filters.q?.trim()) url.searchParams.set("q", filters.q.trim());
   if (filters.category) url.searchParams.set("category", filters.category);
   if (filters.status) url.searchParams.set("status", filters.status);
-  return jsonRequest<AdminServiceRequest[]>(url.toString(), "GET");
+  url.searchParams.set("page", String(filters.page ?? 1));
+  url.searchParams.set("pageSize", String(filters.pageSize ?? 10));
+  if (filters.focus) url.searchParams.set("focus", filters.focus);
+  return jsonRequest<AdminServiceRequestPage>(url.toString(), "GET");
 }
 
 export function updateAdminServiceRequest(
@@ -1069,6 +1469,13 @@ export function staffMe(): Promise<StaffUser> {
   return jsonRequest<StaffUser>("/api/staff/me", "GET");
 }
 
+export function staffUpdateProfile(input: {
+  name?: string;
+  email?: string;
+}): Promise<StaffUser> {
+  return jsonRequest<StaffUser>("/api/staff/me", "PATCH", input);
+}
+
 export function staffSetPin(
   pin: string,
   currentPin?: string,
@@ -1087,6 +1494,30 @@ export function staffChangePin(
     currentPin,
     newPin,
   });
+}
+
+export function fetchStaffAvatar(): Promise<{ url: string | null }> {
+  return jsonRequest<{ url: string | null }>("/api/admin/me/avatar", "GET");
+}
+
+export async function uploadStaffAvatar(file: File): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await apiFetch(`${API_BASE}/api/admin/me/avatar`, {
+    method: "POST",
+    body: form,
+  });
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: { url: string } }
+    | null;
+
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(
+      payload?.message || `Could not upload the photo (${response.status}).`,
+    );
+  }
+
+  return payload.data;
 }
 
 export function staffLogout(): Promise<void> {
@@ -1116,4 +1547,300 @@ export function updateAdminStaff(
   },
 ): Promise<StaffUser> {
   return jsonRequest<StaffUser>(`/api/admin/staff/${id}`, "PATCH", patch);
+}
+
+/* ------------------------------ Daily tasks ----------------------------- */
+
+export type DailyTaskStatus =
+  | "connected_interested"
+  | "connected_not_interested"
+  | "not_reachable"
+  | "call_back";
+
+export type DailyTaskDisplayStatus =
+  | DailyTaskStatus
+  | "pending"
+  | "not_contacted";
+
+export type AdminDailyTask = {
+  id: string;
+  taskDate: string;
+  sortOrder: number;
+  mobilePrimary: string;
+  mobileSecondary: string;
+  customerName: string;
+  email: string;
+  status: DailyTaskStatus | null;
+  displayStatus: DailyTaskDisplayStatus;
+  interested: boolean | null;
+  reasonNotInterested: string;
+  nextStep: string;
+  comments: string;
+  calledAt: string | null;
+  durationMinutes: number | null;
+  assignedTo: string;
+  assignedByName: string | null;
+  assignedByCode: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminDailyTaskAssignee = {
+  id: string;
+  name: string;
+  staffCode: string;
+  role: "admin" | "partner";
+};
+
+export type AdminDailyTaskStats = {
+  total: number;
+  pending: number;
+  notContacted: number;
+  connectedInterested: number;
+  connectedNotInterested: number;
+  notReachable: number;
+  callBack: number;
+};
+
+export type AdminDailyTaskFilters = {
+  date?: string;
+  status?: string;
+  assignedTo?: string;
+};
+
+export type AdminDailyTaskCreateInput = {
+  taskDate: string;
+  sortOrder?: number;
+  mobilePrimary: string;
+  mobileSecondary?: string;
+  customerName?: string;
+  email?: string;
+  assignedTo?: string;
+};
+
+export type AdminDailyTaskPatch = {
+  taskDate?: string;
+  sortOrder?: number;
+  mobilePrimary?: string;
+  mobileSecondary?: string;
+  customerName?: string;
+  email?: string;
+  assignedTo?: string;
+  status?: DailyTaskStatus | null;
+  interested?: boolean | null;
+  reasonNotInterested?: string;
+  nextStep?: string;
+  comments?: string;
+  calledAt?: string | null;
+  durationMinutes?: number | null;
+};
+
+export function fetchDailyTasks(
+  filters: AdminDailyTaskFilters = {},
+): Promise<AdminDailyTask[]> {
+  const params = new URLSearchParams();
+  if (filters.date) params.set("date", filters.date);
+  if (filters.status) params.set("status", filters.status);
+  if (filters.assignedTo) params.set("assignedTo", filters.assignedTo);
+  const query = params.toString();
+  return jsonRequest<AdminDailyTask[]>(
+    `/api/admin/daily-tasks${query ? `?${query}` : ""}`,
+    "GET",
+  );
+}
+
+export function fetchDailyTaskStats(): Promise<AdminDailyTaskStats> {
+  return jsonRequest<AdminDailyTaskStats>("/api/admin/daily-tasks/stats", "GET");
+}
+
+export function fetchDailyTasksExport(
+  from: string,
+  to: string,
+): Promise<AdminDailyTask[]> {
+  const params = new URLSearchParams({ from, to });
+  return jsonRequest<AdminDailyTask[]>(
+    `/api/admin/daily-tasks/export?${params.toString()}`,
+    "GET",
+  );
+}
+
+export function fetchDailyTaskAssignees(): Promise<AdminDailyTaskAssignee[]> {
+  return jsonRequest<AdminDailyTaskAssignee[]>(
+    "/api/admin/daily-tasks/agents",
+    "GET",
+  );
+}
+
+export function createDailyTask(
+  input: AdminDailyTaskCreateInput,
+): Promise<AdminDailyTask> {
+  return jsonRequest<AdminDailyTask>("/api/admin/daily-tasks", "POST", input);
+}
+
+export function updateDailyTask(
+  id: string,
+  patch: AdminDailyTaskPatch,
+): Promise<AdminDailyTask> {
+  return jsonRequest<AdminDailyTask>(
+    `/api/admin/daily-tasks/${id}`,
+    "PATCH",
+    patch,
+  );
+}
+
+export function deleteDailyTask(id: string): Promise<void> {
+  return jsonRequest<void>(`/api/admin/daily-tasks/${id}`, "DELETE");
+}
+export async function uploadAdminPropertyPhotos(
+  id: string,
+  files: File[],
+): Promise<AdminProperty> {
+  const form = new FormData();
+  for (const file of files) {
+    form.append("photos", file);
+  }
+
+  const response = await apiFetch(
+    `${API_BASE}/api/admin/properties/${id}/photos`,
+    {
+      method: "POST",
+      body: form,
+    },
+  );
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: AdminProperty }
+    | null;
+
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(
+      payload?.message || `Could not upload photos (${response.status}).`,
+    );
+  }
+
+  return payload.data;
+}
+export type AdminStorageBucket = "public" | "private";
+
+export type AdminStorageObject = {
+  key: string;
+  url: string;
+  size: number;
+  lastModified: string | null;
+  etag: string | null;
+};
+
+export type AdminStorageList = {
+  bucket: AdminStorageBucket;
+  configured: boolean;
+  objects: AdminStorageObject[];
+  truncated: boolean;
+  cursor: string | null;
+};
+
+export async function fetchAdminStorageFiles(
+  bucket: AdminStorageBucket,
+  options: { prefix?: string; cursor?: string | null; limit?: number } = {},
+): Promise<AdminStorageList> {
+  const url = new URL(`${API_BASE}/api/admin/storage/files`);
+  url.searchParams.set("bucket", bucket);
+  if (options.prefix) url.searchParams.set("prefix", options.prefix);
+  if (options.cursor) url.searchParams.set("cursor", options.cursor);
+  url.searchParams.set("limit", String(options.limit ?? 10));
+
+  const response = await apiFetch(url.toString());
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: AdminStorageList }
+    | null;
+
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(
+      payload?.message || `Could not load storage (${response.status}).`,
+    );
+  }
+
+  return payload.data;
+}
+
+export async function uploadAdminStorageFiles(
+  bucket: AdminStorageBucket,
+  files: File[],
+): Promise<void> {
+  const form = new FormData();
+  for (const file of files) {
+    form.append("files", file);
+  }
+
+  const response = await apiFetch(
+    `${API_BASE}/api/admin/storage/upload?bucket=${bucket}`,
+    { method: "POST", body: form },
+  );
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string }
+    | null;
+
+  if (!response.ok || !payload?.success) {
+    throw new Error(
+      payload?.message || `Upload failed (${response.status}).`,
+    );
+  }
+}
+
+export async function deleteAdminStorageFile(
+  bucket: AdminStorageBucket,
+  key: string,
+): Promise<void> {
+  const url = new URL(`${API_BASE}/api/admin/storage/files`);
+  url.searchParams.set("bucket", bucket);
+  url.searchParams.set("key", key);
+
+  const response = await apiFetch(url.toString(), { method: "DELETE" });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as
+      | { message?: string }
+      | null;
+    throw new Error(
+      payload?.message || `Delete failed (${response.status}).`,
+    );
+  }
+}
+
+export async function getAdminStorageSignedUrl(
+  bucket: AdminStorageBucket,
+  key: string,
+): Promise<string> {
+  const url = new URL(`${API_BASE}/api/admin/storage/signed-url`);
+  url.searchParams.set("bucket", bucket);
+  url.searchParams.set("key", key);
+
+  const response = await apiFetch(url.toString());
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: { url?: string } }
+    | null;
+
+  if (!response.ok || !payload?.success || !payload.data?.url) {
+    throw new Error(
+      payload?.message || `Could not sign file URL (${response.status}).`,
+    );
+  }
+
+  return payload.data.url;
+}
+export type AdminStorageUsage = {
+  public: { count: number; size: number };
+  private: { count: number; size: number };
+};
+
+export async function fetchAdminStorageUsage(): Promise<AdminStorageUsage> {
+  const response = await apiFetch(`${API_BASE}/api/admin/storage/usage`);
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string; data?: AdminStorageUsage }
+    | null;
+
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(
+      payload?.message || `Could not load storage usage (${response.status}).`,
+    );
+  }
+
+  return payload.data;
 }

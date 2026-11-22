@@ -44,8 +44,10 @@ const TOAST_TTL_MS = 7000;
 
 export function AdminNotificationsProvider({
   children,
+  enabled = true,
 }: {
   children: ReactNode;
+  enabled?: boolean;
 }) {
   const [items, setItems] = useState<AdminNotification[]>([]);
   const [toasts, setToasts] = useState<AdminNotificationToast[]>([]);
@@ -109,6 +111,11 @@ export function AdminNotificationsProvider({
   }, [showToasts]);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     let controller: AbortController | null = null;
     let retry: number | null = null;
@@ -209,9 +216,11 @@ export function AdminNotificationsProvider({
       controller?.abort();
       if (retry !== null) window.clearTimeout(retry);
     };
-  }, [showToasts]);
+  }, [enabled, showToasts]);
 
   useEffect(() => {
+    if (!enabled) return;
+
     const interval = window.setInterval(() => {
       void refresh();
     }, FALLBACK_POLL_MS);
@@ -225,7 +234,7 @@ export function AdminNotificationsProvider({
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [refresh]);
+  }, [enabled, refresh]);
 
   const markRead = useCallback((id: string) => {
     setItems((current) =>

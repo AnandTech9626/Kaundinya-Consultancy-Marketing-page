@@ -31,7 +31,9 @@ export function StaffSetup() {
     try {
       const updated = await staffSetPin(pin);
       updateStaff(updated);
-      navigate("/dashboard", { replace: true });
+      navigate(updated.role === "partner" ? "/daily-tasks" : "/requests", {
+        replace: true,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not set your PIN.");
     } finally {
