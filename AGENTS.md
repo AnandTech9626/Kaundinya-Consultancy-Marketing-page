@@ -10,7 +10,7 @@ C:\Users\Sagar Babu\kaundinya-backend
 
 Read that repo's `README.md`, `SKILLS.md`, and `docs/` before backend or API work.
 
-The active admin console is also separate: `C:\Users\Sagar Babu\kaundinya-admin`.
+The active admin console lives in this monorepo at `apps/admin` (workspace `@kaundinya/admin`).
 
 ## Structure
 
@@ -18,7 +18,7 @@ Monorepo with npm workspaces:
 
 - `apps/marketing` — Astro marketing site
 - `apps/app` — React + Vite client app
-- `apps/admin` — old admin app, unused
+- `apps/admin` — staff admin console
 - `packages/ui` — shared React components
 - `packages/config` — shared content/data/status metadata
 - `packages/tokens` — shared design tokens / Tailwind preset
@@ -55,7 +55,7 @@ npm run build:app
 
 - Marketing: Cloudflare Workers (`marketing`), assets `apps/marketing/dist`
 - Client app: Cloudflare Workers
-- Admin console: separate deployment
+- Admin console: Cloudflare Worker `admin` from `apps/admin`
 - Backend: Vercel/Node, database stays on Neon
 
 Before merging or deploying, read `deploy.md`.

@@ -38,7 +38,11 @@ Rules:
   - Required GitHub Actions secrets (set once by a repo admin under Settings → Secrets and variables → Actions):
     - `CLOUDFLARE_API_TOKEN`
     - `CLOUDFLARE_ACCOUNT_ID`
-- **App** (`apps/app`) → **Cloudflare Workers** (future)
+- **App** (`apps/app`) → **Cloudflare Workers**
+  - Deploys automatically on push to `main` via `.github/workflows/deploy-app.yml` (worker `app`, custom domain `app.kaundinya.co.in`).
+- **Admin** (`apps/admin`) → **Cloudflare Workers**
+  - Deploys automatically on push to `main` via `.github/workflows/deploy-admin.yml` (worker `admin`, custom domain `admin.kaundinya.co.in`).
+  - Uses the same `CLOUDFLARE_API_TOKEN_WORKERS` and `CLOUDFLARE_ACCOUNT_ID` secrets.
 - **Backend** (standalone repo `kaundinya-backend`) → **Vercel** (Node)
 
 ## 4. Correct order, summarized
