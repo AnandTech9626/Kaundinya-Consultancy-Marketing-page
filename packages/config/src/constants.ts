@@ -20,7 +20,7 @@ export const SITE_INFO = {
 export const CONTACT_PERSONS = [
   {
     name: "Sampath Krishna Goud",
-    role: "Managing Director / Principal",
+    role: "Managing Director",
     phone: "+91 70933 20947",
     phoneRaw: "+917093320947",
     primary: true,

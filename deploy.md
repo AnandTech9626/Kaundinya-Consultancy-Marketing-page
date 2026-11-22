@@ -43,6 +43,7 @@ Rules:
 - **Admin** (`apps/admin`) → **Cloudflare Workers**
   - Deploys automatically on push to `main` via `.github/workflows/deploy-admin.yml` (worker `admin`, custom domain `admin.kaundinya.co.in`).
   - Uses the same `CLOUDFLARE_API_TOKEN_WORKERS` and `CLOUDFLARE_ACCOUNT_ID` secrets.
+  - Deploy **only** from `apps/admin` in this repo; the old standalone `kaundinya-admin` repo is retired.
 - **Backend** (standalone repo `kaundinya-backend`) → **Vercel** (Node)
 
 ## 4. Correct order, summarized

@@ -248,7 +248,7 @@ export default function ConsultationModal() {
               {/* Middle Section: Leadership Contacts */}
               <div className="space-y-4">
                 <div className="border-t border-charcoal-light/70 pt-4 space-y-1">
-                  <p className="text-[11px] text-ivory/60 font-medium">Managing Director / Principal</p>
+                  <p className="text-[11px] text-ivory/60 font-medium">Managing Director</p>
                   <p className="text-sm font-bold text-white">Sampath Krishna Goud</p>
                 </div>
 

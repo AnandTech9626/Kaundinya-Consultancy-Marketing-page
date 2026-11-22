@@ -55,7 +55,7 @@ export default function MobileNav({ links, currentPath }: Props) {
         createPortal(
           <div className="fixed inset-0 z-[100] bg-white overflow-y-auto">
             <div className="flex items-center justify-between h-16 px-4 border-b border-border-subtle">
-              <BrandLockup size="sm" />
+              <BrandLockup size="sm" tone="brown" />
               <button
                 type="button"
                 onClick={close}

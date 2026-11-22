@@ -56,6 +56,7 @@ npm run build:app
 - Marketing: Cloudflare Workers (`marketing`), assets `apps/marketing/dist`
 - Client app: Cloudflare Workers
 - Admin console: Cloudflare Worker `admin` from `apps/admin`
+  - Deploy **only** from this monorepo (`apps/admin`); the old standalone `kaundinya-admin` repo is retired and must not be deployed to `admin.kaundinya.co.in`.
 - Backend: Vercel/Node, database stays on Neon
 
 Before merging or deploying, read `deploy.md`.

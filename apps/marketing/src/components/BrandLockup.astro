@@ -4,9 +4,16 @@ type BrandSize = "sm" | "md" | "lg";
 interface Props {
   size?: BrandSize;
   class?: string;
+  tone?: "gold" | "brown";
 }
 
-const { size = "md", class: className = "" } = Astro.props;
+const {
+  size = "md",
+  class: className = "",
+  tone = "gold",
+} = Astro.props;
+
+const toneClass = tone === "brown" ? "text-[#281C12]" : "text-gold";
 
 const ICON_HEIGHT: Record<BrandSize, string> = {
   sm: "h-10",
@@ -25,8 +32,6 @@ const SUBTITLE_SIZE: Record<BrandSize, string> = {
   md: "text-[10px]",
   lg: "text-[12px]",
 };
-
-const SUBTITLE_CHARS = "INTEGRATED SERVICES".split("");
 ---
 
 <div
@@ -42,23 +47,14 @@ const SUBTITLE_CHARS = "INTEGRATED SERVICES".split("");
   />
   <div class="flex min-w-0 flex-col">
     <span
-      class={`font-extrabold leading-none tracking-[0.12em] text-gold ${TITLE_SIZE[size]}`}
+      class={`font-black leading-none tracking-[0.18em] ${toneClass} ${TITLE_SIZE[size]}`}
     >
       KAUNDINYA
     </span>
     <span
-      class={`mt-1 flex w-full justify-between font-bold leading-none text-gold ${SUBTITLE_SIZE[size]}`}
-      aria-label="Integrated Services"
+      class={`mt-1 whitespace-nowrap font-bold uppercase leading-none tracking-[0.22em] ${toneClass} ${SUBTITLE_SIZE[size]}`}
     >
-      {
-        SUBTITLE_CHARS.map((character, index) =>
-          character === " " ? (
-            <span class="w-[0.6em]" aria-hidden="true" />
-          ) : (
-            <span aria-hidden="true">{character}</span>
-          ),
-        )
-      }
+      Integrated Services
     </span>
   </div>
 </div>
