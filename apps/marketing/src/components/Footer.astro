@@ -1,5 +1,5 @@
 ---
-import { SITE_INFO, CONTACT_PERSONS, SERVICE_CATEGORIES, NAV_LINKS } from '../lib/constants';
+import { SITE_INFO, SERVICE_CATEGORIES, NAV_LINKS } from '../lib/constants';
 import BrandLockup from './BrandLockup.astro';
 
 const currentYear = new Date().getFullYear();
@@ -7,7 +7,7 @@ const currentYear = new Date().getFullYear();
 
 <footer class="bg-charcoal text-white pt-16 pb-12 border-t-2 border-gold/40">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-charcoal-light">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 pb-12 border-b border-charcoal-light">
       
       <!-- Column 1: Brand & Identity (Span 2 cols on lg) -->
       <div class="lg:col-span-2 space-y-4">
@@ -87,19 +87,6 @@ const currentYear = new Date().getFullYear();
         </ul>
       </div>
 
-      <!-- Column 4: Verified Direct Contacts -->
-      <div>
-        <h3 class="text-xs font-bold uppercase tracking-wider text-gold mb-4">Direct Contacts</h3>
-        <div class="space-y-4 text-sm">
-          {CONTACT_PERSONS.map((person) => (
-            <div class="bg-charcoal-light/70 p-3 rounded-lg border border-charcoal-light">
-              <div class="text-xs text-ivory/60 font-medium">{person.name}</div>
-              <div class="text-xs text-gold/80">{person.role}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
     </div>
 
     <!-- Bottom Bar -->
@@ -109,9 +96,18 @@ const currentYear = new Date().getFullYear();
       </p>
       <div class="flex items-center gap-6">
         <span>Serving Hyderabad & Telangana</span>
-        <span>   </span>
+        <span>·</span>
+        <a
+          href="https://ansa1734-site.pages.dev/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:text-gold transition-colors"
+        >
+          Designed &amp; built by ANSA
+        </a>
+        <span>·</span>
         <a href="/privacy" class="hover:text-gold transition-colors">Privacy Notice</a>
-        <span>   </span>
+        <span>·</span>
         <button type="button" data-open-consultation class="hover:text-gold transition-colors cursor-pointer">
           Request Consultation
         </button>

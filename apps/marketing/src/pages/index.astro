@@ -1,19 +1,19 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SectionHeading from '../components/SectionHeading.astro';
-import ServiceCard from '../components/ServiceCard.astro';
 import ServiceFinder from '../components/ServiceFinder';
 import BrandPrincipleCard from '../components/BrandPrincipleCard';
-import Button from '../components/Button.astro';
 import { 
   SITE_INFO, 
-  SERVICE_CATEGORIES, 
   BRAND_PRINCIPLES, 
   HOW_IT_WORKS_STEPS,
   CONTACT_PERSONS 
 } from '../lib/constants';
 
-const primaryContact = CONTACT_PERSONS[0];
+const LEADERSHIP_DESCRIPTIONS = [
+  "Specializing in Real Estate advisory, Loan structuring, and strategic client engagements.",
+  "Leading Insurance solutions, Home Services operations, and end-to-end client consultations.",
+];
 ---
 
 <BaseLayout 
@@ -93,7 +93,7 @@ const primaryContact = CONTACT_PERSONS[0];
           <div class="flex flex-wrap items-center gap-4 pt-6 sm:pt-8">
             <a 
               href="#service-finder" 
-              class="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-lg bg-[#F5B900] hover:bg-[#D8A200] text-[#121316] font-bold text-sm sm:text-base shadow-lg shadow-[#F5B900]/25 transition-all duration-200 hover:-translate-y-0.5"
+              class="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-lg bg-[#F5B900] hover:bg-[#D8A200] text-[#121316] font-bold text-sm sm:text-base transition-all duration-200 hover:-translate-y-0.5"
             >
               <span>Explore Our Services</span>
               <svg class="w-4 h-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -213,50 +213,7 @@ const primaryContact = CONTACT_PERSONS[0];
     </div>
   </section>
 
-  <!-- 4. SERVICES OVERVIEW -->
-  <section class="py-20 bg-white border-y border-border-subtle">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-        <SectionHeading 
-          badge="Integrated Portfolio"
-          title="All Four Core Service Categories"
-          subtitle="Explore the full spectrum of our coordinated services across Hyderabad."
-        />
-        <div>
-          <Button href="/services" variant="outline" size="sm">
-            <span>Explore All Detailed Guides</span>
-            <svg class="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </Button>
-        </div>
-      </div>
-
-      <!-- 4 Pillars Grid with real photos -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {SERVICE_CATEGORIES.map((cat, idx) => (
-          <ServiceCard category={cat} index={idx} />
-        ))}
-      </div>
-
-      <!-- Disclaimer notice with Clean SVG Icon -->
-      <div class="mt-12 p-5 rounded-xl bg-ivory border border-border-subtle text-xs text-muted leading-relaxed flex items-start gap-3">
-        <svg class="w-4 h-4 text-gold shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="16" x2="12" y2="12"></line>
-          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-        </svg>
-        <p>
-          <strong>Notice of Transparency:</strong> Kaundinya Consultancy provides professional advisory, documentation support, and service coordination. We do not provide legal guarantees of loan approvals, insurance claim outcomes, or government document update timelines; all institutional approvals are subject to official regulatory criteria and guidelines.
-        </p>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- 5. HOW IT WORKS -->
+  <!-- 4. HOW IT WORKS -->
   <section class="py-20 bg-ivory-light">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
@@ -318,7 +275,63 @@ const primaryContact = CONTACT_PERSONS[0];
     </div>
   </section>
 
-  <!-- 7. SERVICE AREA CALLOUT -->
+  <!-- 7. LEADERSHIP -->
+  <section id="leadership" class="bg-[#FAF8F5] py-20 px-6 md:px-12 scroll-mt-24">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center">
+        <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#B8860B]">
+          Leadership
+        </p>
+        <h2 class="mt-2 text-3xl md:text-4xl font-bold text-[#1C1917]">
+          Directors
+        </h2>
+        <p class="mt-3 text-sm md:text-base text-[#57534E]">
+          Direct access to the people accountable for your engagement.
+        </p>
+      </div>
+
+      <div class="mt-14 grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-0">
+        {CONTACT_PERSONS.map((person, index) => (
+          <div
+            class={`flex h-full flex-col justify-between ${
+              index === 0
+                ? "md:border-r md:border-[#D4AF37]/40 md:pr-12"
+                : "md:pl-12"
+            }`}
+          >
+            <div>
+              <div class="mb-7 h-[6px] w-full bg-[#E5B83B]" aria-hidden="true" />
+              <p class="text-xs font-bold uppercase tracking-[0.14em] text-[#9A7209]">
+                {person.role}
+              </p>
+              <h3 class="mt-2 text-2xl md:text-[28px] font-bold tracking-tight text-[#1C1917]">
+                {person.name}
+              </h3>
+              <p class="mt-3 max-w-md text-sm md:text-[15px] leading-relaxed text-[#44403C]">
+                {LEADERSHIP_DESCRIPTIONS[index] ?? ""}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              data-open-consultation
+              class="group mt-6 inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-[#856404] transition-colors hover:text-[#1C1917]"
+            >
+              Book Consultation
+              <span
+                aria-hidden="true"
+                class="transition-transform group-hover:translate-x-1"
+              >
+                →
+              </span>
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. SERVICE AREA CALLOUT -->
   <section class="py-12 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="relative overflow-hidden rounded-2xl bg-charcoal border border-charcoal-light p-8 sm:p-10 lg:p-12">
