@@ -18,15 +18,16 @@ const SUBTITLE_SIZE: Record<BrandSize, string> = {
   lg: "text-[12px]",
 };
 
-const SUBTITLE_CHARS = "INTEGRATED SERVICES".split("");
-
 export function BrandLockup({
   size = "md",
   className = "",
+  tone = "gold",
 }: {
   size?: BrandSize;
   className?: string;
+  tone?: "gold" | "brown";
 }) {
+  const toneClass = tone === "brown" ? "text-[#281C12]" : "text-gold";
   return (
     <div
       className={`flex items-center gap-1 ${className}`}
@@ -41,23 +42,14 @@ export function BrandLockup({
       />
       <div className="flex min-w-0 flex-col">
         <span
-          className={`font-extrabold leading-none tracking-[0.12em] text-gold ${TITLE_SIZE[size]}`}
+          className={`font-black leading-none tracking-[0.18em] ${toneClass} ${TITLE_SIZE[size]}`}
         >
           KAUNDINYA
         </span>
         <span
-          className={`mt-1 flex w-full justify-between font-bold leading-none text-gold ${SUBTITLE_SIZE[size]}`}
-          aria-label="Integrated Services"
+          className={`mt-1 whitespace-nowrap font-bold uppercase leading-none tracking-[0.22em] ${toneClass} ${SUBTITLE_SIZE[size]}`}
         >
-          {SUBTITLE_CHARS.map((character, index) =>
-            character === " " ? (
-              <span key={index} className="w-[0.6em]" aria-hidden="true" />
-            ) : (
-              <span key={index} aria-hidden="true">
-                {character}
-              </span>
-            ),
-          )}
+          Integrated Services
         </span>
       </div>
     </div>
