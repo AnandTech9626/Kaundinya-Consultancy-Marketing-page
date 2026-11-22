@@ -7,29 +7,31 @@ export const inputClass =
 export const labelClass =
   "mb-1 block text-[11px] font-bold text-charcoal";
 
-const STATUS_STYLES: Record<string, string> = {
-  requested: "border-amber-200 bg-amber-50 text-amber-700",
-  application: "border-amber-200 bg-amber-50 text-amber-700",
-  active: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  verified: "border-blue-200 bg-blue-50 text-blue-700",
-  submitted: "border-indigo-200 bg-indigo-50 text-indigo-700",
-  approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  disbursed: "border-teal-200 bg-teal-50 text-teal-700",
-  expiring: "border-orange-200 bg-orange-50 text-orange-700",
-  lapsed: "border-rose-200 bg-rose-50 text-rose-700",
-  cancelled: "border-rose-200 bg-rose-50 text-rose-700",
-};
+function statusStyle(status: string) {
+  const value = status.toLowerCase();
+  if (/(cancel|reject|fail|laps|expir|overdue|declin|error|blocked)/.test(value)) {
+    return "border-rose-200 bg-rose-50 text-rose-700";
+  }
+  if (/(pending|new|request|draft|await|review|hold|queued|application)/.test(value)) {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+  if (/(complete|active|approve|disburse|paid|sold|rented|success|closed|done|resolved)/.test(value)) {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+  if (/(progress|process|contact|confirm|schedule|route|submit|verif|issue|ready|printing|documents)/.test(value)) {
+    return "border-blue-200 bg-blue-50 text-blue-700";
+  }
+  return "border-border-subtle bg-ivory text-muted";
+}
 
 export function StatusBadge({ status }: { status: string }) {
-  const style =
-    STATUS_STYLES[status] ?? "border-border-subtle bg-ivory text-muted";
   const label = status
-    .replace(/_/g, " ")
-    .replace(/^\w/, (character) => character.toUpperCase());
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 
   return (
     <span
-      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${style}`}
+      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusStyle(status)}`}
     >
       {label}
     </span>
@@ -102,12 +104,18 @@ export function ConfirmDialog({
   busy,
   onConfirm,
   onCancel,
+  confirmLabel = "Delete",
+  busyLabel = "Deleting...",
+  tone = "danger",
 }: {
   title: string;
   message: string;
   busy: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmLabel?: string;
+  busyLabel?: string;
+  tone?: "danger" | "primary";
 }) {
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -141,9 +149,13 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-50"
+            className={`rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-50 ${
+              tone === "primary"
+                ? "bg-gold text-charcoal hover:bg-gold-hover"
+                : "bg-rose-600 text-white hover:bg-rose-700"
+            }`}
           >
-            {busy ? "Deleting..." : "Delete"}
+            {busy ? busyLabel : confirmLabel}
           </button>
         </div>
       </div>

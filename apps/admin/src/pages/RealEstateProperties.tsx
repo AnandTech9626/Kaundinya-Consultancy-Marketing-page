@@ -5,7 +5,19 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { AlertTriangle, Building2, Plus, Search, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Building2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Plus,
+  Search,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import {
   addAdminEnquiryNote,
   createAdminProperty,
@@ -15,6 +27,7 @@ import {
   updateAdminEnquiry,
   updateAdminProperty,
   updateAdminRequest,
+  uploadAdminPropertyPhotos,
   updateAdminSiteVisit,
   updateAdminValuation,
   type AdminEnquiry,
@@ -27,6 +40,7 @@ import {
 } from "../lib/api";
 import { formatDateTime, formatPrice } from "../lib/format";
 import { showToast } from "../lib/toast";
+import { SkeletonRows } from "../components/Skeleton";
 
 const STATUS_STYLES: Record<AdminPropertyStatus, string> = {
   active: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -60,22 +74,37 @@ function PropertyRow({
   property,
   selected,
   onSelect,
+  onDelete,
+  onApprove,
+  onReject,
+  rowBusy,
 }: {
   property: AdminProperty;
   selected: boolean;
   onSelect: () => void;
+  onDelete: () => void;
+  onApprove: () => void;
+  onReject: () => void;
+  rowBusy: boolean;
 }) {
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
-      className={`flex w-full items-start justify-between gap-3 rounded-lg border p-2.5 text-left transition-colors ${
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+      className={`flex w-full cursor-pointer items-start justify-between gap-2 rounded-lg border p-2.5 text-left transition-colors ${
         selected
           ? "border-gold bg-gold-light/40"
           : "border-border-subtle hover:border-gold/60"
       }`}
     >
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <p className="line-clamp-1 text-xs font-bold text-charcoal">
             {property.title}
@@ -90,9 +119,52 @@ function PropertyRow({
         <p className="mt-0.5 text-[11px] font-extrabold text-charcoal">
           {formatPrice(property.price, property.priceUnit)}
         </p>
+
+        {property.status === "draft" && (
+          <div className="mt-1 flex items-center gap-1">
+            <button
+              type="button"
+              disabled={rowBusy}
+              onClick={(event) => {
+                event.stopPropagation();
+                onApprove();
+              }}
+              className="inline-flex items-center gap-0.5 rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+            >
+              <Check className="h-2.5 w-2.5" />
+              Approve
+            </button>
+            <button
+              type="button"
+              disabled={rowBusy}
+              onClick={(event) => {
+                event.stopPropagation();
+                onReject();
+              }}
+              className="inline-flex items-center gap-0.5 rounded bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+            >
+              <X className="h-2.5 w-2.5" />
+              Reject
+            </button>
+          </div>
+        )}
       </div>
-      <StatusBadge status={property.status} />
-    </button>
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        <StatusBadge status={property.status} />
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete();
+          }}
+          aria-label={`Delete ${property.title}`}
+          title="Delete property"
+          className="rounded-md p-1 text-muted transition-colors hover:bg-rose-50 hover:text-rose-600 cursor-pointer"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -109,6 +181,7 @@ function PropertySheet({
   const [actionError, setActionError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState<number | null>(null);
 
   const runStatus = async (status: AdminPropertyStatus) => {
     setBusy(true);
@@ -347,12 +420,20 @@ function PropertySheet({
             {property.images.length > 0 ? (
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {property.images.map((src, index) => (
-                  <img
+                  <button
                     key={`${src}-${index}`}
-                    src={src}
-                    alt={`${property.title} ${index + 1}`}
-                    className="h-24 w-full rounded-lg object-cover"
-                  />
+                    type="button"
+                    onClick={() => setPhotoIndex(index)}
+                    aria-label={`View photo ${index + 1}`}
+                    className="group relative overflow-hidden rounded-lg cursor-zoom-in"
+                  >
+                    <img
+                      src={src}
+                      alt={`${property.title} ${index + 1}`}
+                      className="h-24 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <span className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20" />
+                  </button>
                 ))}
               </div>
             ) : (
@@ -371,6 +452,63 @@ function PropertySheet({
             onChanged();
           }}
         />
+      )}
+
+      {photoIndex !== null && property.images[photoIndex] && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Property photos"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4"
+        >
+          <button
+            type="button"
+            onClick={() => setPhotoIndex(null)}
+            aria-label="Close photos"
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          {property.images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  setPhotoIndex(
+                    (current) =>
+                      ((current ?? 0) - 1 + property.images.length) %
+                      property.images.length,
+                  )
+                }
+                aria-label="Previous photo"
+                className="absolute left-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setPhotoIndex(
+                    (current) =>
+                      ((current ?? 0) + 1) % property.images.length,
+                  )
+                }
+                aria-label="Next photo"
+                className="absolute right-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+            </>
+          )}
+          <img
+            src={property.images[photoIndex]}
+            alt={`${property.title} photo ${photoIndex + 1}`}
+            className="max-h-[85vh] max-w-[92vw] rounded-lg object-contain"
+          />
+          <p className="absolute bottom-5 text-xs font-bold text-white/80">
+            {photoIndex + 1} / {property.images.length}
+          </p>
+        </div>
       )}
 
       {confirmDelete && (
@@ -486,12 +624,36 @@ function PropertyEditModal({
   const [areaSqft, setAreaSqft] = useState(String(property.areaSqft));
   const [status, setStatus] = useState<AdminPropertyStatus>(property.status);
   const [featured, setFeatured] = useState(property.featured);
+  const [images, setImages] = useState<string[]>(property.images);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const inputClass =
     "w-full rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm text-charcoal outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/30";
   const labelClass = "mb-1 block text-[11px] font-bold text-charcoal";
+
+  const addPhotos = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    setUploadingPhotos(true);
+    setError(null);
+    try {
+      const updated = await uploadAdminPropertyPhotos(
+        property.id,
+        Array.from(fileList),
+      );
+      setImages(updated.images);
+      showToast("Photos added.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not upload photos.");
+    } finally {
+      setUploadingPhotos(false);
+    }
+  };
+
+  const removePhoto = (url: string) => {
+    setImages((previous) => previous.filter((item) => item !== url));
+  };
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
@@ -517,6 +679,7 @@ function PropertyEditModal({
         areaSqft: Number(areaSqft),
         status,
         featured,
+        ...(images !== property.images ? { images } : {}),
       });
       onSaved();
       showToast("Property updated.");
@@ -698,6 +861,47 @@ function PropertyEditModal({
           />
         </div>
 
+        <div>
+          <span className={labelClass}>Photos</span>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {images.map((src) => (
+              <div key={src} className="relative">
+                <img
+                  src={src}
+                  alt=""
+                  className="h-20 w-full rounded-lg border border-border-subtle object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(src)}
+                  aria-label="Remove photo"
+                  className="absolute right-1 top-1 rounded-full bg-charcoal/70 p-1 text-white hover:bg-rose-600"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            <label className="flex h-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border-subtle text-[11px] font-semibold text-muted hover:border-gold">
+              <Upload className="h-4 w-4" />
+              {uploadingPhotos ? "Uploading..." : "Add"}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                disabled={uploadingPhotos}
+                onChange={(event) => {
+                  void addPhotos(event.target.files);
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+          <p className="mt-1 text-[11px] text-muted">
+            JPG, PNG or WEBP up to 10 MB each. Photos publish with the listing.
+          </p>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={labelClass} htmlFor="edit-status">
@@ -785,6 +989,7 @@ function AddPropertyModal({
   const [description, setDescription] = useState("");
   const [amenities, setAmenities] = useState("");
   const [featured, setFeatured] = useState(false);
+  const [photos, setPhotos] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -807,7 +1012,7 @@ function AddPropertyModal({
     setError(null);
 
     try {
-      await createAdminProperty({
+      const created = await createAdminProperty({
         title: title.trim(),
         description: description.trim(),
         listingType: category === "rent" ? "rent" : "sale",
@@ -825,6 +1030,11 @@ function AddPropertyModal({
         status: category === "purchase" ? "sold" : "active",
         featured,
       });
+
+      if (photos.length > 0) {
+        await uploadAdminPropertyPhotos(created.id, photos);
+      }
+
       onSaved();
       showToast("Property added and published.");
     } catch (err) {
@@ -1015,6 +1225,58 @@ function AddPropertyModal({
           />
         </div>
 
+        <div>
+          <span className={labelClass}>Photos</span>
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border-subtle px-3 py-4 text-center text-[11px] font-semibold text-muted hover:border-gold">
+            <Upload className="h-4 w-4" />
+            {photos.length === 0
+              ? "Add photos (optional)"
+              : `${photos.length} selected - add more`}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              disabled={busy}
+              onChange={(event) => {
+                const picked = Array.from(event.target.files ?? []);
+                if (picked.length > 0) {
+                  setPhotos((previous) => [...previous, ...picked]);
+                }
+                event.target.value = "";
+              }}
+            />
+          </label>
+          {photos.length > 0 && (
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {photos.map((photo, index) => (
+                <div key={`${photo.name}-${index}`} className="relative">
+                  <img
+                    src={URL.createObjectURL(photo)}
+                    alt={photo.name}
+                    className="h-16 w-full rounded-md border border-border-subtle object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPhotos((previous) =>
+                        previous.filter((_, itemIndex) => itemIndex !== index),
+                      )
+                    }
+                    aria-label={`Remove ${photo.name}`}
+                    className="absolute right-1 top-1 rounded-full bg-charcoal/70 p-0.5 text-white hover:bg-rose-600"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="mt-1 text-[11px] text-muted">
+            JPG, PNG or WEBP up to 10 MB each. Uploaded when the property is created.
+          </p>
+        </div>
+
         <label className="flex items-center gap-2 text-xs font-bold text-charcoal">
           <input
             type="checkbox"
@@ -1049,7 +1311,6 @@ function AddPropertyModal({
 }
 
 export function RealEstateProperties() {
-  const [view, setView] = useState<ViewMode>("all");
   const [query, setQuery] = useState("");
   const [applied, setApplied] = useState({ q: "", min: "", max: "" });
   const [statusFilter, setStatusFilter] = useState("");
@@ -1063,6 +1324,9 @@ export function RealEstateProperties() {
   const [reloadKey, setReloadKey] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<AdminProperty | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [rowBusy, setRowBusy] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(
@@ -1121,67 +1385,64 @@ export function RealEstateProperties() {
     setMaxPrice("");
   };
 
-  const groups = useMemo(
-    () => [
-      {
-        label: "Sales",
-        items: properties.filter(
-          (item) => item.listingType === "sale" && item.status !== "sold",
-        ),
-      },
-      {
-        label: "Rent",
-        items: properties.filter(
-          (item) => item.listingType === "rent" && item.status !== "rented",
-        ),
-      },
-      {
-        label: "Purchase",
-        items: properties.filter(
-          (item) => item.status === "sold" || item.status === "rented",
-        ),
-      },
-    ],
-    [properties],
-  );
-
   const selected = properties.find((item) => item.id === selectedId) ?? null;
+
+  const reviewProperty = async (
+    propertyId: string,
+    status: AdminPropertyStatus,
+  ) => {
+    setRowBusy(propertyId);
+    try {
+      await updateAdminProperty(propertyId, { status });
+      showToast(
+        status === "active" ? "Listing approved." : "Listing rejected.",
+      );
+      if (selectedId === propertyId) setSelectedId(null);
+      setReloadKey((key) => key + 1);
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Could not update property.",
+        "error",
+      );
+    } finally {
+      setRowBusy(null);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteAdminProperty(deleteTarget.id);
+      showToast("Property deleted.");
+      if (selectedId === deleteTarget.id) setSelectedId(null);
+      setDeleteTarget(null);
+      setReloadKey((key) => key + 1);
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Could not delete property.",
+        "error",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:h-[calc(100vh-8rem)] lg:grid-cols-2">
       <div className="flex min-h-0 flex-col gap-3 lg:h-full">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-extrabold tracking-tight text-charcoal">
             Properties
           </h2>
-          <span className="text-[11px] font-semibold text-muted">
-            {properties.length} total
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-semibold text-muted">
+              {properties.length} total
+            </span>
+          </div>
         </div>
 
         <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-border-subtle bg-white p-4 sm:p-5">
-        <div className="grid grid-cols-2 gap-1 rounded-xl border border-border-subtle bg-ivory p-1">
-          {(
-            [
-              { value: "all", label: "All" },
-              { value: "individual", label: "Individual" },
-            ] as const
-          ).map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              onClick={() => setView(tab.value)}
-              className={`rounded-lg py-2 text-sm font-bold transition-colors ${
-                view === tab.value
-                  ? "bg-charcoal text-white"
-                  : "text-charcoal hover:bg-white"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <div className="relative min-w-0 sm:flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-light" />
@@ -1269,16 +1530,8 @@ export function RealEstateProperties() {
         </div>
 
         {loading ? (
-          <div className="mt-3 space-y-2">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div
-                key={index}
-                className="space-y-2 rounded-lg border border-border-subtle p-3"
-              >
-                <div className="h-3 w-2/3 animate-pulse rounded bg-ivory-dark" />
-                <div className="h-3 w-1/2 animate-pulse rounded bg-ivory-dark" />
-              </div>
-            ))}
+          <div className="mt-3">
+            <SkeletonRows rows={4} itemClass="h-14" />
           </div>
         ) : error ? (
           <div className="mt-3 space-y-2 rounded-xl border border-dashed border-border-subtle p-6 text-center">
@@ -1301,7 +1554,7 @@ export function RealEstateProperties() {
               Properties added by owners will appear here.
             </p>
           </div>
-        ) : view === "all" ? (
+        ) : (
           <div className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1 max-h-[65vh] lg:max-h-none">
             {properties.map((property) => (
               <PropertyRow
@@ -1309,42 +1562,11 @@ export function RealEstateProperties() {
                 property={property}
                 selected={selectedId === property.id}
                 onSelect={() => setSelectedId(property.id)}
+                onDelete={() => setDeleteTarget(property)}
+                onApprove={() => void reviewProperty(property.id, "active")}
+                onReject={() => void reviewProperty(property.id, "rejected")}
+                rowBusy={rowBusy === property.id}
               />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-3 flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-rows-3">
-            {groups.map((group) => (
-              <div
-                key={group.label}
-                className="flex max-h-[260px] min-h-0 flex-col overflow-hidden rounded-xl border border-border-subtle lg:max-h-none"
-              >
-                <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border-subtle bg-ivory/60 px-3 py-2">
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-charcoal">
-                    {group.label}
-                  </h3>
-                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-muted">
-                    {group.items.length}
-                  </span>
-                </div>
-                <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2">
-                  {group.items.length === 0 ? (
-                    <p className="p-3 text-center text-[11px] text-muted">
-                      No {group.label.toLowerCase()} properties
-                      {applied.q ? " match your search" : " yet"}.
-                    </p>
-                  ) : (
-                    group.items.map((property) => (
-                      <PropertyRow
-                        key={property.id}
-                        property={property}
-                        selected={selectedId === property.id}
-                        onSelect={() => setSelectedId(property.id)}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
             ))}
           </div>
         )}
@@ -1361,9 +1583,7 @@ export function RealEstateProperties() {
           </span>
         </div>
         <div className="min-h-0 flex-1">
-          <RequestsPanel
-            onPropertiesChanged={() => setReloadKey((key) => key + 1)}
-          />
+          <RequestsPanel />
         </div>
       </div>
 
@@ -1372,6 +1592,17 @@ export function RealEstateProperties() {
           property={selected}
           onClose={() => setSelectedId(null)}
           onChanged={() => setReloadKey((key) => key + 1)}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete property?"
+          message={`This will permanently delete "${deleteTarget.title}". This cannot be undone.`}
+          confirmLabel="Delete permanently"
+          busy={deleting}
+          onConfirm={() => void confirmDelete()}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
 
@@ -1391,7 +1622,7 @@ export function RealEstateProperties() {
 type RequestItem = {
   key: string;
   entityId: string;
-  kind: "enquiry" | "valuation" | "site-visit" | "listing";
+  kind: "enquiry" | "valuation" | "site-visit";
   title: string;
   name: string;
   mobile: string;
@@ -1410,24 +1641,16 @@ const KIND_STYLES: Record<RequestItem["kind"], string> = {
   enquiry: "bg-blue-50 text-blue-700",
   valuation: "bg-amber-50 text-amber-700",
   "site-visit": "bg-violet-50 text-violet-700",
-  listing: "bg-emerald-50 text-emerald-700",
 };
 
 const KIND_LABELS: Record<RequestItem["kind"], string> = {
   enquiry: "Enquiry",
   valuation: "Valuation",
   "site-visit": "Site visit",
-  listing: "Listing",
 };
 
 function getRequestActions(item: RequestItem): RequestAction[] {
   const actions: RequestAction[] = [];
-
-  if (item.kind === "listing") {
-    actions.push({ label: "Accept", status: "active", tone: "primary" });
-    actions.push({ label: "Reject", status: "rejected", tone: "danger" });
-    return actions;
-  }
 
   if (item.kind === "enquiry") {
     const next: Record<string, string> = {
@@ -1576,7 +1799,6 @@ function RequestRow({
               {action.label}
             </button>
           ))}
-          {item.kind !== "listing" && (
             <button
               type="button"
               disabled={busy}
@@ -1585,26 +1807,22 @@ function RequestRow({
             >
               Manage
             </button>
-          )}
+        
         </div>
       )}
     </div>
   );
 }
 
-function RequestsPanel({
-  onPropertiesChanged,
-}: {
-  onPropertiesChanged: () => void;
-}) {
+function RequestsPanel() {
   const [view, setView] = useState<ViewMode>("all");
+  const [openGroup, setOpenGroup] = useState<string | null>("Enquiries");
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [requests, setRequests] = useState<AdminRealEstateRequests>({
     enquiries: [],
     valuations: [],
     siteVisits: [],
-    listings: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1691,19 +1909,7 @@ function RequestsPanel({
       });
     }
 
-    for (const item of requests.listings) {
-      list.push({
-        key: `lst-${item.id}`,
-        entityId: item.id,
-        kind: "listing",
-        title: item.title,
-        name: `${item.bhk} · ${item.propertyType}`,
-        mobile: `${item.location} · ${item.pincode}`,
-        detail: formatPrice(item.price, item.priceUnit),
-        status: item.status,
-        createdAt: item.createdAt,
-      });
-    }
+
 
     return list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [requests]);
@@ -1722,16 +1928,11 @@ function RequestsPanel({
         label: "Site Visits",
         items: items.filter((item) => item.kind === "site-visit"),
       },
-      {
-        label: "Listings",
-        items: items.filter((item) => item.kind === "listing"),
-      },
     ],
     [items],
   );
 
   const handleManage = (item: RequestItem) => {
-    if (item.kind === "listing") return;
     setSelected({ kind: item.kind, id: item.entityId });
   };
 
@@ -1740,22 +1941,14 @@ function RequestsPanel({
     setActionError(null);
 
     try {
-      if (item.kind === "listing") {
-        await updateAdminProperty(item.entityId, {
-          status: status as AdminPropertyStatus,
-        });
-        onPropertiesChanged();
-      } else {
+
         await updateAdminRequest(
           item.kind as AdminRequestKind,
           item.entityId,
           status,
-        );
-      }
+        );
       setReloadKey((key) => key + 1);
-      showToast(
-        item.kind === "listing" ? "Listing updated." : "Request updated.",
-      );
+      showToast("Request updated.");
     } catch (err) {
       setActionError(
         err instanceof Error ? err.message : "Could not update request.",
@@ -1808,16 +2001,8 @@ function RequestsPanel({
         )}
 
         {loading ? (
-        <div className="mt-3 space-y-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={index}
-              className="space-y-2 rounded-lg border border-border-subtle p-3"
-            >
-              <div className="h-3 w-2/3 animate-pulse rounded bg-ivory-dark" />
-              <div className="h-3 w-1/2 animate-pulse rounded bg-ivory-dark" />
-            </div>
-          ))}
+        <div className="mt-3">
+          <SkeletonRows rows={4} itemClass="h-14" />
         </div>
       ) : error ? (
         <div className="mt-3 space-y-2 rounded-xl border border-dashed border-border-subtle p-6 text-center">
@@ -1850,40 +2035,60 @@ function RequestsPanel({
           ))}
         </div>
       ) : (
-        <div className="mt-3 flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-rows-3">
-          {groups.map((group) => (
-            <div
-              key={group.label}
-              className="flex max-h-[260px] min-h-0 flex-col overflow-hidden rounded-xl border border-border-subtle lg:max-h-none"
-            >
-              <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border-subtle bg-ivory/60 px-3 py-2">
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-charcoal">
-                  {group.label}
-                </h3>
-                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-muted">
-                  {group.items.length}
-                </span>
-              </div>
-              <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2">
-                {group.items.length === 0 ? (
-                  <p className="p-3 text-center text-[11px] text-muted">
-                    No {group.label.toLowerCase()}
-                    {debounced ? " match your search" : " yet"}.
-                  </p>
-                ) : (
-                  group.items.map((item) => (
-                    <RequestRow
-              key={item.key}
-              item={item}
-              busy={busyKey === item.key}
-              onAction={handleAction}
-              onManage={handleManage}
-            />
-                  ))
+                <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2">
+          {groups.map((group) => {
+            const open = openGroup === group.label;
+            return (
+              <div
+                key={group.label}
+                className={`flex min-h-0 flex-col overflow-hidden rounded-xl border border-border-subtle ${
+                  open ? "flex-1" : ""
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenGroup(open ? null : group.label)}
+                  aria-expanded={open}
+                  className="flex shrink-0 cursor-pointer items-center justify-between gap-2 bg-ivory/60 px-3 py-2.5 text-left"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-charcoal">
+                      {group.label}
+                    </span>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-muted">
+                      {group.items.length}
+                    </span>
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-muted transition-transform ${
+                      open ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {open && (
+                  <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2">
+                    {group.items.length === 0 ? (
+                      <p className="p-4 text-center text-[11px] text-muted">
+                        No {group.label.toLowerCase()}
+                        {debounced ? " match your search" : " yet"}.
+                      </p>
+                    ) : (
+                      group.items.map((item) => (
+                        <RequestRow
+                          key={item.key}
+                          item={item}
+                          busy={busyKey === item.key}
+                          onAction={handleAction}
+                          onManage={handleManage}
+                        />
+                      ))
+                    )}
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
       </section>

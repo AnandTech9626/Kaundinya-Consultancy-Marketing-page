@@ -13,6 +13,7 @@ import {
   writeRememberedStaffMobile,
 } from "../lib/staff-session";
 import { BrandLockup } from "../components/BrandLockup";
+import { BRAND_MARK_URL } from "../lib/brand";
 import { inputClass, labelClass } from "../components/AdminUi";
 
 type Step = "mobile" | "pin" | "otp";
@@ -46,8 +47,9 @@ export function StaffLogin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const afterLogin = (profileComplete: boolean) => {
-    navigate(profileComplete ? "/dashboard" : "/setup", { replace: true });
+  const afterLogin = (profileComplete: boolean, role?: string) => {
+    const home = role === "partner" ? "/daily-tasks" : "/requests";
+    navigate(profileComplete ? home : "/setup", { replace: true });
   };
 
   const sendOtp = async (target: string) => {
@@ -99,7 +101,7 @@ export function StaffLogin() {
       const session = await staffPinLogin(clean, pin);
       login(session);
       writeRememberedStaffMobile(clean);
-      afterLogin(session.staff.profileComplete);
+      afterLogin(session.staff.profileComplete, session.staff.role);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign in.");
     } finally {
@@ -120,7 +122,7 @@ export function StaffLogin() {
       const session = await staffVerifyOtp(clean, otp);
       login(session);
       writeRememberedStaffMobile(clean);
-      afterLogin(session.staff.profileComplete);
+      afterLogin(session.staff.profileComplete, session.staff.role);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not verify OTP.");
     } finally {
@@ -129,12 +131,41 @@ export function StaffLogin() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-ivory">
-      <header className="flex items-center justify-center border-b border-border-subtle bg-white px-6 py-3">
-        <BrandLockup size="lg" />
-      </header>
+    <div className="min-h-screen bg-[#FAF7F2] lg:grid lg:grid-cols-2">
+      <aside className="relative hidden overflow-hidden bg-[#1C140D] lg:flex lg:flex-col">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_26%,rgba(197,155,39,0.3),transparent_55%)]"
+        />
+        <p className="absolute inset-x-0 top-8 text-center text-[11px] font-bold uppercase tracking-[0.35em] text-[#C8AE79]">
+          Administrative Portal
+        </p>
+        <div className="relative flex flex-1 flex-col items-center justify-center gap-5 px-10 pt-20">
+          <img
+            src={BRAND_MARK_URL}
+            alt="Kaundinya"
+            className="w-44 object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.5)] xl:w-52"
+          />
+          <div className="text-center">
+            <p className="text-3xl font-extrabold tracking-[0.12em] text-[#C59B27]">
+              KAUNDINYA
+            </p>
+            <p className="mt-1 text-[12px] font-bold uppercase tracking-[0.22em] text-[#B99A5B]">
+              Integrated Services
+            </p>
+          </div>
+          <div className="mt-2 h-px w-44 bg-[#C59B27]/30" />
+          <p className="max-w-[19rem] text-center text-[12px] leading-relaxed text-[#C9B58E]">
+            Staff access for requests, properties, insurance, loans and daily
+            operations.
+          </p>
+        </div>
+      </aside>
 
-      <main className="flex flex-1 items-center justify-center p-6">
+      <main className="relative flex min-h-screen flex-col items-center justify-center border-l border-[#C59B27]/25 bg-[#FAF7F2] p-6 sm:p-10">
+        <div className="mb-6 flex justify-center lg:hidden">
+          <BrandLockup size="md" />
+        </div>
         <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-white p-6 shadow-sm sm:p-8">
           {step === "mobile" ? (
             <form onSubmit={handleContinue} className="space-y-5">
